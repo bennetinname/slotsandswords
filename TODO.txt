@@ -1,25 +1,37 @@
-- Endlos mit Highscore
-- Ein kurzes Tutorial was die Mechaniken erklärt (soll extra über hauptmenü aufrufbar sein, nicht immer wenn man eine runde startet)
-- Mehr Karten und mehr Slot effekte
-- Einige Texte werden nicht ganz angezeigt, einmal durchgehen und fixen
-- Andere Ideen aus dem Internet / von anderen Games suchen und umsetzen
-- Wenn ein Gegner durch Slot schaden stirbt öffnet sich sofort das Sieg Fenster und man weiß gar nicht was man gezogen hat, bau da einen kurzen Delay ein
-- Nichts mit Gott im Spiel
-- Man soll die Slotmaschine nur in der Slot Phase sehen
-- Die Gegneranzeige im UI passt nicht ganz rein oben
-- Kampflog soll man hochscrollen können
-- Der Text den man im Greed im Shop sieht, also was man bekommen hat, soll nicht perma angezeigt werden sondern nur so 2 sek.
-- führe eine changelist
-- Shield verschwindet nach dem Zug, soll da bleiben
-- BUG: Wenn man keine Karten mehr hat und in die Slots geht crashed das Spiel: Traceback (most recent call last):
-  File "C:\Users\bseidel\Desktop\persönlich\vibe\main.py", line 26, in <module>
-    main()
-  File "C:\Users\bseidel\Desktop\persönlich\vibe\main.py", line 20, in main
-    game.run()
-  File "C:\Users\bseidel\Desktop\persönlich\vibe\game.py", line 107, in run
-    self._handle_events()
-  File "C:\Users\bseidel\Desktop\persönlich\vibe\game.py", line 126, in _handle_events
-    self._handle_click(pygame.mouse.get_pos())
-  File "C:\Users\bseidel\Desktop\persönlich\vibe\game.py", line 152, in _handle_click
-    for i, (rect, card) in enumerate(zip(self.card_rects, self.player.hand)):
-TypeError: 'NoneType' object is not iterable
+TODO / IDEEN – Slots & Swords
+=============================
+(kurz gehalten, nicht priorisiert)
+
+GAMEPLAY
+- Status-Effekt-System: Vulnerable, Weak, Gift, Regeneration
+- Mehr Karten, Relikte, Events, Slot-Effekte
+- Mehr Gegner-/Boss-Varianten, akt-spezifische Gegner
+- Multiplikator-/Scaling-System (Balatro-Stil)
+- Deck-Archetypen & Synergien (Burn, Hühner, Gold, Block)
+- Balancing/Economy-Pass (Gold-Inflation spät)
+
+ASSETS / OPTIK
+- Karten-Effekt-Icons auf den Karten anzeigen (liegen schon bereit)
+- Slot-Cabinet-Rahmen um die Walzen setzen
+- Status-Effekt-Icons (siehe asset_prompts.txt)
+- Karten-Rahmen/Backs als Sprites
+- Player-Avatar im Kampf, Merchant im Shop
+- Event-Illustrationen
+- .ico App-Icon für die EXE
+
+UX / KOMFORT
+- Tastatur-Steuerung (1–7 Karten spielen, Space = drehen/Zug beenden)
+- Settings-Menü (Lautstärke, Vollbild)
+- Schadens-/Effekt-Tooltips überall
+- Autosave zwischen Knoten (zusätzlich zum Pause-Save)
+
+META / REPLAY
+- Daily Run mit festem Seed + eigene Bestenliste
+- Unlocks über Runs (neue Karten/Relikte/Charaktere)
+- Mehrere Startcharaktere/Klassen
+- Run-Statistik-Screen am Ende
+
+TECHNIK
+- Seeded RNG zentral (für Daily/Reproduzierbarkeit)
+- Emoji-Font bündeln (Fallback auf fremden PCs)
+- EN-Lokalisierung

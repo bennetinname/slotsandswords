@@ -843,29 +843,16 @@ class UIRenderer:
         t = self._anim_t
         self.draw_background()
 
-        logo = assets.fit("ui", "logo", 660, 180)
+        logo = assets.fit("ui", "logo", 720, 240)
         if logo:
             bob = int(4 * math.sin(t * 1.5))
-            self.screen.blit(logo, (self.w // 2 - logo.get_width() // 2, 30 + bob))
+            self.screen.blit(logo, (self.w // 2 - logo.get_width() // 2, 70 + bob))
         else:
             pulse = abs(math.sin(t * 1.5)) * 0.12 + 0.88
             title_color = (int(255 * pulse), int(198 * pulse), int(64 * pulse))
             self._text("🎰  SLOTS & SWORDS  🎰", self.font_huge, title_color,
-                       self.w // 2, 70, center=True, shadow=True)
-        self._text("Ein Roguelike-Kartenspiel-Slot-Gambling-Ding", self.font_title, INK_DIM,
-                   self.w // 2, 226, center=True)
-        self._text('"Slay the Spire trifft Balatro in einer dubiosen Bahnhofskneipe"',
-                   self.font_small, _lighten(PURPLE, 0.3), self.w // 2, 258, center=True)
+                       self.w // 2, 120, center=True, shadow=True)
 
-        # Rotierende Symbole
-        symbols = ["💀", "🍀", "💰", "❤", "🎲", "🔥", "🐔", "⭐", "💣", "👑"]
-        for i, sym in enumerate(symbols):
-            angle = t * 0.7 + i * (2 * math.pi / len(symbols))
-            sx = int(self.w // 2 + math.cos(angle) * 215)
-            sy = int(330 + math.sin(angle) * 88)
-            s = self.font_large.render(sym, True, WHITE)
-            s.set_alpha(150)
-            self.screen.blit(s, (sx - s.get_width() // 2, sy - s.get_height() // 2))
 
         # Buttons aus dem übergebenen Layout (deckungsgleich mit der Klickerkennung)
         r = layout.get("resume")

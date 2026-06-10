@@ -12,7 +12,7 @@ import audio
 
 def main():
     pygame.init()
-    pygame.display.set_caption("SLOTS & SWORDS: Das Roguelike-Kartenspiel-Slot-Gambling-Ding")
+    pygame.display.set_caption("Slots & Swords")
 
     screen = pygame.display.set_mode((1200, 800))
     clock = pygame.time.Clock()

@@ -2,6 +2,15 @@
  SLOTS & SWORDS – ASSET-GENERIERUNGS-PROMPTS (Pixel-Art)
 ============================================================
 
+STATUS (Stand v1.4.0)
+---------------------
+ERLEDIGT & im Spiel:  Gegner, Slot-Symbole, Relikte, Map-Knoten, Logo,
+  Hintergrund (Kneipe).  -> liegen in assets/<kategorie>/
+ERLEDIGT, aber noch NICHT verdrahtet:  Karten-Effekt-Icons (assets/cards/),
+  Slot-Cabinet, HUD-Icons, Cursor.
+NOCH ZU GENERIEREN:  siehe Abschnitt "NOCH BENOETIGT" ganz unten.
+
+
 ANLEITUNG
 ---------
 Für JEDES Asset gilt:  [STYLE]  +  [SUBJECT des Assets]  +  [TECH]
@@ -205,3 +214,40 @@ cursor.png          (32x32, optional)
   faellt auf die jetzige prozedurale Darstellung zurueck, wenn eine Datei fehlt.
 - KI-Pixelart braucht meist Cleanup: Streupixel entfernen, Palette re-indizieren,
   Alpha-Kanten saeubern.
+
+
+============================================================
+ NOCH BENOETIGT  (naechste Asset-Runde)
+============================================================
+Gleicher [STYLE] + [TECH] wie oben. Magenta-Hintergrund, klar abgegrenzt.
+
+STATUS-EFFEKT-ICONS  –  32x32, einzelnes Icon
+  status_burn.png      –  small flame (Brennen)
+  status_poison.png    –  green skull/droplet (Gift)
+  status_strength.png  –  flexing arm (Staerke)
+  status_weak.png      –  cracked down-arrow (Schwaeche)
+  status_vulnerable.png–  cracked shield (verwundbar)
+  status_block.png     –  blue barrier (Block)
+  status_regen.png     –  green plus / heart-leaf (Regeneration)
+
+KARTEN-RAHMEN  –  fuer das Karten-Deck-Design
+  card_frame_common.png   (110x150)  –  grey-trim card frame, empty center
+  card_frame_uncommon.png (110x150)  –  blue-trim card frame
+  card_frame_rare.png     (110x150)  –  gold-trim glowing card frame
+  card_frame_curse.png    (110x150)  –  cracked purple cursed frame
+  card_back.png           (110x150)  –  ornate card back, crossed swords + reel
+
+EVENT-ILLUSTRATIONEN  –  ~220x140, kleine Banner pro Event (7)
+  event_brunnen, event_haendler, event_schrein, event_orakel,
+  event_atm, event_training, event_truhe
+  (jeweils Szene passend zum Event-Titel)
+
+CHARAKTERE / SZENEN
+  player_avatar.png   (120x160)  –  the gambler hero (player), scruffy, lucky charm
+  merchant.png        (120x160)  –  shifty bar merchant for the shop
+  defeat_art.png      (300x200)  –  grim "game over" vignette
+  victory_art.png     (300x200)  –  triumphant "you win" vignette
+
+APP-ICON
+  icon.ico  –  64x64 (und 256x256) App-Icon fuer die EXE (Logo-Krone/Schwert)
+
