@@ -10,6 +10,18 @@ GAMEPLAY
 - Deck-Archetypen & Synergien (Burn, Hühner, Gold, Block)
 - Balancing/Economy-Pass (Gold-Inflation spät)
 
+SCHWIERIGKEIT (Spiel evtl. zu schwer, da seltener Shop) – Ideen:
+- Garantiert 1 Shop pro Akt (z.B. eine Reihe immer als Shop)
+- Shop-Knoten häufiger gewichten in mapgen
+- Heilung nach jedem normalen Kampf (kleiner %-Wert)
+- Rast-Knoten häufiger / Rast heilt mehr
+- Startgold + Gold-Belohnungen leicht erhöhen, Shop-Preise senken
+- Gegner-Skalierung pro Tiefe abflachen (0.13 -> z.B. 0.10)
+- Erste 1-2 Etagen bewusst leichter halten
+- Mobiler Händler als häufigeres Event
+- Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart
+- Mehr/garantierte Relikte früh (z.B. Akt-Start-Relikt)
+
 ASSETS / OPTIK
 - Karten-Effekt-Icons auf den Karten anzeigen (liegen schon bereit)
 - Slot-Cabinet-Rahmen um die Walzen setzen

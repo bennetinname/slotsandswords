@@ -413,7 +413,10 @@ class Enemy:
             if player.lucky > 0:
                 player.lucky = 0
                 out.append(f"🎲 {self.name} löscht dein Glück! (Glücksrunden → 0)")
-            self.jam_next = True
+            # Nicht jede Runde blockieren – sonst dreht man nie (war zu hart)
+            if random.random() < 0.5:
+                self.jam_next = True
+                out.append(f"🎰 {self.name} manipuliert deinen Automaten! (−1 Dreh)")
             if dealt > 0:
                 healed = self.heal(dealt // 2)
                 if healed > 0:

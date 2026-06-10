@@ -1192,7 +1192,8 @@ class UIRenderer:
     # SHOP
     # ═══════════════════════════════════════════════
 
-    def draw_shop(self, items, player, message=""):
+    def draw_shop(self, items, player, message="", purchased=None):
+        purchased = purchased or set()
         self.draw_background()
         self._text("🏪  DUBIOSER LADEN  🏪", self.font_huge, ACCENT, self.w // 2, 18, center=True, shadow=True)
         self._text("Der Händler riecht nach Bier und schlechten Entscheidungen.",
@@ -1213,8 +1214,9 @@ class UIRenderer:
             ix = start_x + i * (item_w + spacing)
             rect = pygame.Rect(ix, item_y, item_w, item_h)
             item_rects.append((rect, item))
-            affordable = player.gold >= item["cost"]
-            hovered = rect.collidepoint(mouse)
+            sold = item["id"] in purchased
+            affordable = (not sold) and player.gold >= item["cost"]
+            hovered = rect.collidepoint(mouse) and not sold
             border = ACCENT if (hovered and affordable) else (PANEL_LINE if affordable else GREY_DARK)
             top = _lighten(PANEL_FILL2, 0.1) if (hovered and affordable) else PANEL_FILL2
             self._panel((ix, item_y - (4 if hovered else 0), item_w, item_h), radius=14,
@@ -1226,9 +1228,16 @@ class UIRenderer:
             desc_lines = self._wrap_text(item["desc"], self._font_micro, item_w - 18)
             for li, line in enumerate(desc_lines[:3]):
                 self._text(line, self._font_micro, INK_DIM, ix + 10, oy + 78 + li * 13)
-            price_col = ACCENT if affordable else RED
-            self._text(f"💰 {item['cost']}", self.font_medium, price_col,
-                       ix + item_w // 2, oy + item_h - 26, center=True)
+            if sold:
+                self._text("✓ GEKAUFT", self.font_medium, GREEN,
+                           ix + item_w // 2, oy + item_h - 26, center=True)
+                veil = pygame.Surface((item_w, item_h), pygame.SRCALPHA)
+                veil.fill((0, 0, 0, 130))
+                self.screen.blit(veil, (ix, oy))
+            else:
+                price_col = ACCENT if affordable else RED
+                self._text(f"💰 {item['cost']}", self.font_medium, price_col,
+                           ix + item_w // 2, oy + item_h - 26, center=True)
 
         # Glücksrad
         gamble_rect = pygame.Rect(self.w // 2 - 330, 330, 310, 170)

@@ -1,6 +1,21 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.2 – 2026-06-10]  BUGFIXES & SHOP
+--------------------------------------
+* FIX (Softlock): Gegen den Obersten Glücksprüfer konnte man in der
+  Slot-Phase mit 0 Drehungen (Slot-Jam) festhängen – kein Drehen, kein
+  Weiter. Jetzt erscheint immer ein "Weiter"-Button (+ Hinweis "Automat
+  blockiert"), wenn keine Drehung möglich ist.
+* Glücksprüfer entschärft: blockiert den Automaten nur noch ~50% statt
+  jede Runde (war zu hart).
+* SHOP: Jedes Item kann pro Shop-Besuch nur noch 1x gekauft werden
+  (gekaufte Items werden ausgegraut mit "✓ GEKAUFT").
+* Relikt-Tooltip lag hinter dem Gegner-Sprite – liegt jetzt darüber.
+* TODO.txt: Ideen-Sammlung gegen zu hohe Schwierigkeit ergänzt.
+
+─────────────────────────────────────────────────────
+
 [v1.6.1 – 2026-06-10]  HP-VORSCHAU
 ---------------------------------
 * HEILUNGS-VORSCHAU: Beim Hovern einer Heilkarte zeigt die eigene HP-Leiste

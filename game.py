@@ -127,6 +127,7 @@ class Game:
         self.shop_upgrade_mode = False # Karte-aufwerten-Auswahl aktiv
         self.shop_upgrade_rects = []
         self.shop_pending_cost = 0
+        self.shop_purchased = set()    # bereits gekaufte Items im aktuellen Shop
         
         # Highscore-Zustand
         self.highscores = load_highscores()
@@ -462,8 +463,10 @@ class Game:
                 if spin_btn.collidepoint(pos):
                     self._do_spin()
             
-            # Weiter-Button (nach fertigem Spin)
-            if self.slot_done and self.spins_remaining == 0:
+            # Weiter-Button: sobald keine Spins mehr offen sind (auch bei 0 Spins
+            # durch Slot-Jam) und gerade nichts dreht -> Softlock-Fix
+            if (self.spins_remaining == 0 and not self.slot_machine.spinning
+                    and not self.slot_death_pending):
                 next_btn = pygame.Rect(SCREEN_W//2 - 80, 735, 160, 40)
                 if next_btn.collidepoint(pos):
                     self._start_enemy_turn()
@@ -1230,6 +1233,7 @@ class Game:
         self.shop_upgrade_mode = False
         self.shop_message = ""
         self.shop_message_timer = 0.0
+        self.shop_purchased = set()   # bereits gekaufte Item-IDs (pro Shop-Besuch)
 
         # Schmiede ist immer verfügbar + 4 zufällige feste Items
         forge = {"id": "upgrade_card", "name": "Schmiede", "emoji": "⚒️", "cost": 50,
@@ -1243,16 +1247,20 @@ class Game:
         self.shop_message_timer = 2.0
     
     def _buy_shop_item(self, item):
-        """Kauft ein Shop-Item"""
+        """Kauft ein Shop-Item (jedes nur 1x pro Shop-Besuch)"""
         item_id = item["id"]
         cost = item["cost"]
-        
+
+        if item_id in self.shop_purchased:
+            self._shop_message("❌ Schon gekauft!")
+            audio.play("error", 0.6)
+            return
         if self.player.gold < cost:
             self._shop_message("❌ Nicht genug Gold!")
             audio.play("error", 0.6)
             return
         audio.play("click")
-        
+
         # "Karte entfernen" braucht eine zweite Auswahl
         if item_id == "remove_card":
             if len([c for c in self.player.deck + self.player.discard]) <= 5:
@@ -1277,6 +1285,7 @@ class Game:
         # Sonst direkt anwenden
         self.player.spend_gold(cost)
         self._apply_shop_item(item_id)
+        self.shop_purchased.add(item_id)
     
     def _apply_shop_item(self, item_id):
         """Wendet den gekauften Effekt an"""
@@ -1313,6 +1322,7 @@ class Game:
         
         if removed:
             self.player.spend_gold(self.shop_pending_cost)
+            self.shop_purchased.add("remove_card")
             self._shop_message(f"🔥 '{card.name}' verbrannt!")
         self.shop_remove_mode = False
 
@@ -1324,6 +1334,7 @@ class Game:
             audio.play("relic", 0.7)
             if self.upgrade_ctx == "shop":
                 self.player.spend_gold(self.shop_pending_cost)
+                self.shop_purchased.add("upgrade_card")
                 self._shop_message(f"⚒️ '{old_name}' aufgewertet!")
             else:
                 self.map_message = f"⚒️ '{old_name}' aufgewertet!"
@@ -1813,12 +1824,12 @@ class Game:
         # Status-Leiste oben
         self.ui.draw_status_bar(self.player, self.enemy, self.floor_num, self.turn_num)
 
-        # Reliktleiste (links vertikal)
-        self.ui.draw_relic_bar(self.player, 8, 84)
-
         # Gegner (links-mitte)
         if self.enemy:
             self.ui.draw_enemy(self.enemy, 50, 82, 300, 280)
+
+        # Reliktleiste NACH dem Gegner -> Hover-Tooltip liegt über dem Sprite
+        self.ui.draw_relic_bar(self.player, 8, 84)
 
         # Slot-Maschine nur in Slot-Phase (TODO #8)
         if self.state == STATE_SLOT_SPIN and self.slot_machine:
@@ -1917,12 +1928,17 @@ class Game:
             self.ui.draw_button("⚡ Dreht...", SCREEN_W//2 - 80, spin_y, 160, 45,
                                color=GREY_DARK, disabled=True)
         
-        if self.slot_done and self.spins_remaining == 0:
+        if self.spins_remaining == 0 and not self.slot_machine.spinning:
             if self.slot_death_pending:
                 # Gegner tot durch Slot – kurz warten, dann Belohnung
                 win_txt = self.ui.font_title.render("🏆 GEGNER BESIEGT!", True, GOLD)
                 self.screen.blit(win_txt, (SCREEN_W//2 - win_txt.get_width()//2, 735))
             else:
+                if not self.slot_done:
+                    # 0 Spins (z.B. durch Slot-Jam) -> Hinweis statt leerer Phase
+                    hint = self.ui.font_small.render("🎰 Automat blockiert – keine Drehung!",
+                                                     True, ORANGE)
+                    self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, 700))
                 self.ui.draw_button("➡️ Weiter", SCREEN_W//2 - 80, 735, 160, 40,
                                    color=GREEN, pulsing=True)
     
@@ -1969,7 +1985,7 @@ class Game:
         """Shop-Bildschirm (Overlays werden global gezeichnet)"""
         (self.shop_item_rects, self.shop_gamble_rect,
          self.shop_leave_rect) = self.ui.draw_shop(
-            self.shop_items, self.player, self.shop_message)
+            self.shop_items, self.player, self.shop_message, self.shop_purchased)
 
     def _draw_scores(self):
         """Highscore-Bildschirm"""
