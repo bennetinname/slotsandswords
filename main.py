@@ -8,11 +8,12 @@ Starte mit: python main.py
 import pygame
 import sys
 from game import Game
+from constants import GAME_VERSION
 import audio
 
 def main():
     pygame.init()
-    pygame.display.set_caption("Slots & Swords")
+    pygame.display.set_caption(f"Slots & Swords  v{GAME_VERSION}")
 
     screen = pygame.display.set_mode((1200, 800))
     clock = pygame.time.Clock()
