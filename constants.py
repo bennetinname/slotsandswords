@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.6.2"
+GAME_VERSION = "1.6.3"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.6.3", "Fairer: mehr Shops/Heilung, sanftere Skalierung + Event-Bilder"),
     ("1.6.2", "Fix: Slot-Softlock (Glücksprüfer); Shop-Items nur 1x/Besuch"),
     ("1.6.1", "Vorschau: Heilung & eingehender Schaden auf der HP-Leiste"),
     ("1.6.0", "In-Game 'Was ist neu' – diese Übersicht hier"),
@@ -755,6 +756,7 @@ RELIC_DEFINITIONS = [
 EVENT_DEFINITIONS = [
     {
         "title": "Der Glücksbrunnen",
+        "asset": "brunnen",
         "emoji": "⛲",
         "text": "Ein alter Brunnen glitzert. Münzen liegen am verschlammten Grund.",
         "options": [
@@ -765,6 +767,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Zwielichtiger Händler",
+        "asset": "haendler",
         "emoji": "🧙",
         "text": "Eine vermummte Gestalt bietet dir 'ein ganz besonderes Geschäft' an.",
         "options": [
@@ -775,6 +778,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Verlassener Schrein",
+        "asset": "schrein",
         "emoji": "⛩️",
         "text": "Ein staubiger Schrein. Etwas Heiliges (oder Verfluchtes) liegt in der Luft.",
         "options": [
@@ -785,6 +789,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Das Hühnerorakel",
+        "asset": "orakel",
         "emoji": "🐔",
         "text": "Ein riesiges Huhn starrt dich weise an. Es gackert prophetisch.",
         "options": [
@@ -795,6 +800,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Defekter Geldautomat",
+        "asset": "atm",
         "emoji": "🏧",
         "text": "Ein Geldautomat blinkt fehlerhaft. Du könntest ihn manipulieren...",
         "options": [
@@ -805,6 +811,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Trainingsraum",
+        "asset": "training",
         "emoji": "🏋️",
         "text": "Ein staubiges Fitnessstudio. Die Gewichte rufen deinen Namen.",
         "options": [
@@ -815,6 +822,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Mysteriöse Truhe",
+        "asset": "truhe",
         "emoji": "🧰",
         "text": "Eine verschlossene Truhe. Etwas klappert darin. Risiko?",
         "options": [

@@ -27,13 +27,13 @@ def _weighted_type(rng):
     r = rng.random()
     if r < 0.42:
         return "combat"
-    if r < 0.62:
+    if r < 0.58:
         return "event"
-    if r < 0.74:
+    if r < 0.68:
         return "elite"
-    if r < 0.83:
+    if r < 0.82:        # mehr Shops -> fairer
         return "shop"
-    if r < 0.93:
+    if r < 0.93:        # etwas mehr Rast
         return "rest"
     return "treasure"
 
@@ -93,6 +93,11 @@ def generate(act, seed=None):
                 t = "combat"
             node["type"] = t
         _layout(node)
+
+    # Mindestens 1 Shop pro Akt garantieren (sonst zu schwer)
+    middle = [n for n in nodes.values() if 1 <= n["row"] <= ROWS - 3]
+    if middle and not any(n["type"] == "shop" for n in middle):
+        rng.choice(middle)["type"] = "shop"
 
     ordered = [nodes[k] for k in sorted(nodes)]
     return {"rows": ROWS, "cols": COLS, "act": act, "nodes": ordered}

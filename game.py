@@ -621,9 +621,9 @@ class Game:
             cands = [e for e in ENEMY_TYPES if e.get("tier", 1) <= 2 and not e.get("is_boss")]
             enemy_def = random.choice(cands)
 
-        # Gegner skaliert mit der Tiefe (über Akte hinweg)
+        # Gegner skaliert mit der Tiefe (über Akte hinweg) – etwas sanfter
         enemy_def = copy.deepcopy(enemy_def)
-        scale = 1.0 + (self.floor_num - 1) * 0.13
+        scale = 1.0 + (self.floor_num - 1) * 0.11
         enemy_def["hp"] = int(enemy_def["hp"] * scale)
         enemy_def["max_hp"] = enemy_def["hp"]
         enemy_def["damage"] = int(enemy_def["damage"] * scale)
@@ -1056,6 +1056,12 @@ class Game:
         self._log(f"🏆 {self.enemy.name} besiegt! +{gold} Gold!")
         audio.play("gold", 0.7)
         self._spawn_particles(*self.ENEMY_FX, color=(255, 210, 80), count=22, speed=200, size=4)
+
+        # Kleine Heilung nach jedem normalen Kampf (fairer)
+        if not self.enemy.is_boss and not self.enemy.is_elite:
+            healed = self.player.heal_hp(max(4, self.player.max_hp // 12))
+            if healed > 0:
+                self._log(f"🌿 Verschnaufpause: +{healed} HP")
 
         # Herzstein: Heilung bei Kill
         if self.player.has_relic("heal_on_kill"):

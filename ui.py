@@ -765,18 +765,28 @@ class UIRenderer:
         px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2
         self._panel((px, py, pw, ph), radius=18, border=PURPLE, border_w=3)
 
-        self._text(event["emoji"], self.font_huge, WHITE, self.w // 2, py + 22, center=True)
+        art = assets.fit("events", event.get("asset"), 300, 150)
+        if art:
+            ax = self.w // 2 - art.get_width() // 2
+            self._shadow((ax, py + 18, art.get_width(), art.get_height()), radius=8, spread=6)
+            self.screen.blit(art, (ax, py + 18))
+            pygame.draw.rect(self.screen, _darken(PURPLE, 0.2),
+                             (ax, py + 18, art.get_width(), art.get_height()), 2, border_radius=6)
+            title_y = py + 18 + art.get_height() + 6
+        else:
+            self._text(event["emoji"], self.font_huge, WHITE, self.w // 2, py + 22, center=True)
+            title_y = py + 78
         self._text(event["title"], self.font_h1, _lighten(PURPLE, 0.4),
-                   self.w // 2, py + 78, center=True, shadow=True)
+                   self.w // 2, title_y, center=True, shadow=True)
 
         # Beschreibung (umgebrochen, zentriert)
         desc_lines = self._wrap_text(event["text"], self.font_small, pw - 100)
         for i, line in enumerate(desc_lines):
-            self._text(line, self.font_small, INK_DIM, self.w // 2, py + 124 + i * 20, center=True)
+            self._text(line, self.font_small, INK_DIM, self.w // 2, title_y + 42 + i * 20, center=True)
 
         option_rects = []
         continue_rect = None
-        oy = py + 124 + len(desc_lines) * 20 + 20
+        oy = title_y + 42 + len(desc_lines) * 20 + 18
 
         if not resolved:
             ow = pw - 120
@@ -1195,6 +1205,9 @@ class UIRenderer:
     def draw_shop(self, items, player, message="", purchased=None):
         purchased = purchased or set()
         self.draw_background()
+        merch = assets.by_height("ui", "merchant", 116)
+        if merch:
+            self.screen.blit(merch, (18, 10))
         self._text("🏪  DUBIOSER LADEN  🏪", self.font_huge, ACCENT, self.w // 2, 18, center=True, shadow=True)
         self._text("Der Händler riecht nach Bier und schlechten Entscheidungen.",
                    self.font_small, INK_DIM, self.w // 2, 74, center=True)

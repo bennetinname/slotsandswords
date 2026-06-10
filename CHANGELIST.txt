@@ -1,6 +1,24 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.3 – 2026-06-10]  FAIRER + NEUE BILDER
+-------------------------------------------
+Schwierigkeit (sanfte Anpassung – nicht zu leicht, nicht zu schwer):
+* Garantiert mindestens 1 Shop pro Akt; insgesamt mehr Shop- & Rast-Knoten,
+  weniger Elites.
+* Kleine Heilung nach jedem normalen Kampf (~max_hp/12).
+* Gegner-Skalierung pro Tiefe sanfter (0.13 -> 0.11).
+
+Neue Pixel-Art-Assets (aus assets_neu.png geschnitten):
+* Event-Illustrationen werden jetzt im Event-Fenster angezeigt.
+* Händler-Portrait im Shop.
+* Außerdem bereit (noch nicht verdrahtet): Status-Effekt-Icons,
+  Karten-Rahmen, Spieler-Avatar, Sieg-/Niederlage-Art, App-Icon.
+
+Hinweis: kein neues Gegner-Sprite im Sheet -> noch keine neuen Gegner.
+
+─────────────────────────────────────────────────────
+
 [v1.6.2 – 2026-06-10]  BUGFIXES & SHOP
 --------------------------------------
 * FIX (Softlock): Gegen den Obersten Glücksprüfer konnte man in der
