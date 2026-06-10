@@ -11,6 +11,7 @@ dist/
 # Laufzeit-Daten
 savegame.json
 highscores.json
+options.json
 
 # Test-Screenshots
 _shot_*.png

@@ -19,7 +19,14 @@ _sounds = {}              # name -> pygame.Sound
 _music_sound = None
 _music_channel = None
 _spin_channel = None
-_master = 0.7
+
+# Lautstärken (0..1) – per Optionsmenü einstellbar
+_master_vol = 0.8
+_music_vol = 0.5
+_sfx_vol = 0.6
+
+# Manche Effekte sind von Natur aus laut -> Dämpfung pro Effekt
+_PER_SOUND = {"click": 0.3, "reel": 0.7, "error": 0.7, "card": 0.85}
 
 
 # ─────────────────────────────────────────────
@@ -232,13 +239,22 @@ def init():
         _enabled = False
 
 
+def _sfx_gain(vol=1.0):
+    return vol * _sfx_vol * _master_vol
+
+
 def play(name, vol=1.0):
     if not _enabled or _muted:
         return
     snd = _sounds.get(name)
     if snd:
-        snd.set_volume(vol * _master)
+        snd.set_volume(_sfx_gain(vol) * _PER_SOUND.get(name, 1.0))
         snd.play()
+
+
+def click():
+    """Dezenter UI-Klick (bewusst leise)."""
+    play("click")
 
 
 def play_combo(level):
@@ -246,7 +262,7 @@ def play_combo(level):
         return
     snd = _combo_sounds.get(min(8, max(2, level)))
     if snd:
-        snd.set_volume(0.5 * _master)
+        snd.set_volume(_sfx_gain(0.5))
         snd.play()
 
 
@@ -255,7 +271,7 @@ def start_spin():
         return
     snd = _sounds.get("spin")
     if snd:
-        snd.set_volume(0.4 * _master)
+        snd.set_volume(_sfx_gain(0.45))
         _spin_channel.play(snd, loops=-1)
 
 
@@ -268,12 +284,38 @@ def start_music():
     if not _enabled or _muted or not _music_channel or not _music_sound:
         return
     _music_channel.play(_music_sound, loops=-1)
-    _music_channel.set_volume(0.35 * _master)
+    _music_channel.set_volume(_music_vol * _master_vol)
 
 
 def stop_music():
     if _music_channel:
         _music_channel.stop()
+
+
+def _refresh_music_volume():
+    if _music_channel and _music_channel.get_busy():
+        _music_channel.set_volume(_music_vol * _master_vol)
+
+
+def set_master(v):
+    global _master_vol
+    _master_vol = min(1.0, max(0.0, float(v)))
+    _refresh_music_volume()
+
+
+def set_music(v):
+    global _music_vol
+    _music_vol = min(1.0, max(0.0, float(v)))
+    _refresh_music_volume()
+
+
+def set_sfx(v):
+    global _sfx_vol
+    _sfx_vol = min(1.0, max(0.0, float(v)))
+
+
+def get_volumes():
+    return _master_vol, _music_vol, _sfx_vol
 
 
 def is_muted():

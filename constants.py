@@ -1,7 +1,7 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.4.0"
+GAME_VERSION = "1.5.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"

@@ -866,6 +866,8 @@ class UIRenderer:
                          pulsing=(r is None))
         tu = layout["tutorial"]
         self.draw_button("📖 Tutorial", tu.x, tu.y, tu.w, tu.h, color=CYAN, text_color=BLACK)
+        op = layout["options"]
+        self.draw_button("⚙ Optionen", op.x, op.y, op.w, op.h, color=BLUE, text_color=WHITE)
         sc = layout["scores"]
         self.draw_button("🏆 Bestenliste", sc.x, sc.y, sc.w, sc.h, color=PURPLE, text_color=WHITE)
 
@@ -1012,17 +1014,64 @@ class UIRenderer:
         """Pause-/Speichern-Menü über abgedunkeltem Hintergrund"""
         self.draw_background()
         self._dim(170)
-        pw, ph = 440, 300
-        px, py = self.w // 2 - pw // 2, 250
+        pw, ph = 440, 290
+        px, py = self.w // 2 - pw // 2, 232
         self._panel((px, py, pw, ph), radius=18, border=ACCENT, border_w=3)
-        self._text("⏸  PAUSE", self.font_huge, ACCENT, self.w // 2, py + 22, center=True, shadow=True)
+        self._text("⏸  PAUSE", self.font_h1, ACCENT, self.w // 2, py + 18, center=True, shadow=True)
 
         r = layout["resume"]
         self.draw_button("▶ Weiter spielen", r.x, r.y, r.w, r.h, color=GREEN, text_color=BLACK, pulsing=True)
+        o = layout["options"]
+        self.draw_button("⚙ Optionen", o.x, o.y, o.w, o.h, color=BLUE, text_color=WHITE)
         s = layout["save_quit"]
         self.draw_button("💾 Speichern & Beenden", s.x, s.y, s.w, s.h, color=ACCENT, text_color=BLACK)
         m = layout["menu"]
         self.draw_button("🏠 Hauptmenü (ohne Speichern)", m.x, m.y, m.w, m.h, color=GREY_DARK, text_color=WHITE)
+
+    def draw_options(self, layout, opts):
+        """Optionsmenü: Lautstärke-Slider + Toggles"""
+        self.draw_background()
+        self._dim(150)
+        panel = layout["panel"]
+        self._panel((panel.x, panel.y, panel.w, panel.h), radius=18, border=BLUE, border_w=3)
+        self._text("⚙  OPTIONEN", self.font_huge, _lighten(BLUE, 0.3),
+                   self.w // 2, panel.y + 16, center=True, shadow=True)
+
+        slabels = {"master": "🔊 Gesamt", "music": "🎵 Musik", "sfx": "💥 Soundeffekte"}
+        for key, tr in layout["sliders"].items():
+            self._text(slabels[key], self.font_medium, INK, panel.x + 30, tr.y - 9)
+            # Track
+            pygame.draw.rect(self.screen, GREY_DARK, (tr.x, tr.y, tr.w, tr.h), border_radius=5)
+            fw = int(tr.w * opts[key])
+            if fw > 0:
+                fill = self._panel_surface(fw, tr.h, tr.h // 2, _lighten(BLUE, 0.3),
+                                           _darken(BLUE, 0.1), (0, 0, 0), 0)
+                self.screen.blit(fill, (tr.x, tr.y))
+            # Knob
+            kx = tr.x + fw
+            pygame.draw.circle(self.screen, WHITE, (kx, tr.y + tr.h // 2), 10)
+            pygame.draw.circle(self.screen, _darken(BLUE, 0.2), (kx, tr.y + tr.h // 2), 10, 2)
+            self._text(f"{int(opts[key] * 100)}%", self.font_small, ACCENT_SOFT,
+                       tr.right + 18, tr.y - 7)
+
+        tlabels = {"fullscreen": "🖥 Vollbild", "shake": "📳 Screen-Shake", "particles": "✨ Partikel"}
+        for key, pill in layout["toggles"].items():
+            self._text(tlabels[key], self.font_medium, INK, panel.x + 30, pill.y + 4)
+            on = bool(opts[key])
+            bg = GREEN_DARK if on else GREY_DARK
+            pygame.draw.rect(self.screen, bg, pill, border_radius=pill.h // 2)
+            pygame.draw.rect(self.screen, GREEN if on else GREY, pill, 2, border_radius=pill.h // 2)
+            knob_x = pill.right - pill.h // 2 if on else pill.x + pill.h // 2
+            pygame.draw.circle(self.screen, WHITE, (knob_x, pill.centery), pill.h // 2 - 4)
+            self._text("AN" if on else "AUS", self.font_tiny, INK_DIM,
+                       pill.x - 8, pill.centery - 7, right=True)
+
+        b = layout["back"]
+        self.draw_button("⬅ Zurück", b.x, b.y, b.w, b.h, color=ACCENT, text_color=BLACK)
+        d = layout["defaults"]
+        self.draw_button("↺ Standard", d.x, d.y, d.w, d.h, color=GREY_DARK, text_color=WHITE)
+        self._text("Tipp: [M] schaltet den Ton schnell stumm.", self.font_tiny, INK_FAINT,
+                   self.w // 2, panel.bottom - 28, center=True)
 
     # ═══════════════════════════════════════════════
     # TUTORIAL
@@ -1033,29 +1082,29 @@ class UIRenderer:
         self._text("📖  WIE MAN SPIELT", self.font_huge, ACCENT, self.w // 2, 20, center=True, shadow=True)
 
         sections = [
-            ("⚔  KARTEN", CYAN, [
-                "Energie (⚡) zahlt deine Karten — ungespielte bleiben in der Hand.",
-                "Angriff ⚔ = Schaden · Verteidigung 🛡 = Block · Special ✨ = Sonstiges.",
-                "Block bleibt erhalten bis Schaden ihn aufbraucht.",
-                "COMBO: gleiche Kartentypen hintereinander geben Boni!",
+            ("🗺  DER ABLAUF", PURPLE, [
+                "Du bewegst dich über eine Pfad-Karte nach oben zum Boss.",
+                "Knoten: ⚔ Kampf · ⭐ Elite · ❓ Event · 🏪 Shop · 🔥 Rast · 💠 Schatz.",
+                "Nur verbundene Knoten sind wählbar — du entscheidest die Route.",
+                "Nach dem Boss beginnt ein härterer Akt. Es geht endlos weiter.",
             ]),
-            ("🎰  SLOT-MASCHINE", ACCENT, [
-                "Nach den Karten: Slot drehen! Gleiche Symbole = starke Kombos.",
-                "Karten wie 'Double Spin' geben Bonus-Drehungen.",
-                "Glücksrunden (🍀) erhöhen die Chance auf gute Symbole.",
-                "Slot-Schaden kann Gegner direkt erledigen.",
+            ("⚔  DEIN ZUG (KARTEN)", CYAN, [
+                "Energie (⚡) zahlt Karten — Ungespieltes bleibt in der Hand.",
+                "Angriff ⚔ · Verteidigung 🛡 (Block bleibt!) · Special ✨.",
+                "COMBO: gleicher Kartentyp hintereinander = Bonus.",
+                "Karte hovern zeigt den Schaden vorab. Dann 'Slot drehen'.",
             ]),
-            ("💠  RELIKTE & EVENTS", GREEN, [
-                "Relikte sind permanente Boni — von Elites, Bossen & Events.",
-                "Events bieten Entscheidungen mit Risiko & Belohnung.",
-                "Vorsicht: manche Wege bringen Flüche ins Deck.",
-                "Elite-Gegner (⭐) sind hart, geben aber garantiert ein Relikt.",
+            ("🎰  SLOTS & GEGNER", ACCENT, [
+                "Slot drehen: gleiche Symbole = starke Kombos, 🍀 hilft.",
+                "Danach greift der Gegner an (seine Absicht steht oben rechts).",
+                "Gegner haben Tricks: Gold klauen, Gift, Slot blockieren …",
+                "Slot-Schaden kann den Gegner direkt erledigen.",
             ]),
-            ("🗺  KARTE & SHOP", PURPLE, [
-                "Wähle deinen Weg über die Pfad-Karte: Kampf, Elite,",
-                "Event, Shop, Rast 🔥 oder Schatz 💠 – du entscheidest.",
-                "Schmiede ⚒ (Shop & Rast) wertet Karten auf (+50%).",
-                "Nach dem Boss beginnt ein härterer Akt. Endlos!",
+            ("💠  RELIKTE · RAST · PAUSE", GREEN, [
+                "Relikte = permanente Boni (Elite/Boss/Schatz/Event).",
+                "Events: Entscheidungen mit Risiko — manche bringen Flüche!",
+                "Rast 🔥: heilen ODER Karte schmieden ⚒ (+50%). Shop hat beides.",
+                "ESC = Pause: speichern & beenden oder Optionen öffnen.",
             ]),
         ]
         col_w = (self.w - 70) // 2

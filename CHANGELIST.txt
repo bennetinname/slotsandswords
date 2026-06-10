@@ -1,6 +1,21 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.5.0 – 2026-06-10]  OPTIONEN & AUDIO-FEINSCHLIFF
+---------------------------------------------------
+* OPTIONSMENÜ (erreichbar aus Hauptmenü UND Pause):
+  - Lautstärke-Slider: Gesamt, Musik, Soundeffekte (einzeln regelbar).
+  - Schalter: Vollbild, Screen-Shake, Partikel.
+  - "Standard"-Button setzt alles zurück.
+  - Einstellungen werden in options.json gespeichert (bleiben erhalten).
+* KLICK-SOUNDS deutlich leiser gemacht (waren zu laut); zusätzliche
+  Pro-Effekt-Dämpfung. Lautstärken jetzt live über die Slider steuerbar.
+* Tutorial komplett an den aktuellen Spielablauf angepasst
+  (Pfad-Karte -> Karten/Slot/Gegner -> Belohnung -> Boss -> nächster Akt).
+* Fenstertitel zeigt die Version (aus GAME_VERSION).
+
+─────────────────────────────────────────────────────
+
 [v1.4.0 – 2026-06-10]  PIXEL-ART-ASSETS
 ---------------------------------------
 Das Spiel hat jetzt echte Pixel-Art-Grafiken statt Emojis/Procedural:

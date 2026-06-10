@@ -13,6 +13,7 @@ from highscores import load_highscores, add_highscore, calculate_score
 import savegame
 import audio
 import mapgen
+import options
 
 
 # ═══════════════════════════════════════════════
@@ -20,6 +21,7 @@ import mapgen
 # ═══════════════════════════════════════════════
 STATE_MENU        = "menu"
 STATE_TUTORIAL    = "tutorial"       # Tutorial-Bildschirm
+STATE_OPTIONS     = "options"        # Optionen-/Einstellungsmenü
 STATE_PAUSE       = "pause"          # Pause-/Speichern-Menü
 STATE_MAP         = "map"            # Pfad-/Etagenkarte
 STATE_REST        = "rest"           # Lagerfeuer
@@ -148,7 +150,34 @@ class Game:
         self.map_message = ""
         self.map_message_timer = 0.0
         self.upgrade_ctx = None     # "shop" | "rest" – Kontext der Schmiede
-    
+
+        # Optionen
+        self.options = options.load()
+        self.options_drag = None          # (key, track_rect) während Slider-Ziehen
+        self._options_return = STATE_MENU  # wohin "Zurück" im Options-Menü führt
+        self._apply_options()
+        self._apply_fullscreen()
+
+    # ═══════════════════════════════════════════════
+    # OPTIONEN ANWENDEN
+    # ═══════════════════════════════════════════════
+
+    def _apply_options(self):
+        audio.set_master(self.options["master"])
+        audio.set_music(self.options["music"])
+        audio.set_sfx(self.options["sfx"])
+
+    def _apply_fullscreen(self):
+        flags = (pygame.SCALED | pygame.FULLSCREEN) if self.options.get("fullscreen") else 0
+        try:
+            self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H), flags)
+        except Exception:
+            self.options["fullscreen"] = False
+            try:
+                self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+            except Exception:
+                pass
+
     # ═══════════════════════════════════════════════
     # MAIN LOOP
     # ═══════════════════════════════════════════════
@@ -192,6 +221,11 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self._handle_click(pygame.mouse.get_pos())
 
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if self.options_drag:
+                    self.options_drag = None
+                    options.save(self.options)
+
             if event.type == pygame.MOUSEMOTION:
                 self._handle_hover(pygame.mouse.get_pos())
     
@@ -201,7 +235,10 @@ class Game:
 
     def _handle_escape(self):
         """ESC: kontextabhängig pausieren, zurück oder beenden"""
-        if self.state in self.RUN_STATES:
+        if self.state == STATE_OPTIONS:
+            options.save(self.options)
+            self.state = self._options_return
+        elif self.state in self.RUN_STATES:
             self._prev_state = self.state
             self.state = STATE_PAUSE
         elif self.state == STATE_PAUSE:
@@ -213,32 +250,91 @@ class Game:
             self.running = False
 
     def _compute_menu_layout(self):
-        """Layout der Hauptmenü-Buttons (mit/ohne Fortsetzen). Quelle für Zeichnen UND Klick."""
+        """Layout der Hauptmenü-Buttons. Quelle für Zeichnen UND Klick."""
         cx = SCREEN_W // 2
         if savegame.has_valid_save():
             return {
-                "resume":   pygame.Rect(cx - 130, 446, 260, 56),
-                "play":     pygame.Rect(cx - 130, 512, 260, 46),
-                "tutorial": pygame.Rect(cx - 110, 566, 220, 42),
-                "scores":   pygame.Rect(cx - 110, 616, 220, 42),
+                "resume":   pygame.Rect(cx - 130, 430, 260, 54),
+                "play":     pygame.Rect(cx - 130, 490, 260, 44),
+                "tutorial": pygame.Rect(cx - 110, 540, 220, 40),
+                "options":  pygame.Rect(cx - 110, 586, 220, 40),
+                "scores":   pygame.Rect(cx - 110, 632, 220, 40),
             }
         return {
             "resume":   None,
-            "play":     pygame.Rect(cx - 110, 470, 220, 58),
-            "tutorial": pygame.Rect(cx - 110, 540, 220, 44),
-            "scores":   pygame.Rect(cx - 110, 592, 220, 44),
+            "play":     pygame.Rect(cx - 110, 458, 220, 54),
+            "tutorial": pygame.Rect(cx - 110, 520, 220, 42),
+            "options":  pygame.Rect(cx - 110, 570, 220, 42),
+            "scores":   pygame.Rect(cx - 110, 620, 220, 42),
         }
 
     def _compute_pause_layout(self):
         """Layout der Pause-Menü-Buttons"""
         cx = SCREEN_W // 2
         return {
-            "resume":    pygame.Rect(cx - 160, 322, 320, 52),
-            "save_quit": pygame.Rect(cx - 160, 384, 320, 52),
-            "menu":      pygame.Rect(cx - 160, 446, 320, 46),
+            "resume":    pygame.Rect(cx - 160, 296, 320, 50),
+            "options":   pygame.Rect(cx - 160, 352, 320, 44),
+            "save_quit": pygame.Rect(cx - 160, 402, 320, 50),
+            "menu":      pygame.Rect(cx - 160, 458, 320, 44),
         }
 
+    def _compute_options_layout(self):
+        """Layout des Optionsmenüs (Slider + Toggles)."""
+        cx = SCREEN_W // 2
+        px = cx - 300
+        sliders = {
+            "master": pygame.Rect(px + 250, 236, 250, 10),
+            "music":  pygame.Rect(px + 250, 292, 250, 10),
+            "sfx":    pygame.Rect(px + 250, 348, 250, 10),
+        }
+        toggles = {
+            "fullscreen": pygame.Rect(px + 488, 406, 72, 32),
+            "shake":      pygame.Rect(px + 488, 454, 72, 32),
+            "particles":  pygame.Rect(px + 488, 502, 72, 32),
+        }
+        return {
+            "panel": pygame.Rect(px, 150, 600, 470),
+            "sliders": sliders,
+            "toggles": toggles,
+            "back":     pygame.Rect(cx - 200, 558, 180, 44),
+            "defaults": pygame.Rect(cx + 20, 558, 180, 44),
+        }
+
+    def _set_slider(self, key, mx, track):
+        val = max(0.0, min(1.0, (mx - track.x) / track.w))
+        self.options[key] = round(val, 2)
+        self._apply_options()
+
+    def _handle_options_click(self, pos):
+        lay = self._compute_options_layout()
+        for key, tr in lay["sliders"].items():
+            if tr.inflate(24, 28).collidepoint(pos):
+                self._set_slider(key, pos[0], tr)
+                self.options_drag = (key, tr)
+                return
+        for key, tr in lay["toggles"].items():
+            if tr.collidepoint(pos):
+                self.options[key] = not self.options[key]
+                audio.click()
+                if key == "fullscreen":
+                    self._apply_fullscreen()
+                options.save(self.options)
+                return
+        if lay["back"].collidepoint(pos):
+            audio.click(); options.save(self.options); self.state = self._options_return
+            return
+        if lay["defaults"].collidepoint(pos):
+            audio.click()
+            self.options = dict(options.DEFAULTS)
+            self._apply_options(); self._apply_fullscreen(); options.save(self.options)
+            return
+
     def _handle_hover(self, pos):
+        # Slider ziehen
+        if self.state == STATE_OPTIONS and self.options_drag and pygame.mouse.get_pressed()[0]:
+            key, tr = self.options_drag
+            self._set_slider(key, pos[0], tr)
+            return
         if self.state == STATE_PLAYER_TURN and self.card_rects:
             self.hovered_card_idx = None
             for i, rect in enumerate(self.card_rects):
@@ -295,6 +391,9 @@ class Game:
             if lay["tutorial"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_TUTORIAL
                 return
+            if lay["options"].collidepoint(pos):
+                audio.play("click"); self._options_return = STATE_MENU; self.state = STATE_OPTIONS
+                return
             if lay["scores"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_SCORES
                 return
@@ -303,11 +402,17 @@ class Game:
             lay = self._compute_pause_layout()
             if lay["resume"].collidepoint(pos):
                 audio.play("click"); self.state = self._prev_state
+            elif lay["options"].collidepoint(pos):
+                audio.play("click"); self._options_return = STATE_PAUSE; self.state = STATE_OPTIONS
             elif lay["save_quit"].collidepoint(pos):
                 self._save_and_quit()
             elif lay["menu"].collidepoint(pos):
                 # Hauptmenü ohne Speichern (Run wird verworfen)
                 audio.play("click"); self.state = STATE_MENU
+            return
+
+        elif self.state == STATE_OPTIONS:
+            self._handle_options_click(pos)
             return
 
         elif self.state == STATE_TUTORIAL:
@@ -1454,6 +1559,8 @@ class Game:
     # ═══════════════════════════════════════════════
 
     def _do_shake(self, amount):
+        if not self.options.get("shake", True):
+            return
         self.shake = min(16.0, max(self.shake, amount))
 
     def _do_hitstop(self, dur):
@@ -1461,6 +1568,8 @@ class Game:
 
     def _spawn_particles(self, x, y, color, count=12, speed=180, life=0.5,
                          size=4, gravity=420, spread=2 * 3.14159, dir0=0.0):
+        if not self.options.get("particles", True):
+            return
         for _ in range(count):
             ang = dir0 + random.uniform(-spread / 2, spread / 2)
             sp = speed * random.uniform(0.4, 1.0)
@@ -1596,6 +1705,9 @@ class Game:
 
         elif self.state == STATE_TUTORIAL:
             self.ui.draw_tutorial()
+
+        elif self.state == STATE_OPTIONS:
+            self.ui.draw_options(self._compute_options_layout(), self.options)
 
         elif self.state == STATE_PAUSE:
             self.ui.draw_pause(self._compute_pause_layout())

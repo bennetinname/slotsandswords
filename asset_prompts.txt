@@ -2,15 +2,6 @@
  SLOTS & SWORDS – ASSET-GENERIERUNGS-PROMPTS (Pixel-Art)
 ============================================================
 
-STATUS (Stand v1.4.0)
----------------------
-ERLEDIGT & im Spiel:  Gegner, Slot-Symbole, Relikte, Map-Knoten, Logo,
-  Hintergrund (Kneipe).  -> liegen in assets/<kategorie>/
-ERLEDIGT, aber noch NICHT verdrahtet:  Karten-Effekt-Icons (assets/cards/),
-  Slot-Cabinet, HUD-Icons, Cursor.
-NOCH ZU GENERIEREN:  siehe Abschnitt "NOCH BENOETIGT" ganz unten.
-
-
 ANLEITUNG
 ---------
 Für JEDES Asset gilt:  [STYLE]  +  [SUBJECT des Assets]  +  [TECH]
@@ -21,7 +12,7 @@ Für JEDES Asset gilt:  [STYLE]  +  [SUBJECT des Assets]  +  [TECH]
 - Reihenfolge der Umsetzung: 1) Gegner  2) Slot-Symbole  3) Relikte/Map  4) Rest.
 
 
-[STYLE]  (vor jedes Asset setzen)
+[STYLE]  
 ---------------------------------
 16-bit pixel art, dark "dive-bar casino" dark-fantasy theme, grimy
 neon-and-gold palette (deep purple #1a1228, gold #ffc640, red #dc3232,
@@ -31,190 +22,11 @@ light from top-left, subtle dithering for shading, clean cel shading,
 single subject centered, front view, transparent background, no text,
 no UI, no frame, no drop shadow.
 
-[TECH]  (hinter jedes Asset setzen)
+[TECH] 
 -----------------------------------
 single subject centered with small margin, crisp pixels, nearest-neighbor,
 no anti-aliasing on outer edge, export PNG with alpha, generate at 4x then
 downscale to target size.
-
-
-VOLLSTAENDIGES BEISPIEL (so sieht ein fertiger Prompt aus)
-----------------------------------------------------------
-16-bit pixel art, dark dive-bar casino dark-fantasy theme, grimy neon-and-gold
-palette (deep purple #1a1228, gold #ffc640, red #dc3232, teal #32dcdc),
-humorous-grotesque, chunky readable silhouette, bold 1px dark outline, ~32-color
-palette, light from top-left, subtle dithering, single subject centered, front
-view, transparent background, no text, no UI, no frame ::  sluggish lazy green
-goblin, droopy eyes, smells of onions, tiny rusty dagger, comically tired,
-full body ::  single subject centered, crisp pixels, nearest-neighbor, no
-anti-aliasing, PNG with alpha, render 4x then downscale to 160x160.
-
-
-============================================================
- 1) GEGNER  –  160x160 px, full body, idle
-============================================================
-goblin.png
-  sluggish lazy green goblin, droopy tired eyes, smells of onions, tiny rusty
-  dagger, slouched comical pose, full body
-
-ritter.png
-  drunk armored knight, dented helmet, foaming beer mug in hand, stumbling
-  off-balance pose, hiccupping, full body
-
-pestratte.png
-  diseased plague rat standing upright, matted fur, sickly green aura, sharp
-  yellow teeth, twitchy, full body
-
-steuerpruefer.png
-  grey bureaucrat tax-auditor, round glasses, clipboard and briefcase stuffed
-  with gold coins, smug expression, full body
-
-koch.png
-  furious chef, tall white hat, raised ladle as weapon, red angry face, glowing
-  chili peppers, steam puffs, full body
-
-lich.png
-  philosophical undead lich, glowing eyes, tattered hooded robe, holding a tiny
-  skull and pondering, faint purple necromantic glow, full body
-
-croupier.png
-  vampire casino croupier, slicked black hair, pale skin, fangs, bow tie and
-  vest, fanning a hand of blood-stained playing cards, full body
-
-slot_daemon.png
-  possessed slot-machine demon, arcade-cabinet body with a snarling demonic
-  face, spinning glowing reels for eyes, clawed levers for arms, full body
-
-boss_huhnerkoenig.png   (BOSS – etwas groesser/imposanter)
-  giant menacing chicken king, oversized golden crown, glowing red eyes, regal
-  cape, absurd but threatening, dramatic boss pose, full body
-
-boss_glueckspruefer.png (BOSS – etwas groesser/imposanter)
-  supreme "luck inspector" overlord sorcerer, ornate purple robes, holding
-  rigged dice and a slot-machine lever, manipulative grin, arcane symbols, full body
-
-HINWEIS: Elite-Varianten brauchen KEIN eigenes Sprite – im Code wird ein
-goldener Aura-/Tint-Overlay ueber das Basis-Sprite gelegt.
-
-
-============================================================
- 2) SLOT-SYMBOLE  –  64x64 px, einzelnes Icon
- (Stil-Zusatz fuer ALLE: "chunky casino slot-reel icon, gold rim,
-  high contrast, single object centered, bold outline")
-============================================================
-skull.png      –  grinning skull
-clover.png     –  four-leaf clover
-money.png      –  bulging coin money bag with $
-heart.png      –  glossy red heart
-dice.png       –  pair of dice
-fire.png       –  bright flame
-chicken.png    –  cartoon chicken
-star.png       –  shining gold star
-bomb.png       –  round black bomb with lit fuse
-vortex.png     –  swirling purple vortex / spiral
-beer.png       –  frothy beer mug
-crown.png      –  golden royal crown
-lightning.png  –  electric lightning bolt
-shield.png     –  metal shield
-target.png     –  red-and-white target / bullseye
-cherry.png     –  pair of red cherries
-diamond.png    –  cut blue diamond gem
-snake.png      –  coiled green snake
-moon.png       –  crescent moon, night glow
-clown.png      –  creepy circus clown face
-
-
-============================================================
- 3) RELIKT-ICONS  –  48x48 px, einzelnes Icon
- (Stil-Zusatz fuer ALLE: "small magical relic trinket icon,
-  gold-rimmed, softly glowing, single object centered")
-============================================================
-relic_gold_boost.png        –  golden pointing finger dripping gold
-relic_start_block.png       –  sturdy iron shield (will / resolve)
-relic_bonus_spin.png        –  lucky golden slot token
-relic_combat_strength.png   –  war banner on a spear
-relic_heal_on_kill.png      –  glowing red heart-shaped gemstone
-relic_bonus_energy.png      –  pulsing blue energy core / battery
-relic_always_lucky.png      –  loaded dice with glowing pips
-relic_interest.png          –  fat ceramic piggy bank with coins
-relic_thorns.png            –  spiky cactus / thorn carapace
-relic_first_free.png        –  hidden ace playing card up a sleeve
-relic_max_hp_relic.png      –  ornate ring of life, green glow
-relic_chicken_relic.png     –  carved wooden chicken totem
-
-
-============================================================
- 4) KARTEN-EFFEKT-ICONS  –  48x48 px (wiederverwendbar)
- (Stil-Zusatz: "clean bold game icon, single object centered,
-  readable at small size, gold-rimmed")
-============================================================
-icon_atk_slash.png      –  sword with motion slash
-icon_defense_shield.png –  raised shield
-icon_heal_herb.png      –  green healing potion / herb
-icon_fire.png           –  flame burst
-icon_gold_coin.png      –  gold coin
-icon_dice_chaos.png     –  tumbling dice (chaos)
-icon_chicken.png        –  small chicken
-icon_death_skull.png    –  skull (execute / death)
-icon_energy_bolt.png    –  energy lightning bolt
-icon_block_wall.png     –  stone brick wall (block)
-
-
-============================================================
- 5) MAP-KNOTEN-ICONS  –  48x48 px, einzelnes Icon
- (Stil-Zusatz: "map node emblem, circular composition,
-  single object centered, bold outline, glowing")
-============================================================
-node_combat.png    –  crossed swords
-node_elite.png     –  star over a horned skull (elite)
-node_event.png     –  question mark on an old scroll
-node_shop.png      –  coin pouch / merchant tent
-node_rest.png      –  cozy campfire
-node_treasure.png  –  open treasure chest with gem
-node_boss.png      –  horned crown (boss)
-
-
-============================================================
- 6) WELT & UI
-============================================================
-logo.png            (~720x220)
-  pixel-art logo wordmark "SLOTS & SWORDS", glowing neon casino sign, crossed
-  swords intersecting two slot reels, gold and purple, marquee bulbs
-
-slot_cabinet.png    (~380x260)
-  ornate arcade slot-machine cabinet frame labelled "SLOT-O-MATIC 3000", gold
-  trim, marquee lights, with the three reel windows CUT OUT / transparent in the
-  middle so reels show through
-
-reel_strip.png      (90x330, vertikal kachelbar)
-  seamless tileable vertical slot-reel background strip, dark felt texture,
-  subtle vertical grooves, no symbols
-
-bg_kneipe.png       (1200x800, Hintergrund)
-  grimy dingy train-station dive-bar casino interior at night, moody neon and
-  warm bar light, smoke, empty middle area for gameplay, no characters, no UI,
-  background only, slightly out of focus
-
-hud_hp_heart.png    (32x32)  –  glossy red heart HUD icon
-hud_energy.png      (32x32)  –  blue energy bolt HUD icon
-hud_gold.png        (32x32)  –  gold coin HUD icon
-hud_strength.png    (32x32)  –  flexing arm / strength HUD icon
-
-cursor.png          (32x32, optional)
-  pixel-art pointing hand cursor, white glove, bold outline
-
-
-============================================================
- INTEGRATIONS-NOTIZEN (fuer spaeter)
-============================================================
-- Alle Sprites: PNG mit Alpha, transparenter Hintergrund.
-- Ablage geplant in:  assets/enemies/ , assets/slots/ , assets/relics/ ,
-  assets/cards/ , assets/map/ , assets/ui/
-- Dateinamen exakt wie oben -> die Lade-Schicht findet sie automatisch und
-  faellt auf die jetzige prozedurale Darstellung zurueck, wenn eine Datei fehlt.
-- KI-Pixelart braucht meist Cleanup: Streupixel entfernen, Palette re-indizieren,
-  Alpha-Kanten saeubern.
-
 
 ============================================================
  NOCH BENOETIGT  (naechste Asset-Runde)
