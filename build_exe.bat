@@ -9,6 +9,7 @@ python -m PyInstaller ^
   --onefile ^
   --windowed ^
   --name "SlotsAndSwords" ^
+  --icon "icon.ico" ^
   --add-data "assets;assets" ^
   --clean ^
   --noconfirm ^

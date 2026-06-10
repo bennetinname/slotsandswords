@@ -547,11 +547,15 @@ class UIRenderer:
         self._shadow((x, y, w, h), radius=12, spread=8,
                      alpha=150 if active else 110, dy=6 if active else 4)
 
+        # Seltenheits-Rahmen-Sprite (falls vorhanden) – ersetzt den Procedural-Rand
+        frame = assets.scaled("frames", card.rarity, w, h)
+
         # Karten-Korpus (dunkler Verlauf, leicht in Kartenfarbe getönt)
         tint_top = _lerp_color(CARD_BG, card.color, 0.16)
         tint_bot = _darken(CARD_BG, 0.25)
         body = self._panel_surface(w, h, 12, tint_top, tint_bot,
-                                   rarity_col if active else CARD_BORDER, 2)
+                                   rarity_col if active else CARD_BORDER,
+                                   0 if frame else 2)
         self.screen.blit(body, (x, y))
 
         if active:
@@ -559,8 +563,11 @@ class UIRenderer:
             pygame.draw.rect(glow, (*rarity_col, 70), (0, 0, w + 12, h + 12), 4, border_radius=14)
             self.screen.blit(glow, (x - 6, y - 6))
 
-        # Typ-Akzentleiste oben
-        pygame.draw.rect(self.screen, card.color, (x + 8, y + 7, w - 16, 5), border_radius=3)
+        if frame:
+            self.screen.blit(frame, (x, y))
+        else:
+            # Typ-Akzentleiste oben (nur ohne Rahmen)
+            pygame.draw.rect(self.screen, card.color, (x + 8, y + 7, w - 16, 5), border_radius=3)
 
         # Kostenbadge
         cost_col = CYAN if card.cost == 0 else ACCENT
@@ -591,9 +598,7 @@ class UIRenderer:
             icon = "💀" if card.type == "curse" else "✨"
             self._text(icon, self.font_medium, PURPLE, x + w // 2, y + 82, center=True)
 
-        # Marker: upgraded / exhaust
-        if getattr(card, "upgraded", False):
-            self._text("✦", self.font_small, ACCENT, x + w - 12, y + 44, right=True)
+        # Marker: exhaust (upgraded ist schon am '+' im Namen erkennbar)
         if getattr(card, "exhaust", False):
             self._text("♻", self.font_tiny, ORANGE, x + w - 12, y + 62, right=True)
 
@@ -849,6 +854,13 @@ class UIRenderer:
         for i, msg in enumerate(msgs):
             self._text(msg, self.font_medium, INK, self.w // 2, 250 + i * 34, center=True)
 
+        art = assets.fit("ui", "defeat_art", 300, 142)
+        if art:
+            ax = self.w // 2 - art.get_width() // 2
+            self.screen.blit(art, (ax, 474))
+            pygame.draw.rect(self.screen, _darken(RED, 0.2),
+                             (ax, 474, art.get_width(), art.get_height()), 2, border_radius=6)
+
         self.draw_button("🏆 Bestenliste", self.w // 2 - 100, self.h - 122, 200, 46,
                          color=PURPLE, text_color=WHITE)
         self._text("R = Neustart   ·   ESC = Beenden", self.font_small, INK_FAINT,
@@ -874,6 +886,22 @@ class UIRenderer:
             self._text("🥇 NEUER REKORD!", self.font_small, ACCENT_SOFT, self.w // 2, 264, center=True)
         elif rank:
             self._text(f"Platz {rank} in der Bestenliste", self.font_small, CYAN, self.w // 2, 264, center=True)
+
+        art = assets.fit("ui", "victory_art", 320, 150)
+        if art:
+            ax = self.w // 2 - art.get_width() // 2
+            self.screen.blit(art, (ax, 300))
+            pygame.draw.rect(self.screen, _darken(ACCENT, 0.2),
+                             (ax, 300, art.get_width(), art.get_height()), 2, border_radius=6)
+            stats_y = 300 + art.get_height() + 14
+        else:
+            stats_y = 310
+        msgs = [
+            f"🐔 Hühner beschworen: {player.chickens_summoned}",
+            f"💰 Gold verdient: {player.gold_earned}",
+        ]
+        for i, msg in enumerate(msgs):
+            self._text(msg, self.font_medium, INK, self.w // 2, stats_y + i * 34, center=True)
 
         self.draw_button("🏆 Bestenliste", self.w // 2 - 100, self.h - 122, 200, 46,
                          color=PURPLE, text_color=WHITE)

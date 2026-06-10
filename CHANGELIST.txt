@@ -1,6 +1,18 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.4 – 2026-06-10]  MEHR PIXEL-ART
+-------------------------------------
+* KARTEN-RAHMEN nach Seltenheit (common/uncommon/rare/curse) – Karten
+  bekommen verzierte Rahmen, rare leuchtet golden.
+* SPIELER-AVATAR rechts im Kampf.
+* SIEG- & NIEDERLAGE-ART auf den End-Screens.
+* APP-ICON: Schwert-Logo als Fenster-/Datei-Icon der EXE (icon.ico).
+* Kleinigkeit: redundantes Upgrade-Zeichen auf Karten entfernt
+  (das '+' im Namen genügt).
+
+─────────────────────────────────────────────────────
+
 [v1.6.3 – 2026-06-10]  FAIRER + NEUE BILDER
 -------------------------------------------
 Schwierigkeit (sanfte Anpassung – nicht zu leicht, nicht zu schwer):

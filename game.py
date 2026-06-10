@@ -14,6 +14,7 @@ import savegame
 import audio
 import mapgen
 import options
+import assets
 
 
 # ═══════════════════════════════════════════════
@@ -185,6 +186,13 @@ class Game:
                 self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H))
             except Exception:
                 pass
+        # Fenster-Icon (neu setzen, da set_mode es zurücksetzen kann)
+        try:
+            ic = assets.load("ui", "icon_256")
+            if ic:
+                pygame.display.set_icon(ic)
+        except Exception:
+            pass
 
     # ═══════════════════════════════════════════════
     # MAIN LOOP
@@ -1836,6 +1844,11 @@ class Game:
 
         # Reliktleiste NACH dem Gegner -> Hover-Tooltip liegt über dem Sprite
         self.ui.draw_relic_bar(self.player, 8, 84)
+
+        # Spieler-Avatar (rechte Seite)
+        av = assets.by_height("ui", "player_avatar", 150)
+        if av:
+            self.screen.blit(av, (SCREEN_W - av.get_width() - 18, 430))
 
         # Slot-Maschine nur in Slot-Phase (TODO #8)
         if self.state == STATE_SLOT_SPIN and self.slot_machine:
