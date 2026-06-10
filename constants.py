@@ -1,7 +1,7 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.3.0"
+GAME_VERSION = "1.4.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
@@ -115,6 +115,7 @@ SLOT_SYMBOLS = [
 ENEMY_TYPES = [
     {
         "name": "Schluffiger Goblin",
+        "asset": "goblin",
         "hp": 30, "max_hp": 30,
         "damage": 6, "armor": 0,
         "gold_reward": (8, 15),
@@ -124,6 +125,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Betrunkener Ritter",
+        "asset": "ritter",
         "hp": 45, "max_hp": 45,
         "damage": 10, "armor": 3,
         "gold_reward": (12, 20),
@@ -134,6 +136,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Pestratte",
+        "asset": "pestratte",
         "hp": 28, "max_hp": 28,
         "damage": 5, "armor": 0,
         "gold_reward": (8, 14),
@@ -144,6 +147,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Steuerprüfer",
+        "asset": "steuerpruefer",
         "hp": 40, "max_hp": 40,
         "damage": 8, "armor": 2,
         "gold_reward": (15, 25),
@@ -154,6 +158,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Philosophischer Lich",
+        "asset": "lich",
         "hp": 60, "max_hp": 60,
         "damage": 14, "armor": 1,
         "gold_reward": (18, 28),
@@ -164,6 +169,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Wütender Koch",
+        "asset": "koch",
         "hp": 55, "max_hp": 55,
         "damage": 12, "armor": 4,
         "gold_reward": (16, 24),
@@ -174,6 +180,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Vampir-Croupier",
+        "asset": "croupier",
         "hp": 52, "max_hp": 52,
         "damage": 11, "armor": 2,
         "gold_reward": (18, 28),
@@ -184,6 +191,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Slot-Maschinendämon",
+        "asset": "slot_daemon",
         "hp": 70, "max_hp": 70,
         "damage": 16, "armor": 2,
         "gold_reward": (22, 35),
@@ -194,6 +202,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "DER GROSSE HÜHNERKÖNIG",
+        "asset": "boss_huhnerkoenig",
         "hp": 120, "max_hp": 120,
         "damage": 18, "armor": 5,
         "gold_reward": (40, 60),
@@ -205,6 +214,7 @@ ENEMY_TYPES = [
     },
     {
         "name": "Oberster Glücksprüfer",
+        "asset": "boss_glueckspruefer",
         "hp": 150, "max_hp": 150,
         "damage": 20, "armor": 8,
         "gold_reward": (50, 80),

@@ -5,6 +5,12 @@ import random
 import time
 import math
 from constants import *
+import assets
+
+
+def _symbol_img(sym, size):
+    """Slot-Symbol-Sprite (oder None, dann Emoji-Fallback)"""
+    return assets.scaled("slots", sym["name"].lower(), size, size)
 
 
 def weighted_choice(symbols):
@@ -82,6 +88,7 @@ class SlotReel:
         pygame.draw.rect(screen, SLOT_REEL, (self.x, self.y, self.width, self.height), border_radius=8)
         pygame.draw.rect(screen, CARD_BORDER, (self.x, self.y, self.width, self.height), 2, border_radius=8)
         
+        size = min(self.width - 10, 72)
         if self.spinning:
             # Animiertes Scroll durch Symbole
             symbol_h = self.height // 3
@@ -90,9 +97,15 @@ class SlotReel:
                 sym = self.display_symbols[idx % len(self.display_symbols)]
                 sy = self.y + (i - 1) * symbol_h + int(self.spin_offset * symbol_h) - symbol_h
                 if self.y - 5 <= sy <= self.y + self.height + 5:
-                    txt = font_large.render(sym["emoji"], True, WHITE)
-                    screen.blit(txt, (self.x + self.width//2 - txt.get_width()//2,
-                                      sy + symbol_h//2 - txt.get_height()//2))
+                    cy = sy + symbol_h // 2
+                    img = _symbol_img(sym, size)
+                    if img:
+                        screen.blit(img, (self.x + self.width//2 - img.get_width()//2,
+                                          cy - img.get_height()//2))
+                    else:
+                        txt = font_large.render(sym["emoji"], True, WHITE)
+                        screen.blit(txt, (self.x + self.width//2 - txt.get_width()//2,
+                                          cy - txt.get_height()//2))
             # Motion-Blur-Overlay
             overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
             overlay.fill((20, 15, 35, 120))
@@ -100,9 +113,14 @@ class SlotReel:
         else:
             # Stehendes Symbol (groß, zentriert)
             sym = self.current_symbol
-            txt = font_large.render(sym["emoji"], True, WHITE)
-            screen.blit(txt, (self.x + self.width//2 - txt.get_width()//2,
-                              self.y + self.height//2 - txt.get_height()//2))
+            cx = self.x + self.width // 2
+            cy = self.y + self.height // 2
+            img = _symbol_img(sym, size)
+            if img:
+                screen.blit(img, (cx - img.get_width()//2, cy - img.get_height()//2))
+            else:
+                txt = font_large.render(sym["emoji"], True, WHITE)
+                screen.blit(txt, (cx - txt.get_width()//2, cy - txt.get_height()//2))
         
         # Highlight-Linie in der Mitte
         mid_y = self.y + self.height // 2

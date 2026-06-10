@@ -1341,6 +1341,7 @@ class Game:
             "armor": e.armor, "block": e.block, "gold_reward": list(e.gold_reward),
             "color": list(e.color), "tooltip": e.tooltip, "tier": e.tier,
             "is_boss": e.is_boss, "is_elite": e.is_elite, "mechanic": e.mechanic,
+            "asset": e.asset,
             "burn": e.burn, "weakened": e.weakened,
             "intent": e.intent, "intent_value": e.intent_value,
             "undying_used": e._undying_used, "jam_next": e.jam_next,
@@ -1354,7 +1355,7 @@ class Game:
             "gold_reward": tuple(d["gold_reward"]), "color": tuple(d["color"]),
             "tooltip": d["tooltip"], "tier": d["tier"],
             "is_boss": d["is_boss"], "is_elite": d["is_elite"],
-            "mechanic": d.get("mechanic"),
+            "mechanic": d.get("mechanic"), "asset": d.get("asset"),
         }
         e = Enemy(etype)
         e.block = d["block"]; e.burn = d["burn"]; e.weakened = d["weakened"]

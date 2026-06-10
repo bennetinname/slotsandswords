@@ -9,6 +9,7 @@ python -m PyInstaller ^
   --onefile ^
   --windowed ^
   --name "SlotsAndSwords" ^
+  --add-data "assets;assets" ^
   --clean ^
   --noconfirm ^
   main.py

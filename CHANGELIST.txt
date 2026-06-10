@@ -1,6 +1,27 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.4.0 – 2026-06-10]  PIXEL-ART-ASSETS
+---------------------------------------
+Das Spiel hat jetzt echte Pixel-Art-Grafiken statt Emojis/Procedural:
+* 10 Gegner-Sprites (inkl. 2 Bosse) – ersetzen die prozeduralen Figuren.
+* 20 Slot-Symbol-Sprites in den Walzen.
+* 12 Relikt-Icons (Reliktleiste im Kampf).
+* 7 Map-Knoten-Icons auf der Pfad-Karte.
+* Neon-Logo im Hauptmenü.
+* Gemalte "Bahnhofskneipe"-Hintergrundszene (abgedunkelt für Lesbarkeit).
+* Außerdem vorhanden: 10 Karten-Effekt-Icons, Slot-Cabinet, HUD-Icons, Cursor
+  (für spätere Nutzung).
+
+TECHNIK:
+* Neue Asset-Lade-Schicht (assets.py) mit Cache + PROCEDURAL-FALLBACK:
+  fehlt eine PNG, wird wie bisher prozedural gezeichnet -> nichts kann brechen.
+* Assets liegen in assets/<kategorie>/ und werden in die EXE gebündelt
+  (--add-data), funktionieren also auch in der weitergegebenen .exe.
+* Elite-Gegner nutzen das Basis-Sprite + goldene Aura (kein extra Sprite).
+
+─────────────────────────────────────────────────────
+
 [v1.3.0 – 2026-06-10]  EINZIGARTIGE GEGNER & BOSSE
 --------------------------------------------------
 Gegner haben jetzt echte Mechaniken statt nur skalierter Werte:

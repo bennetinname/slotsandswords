@@ -4,6 +4,7 @@ import pygame
 import math
 from constants import *
 import mapgen
+import assets
 
 
 def _lerp(a, b, t):
@@ -64,24 +65,31 @@ class UIRenderer:
     # ═══════════════════════════════════════════════
 
     def _build_background(self):
-        """Erzeugt einmalig den Gradient-Hintergrund mit Vignette & Tiefe"""
+        """Erzeugt einmalig den Hintergrund (gemaltes Bild ODER Gradient) mit Vignette"""
         bg = pygame.Surface((self.w, self.h)).convert()
-        for y in range(self.h):
-            t = y / self.h
-            pygame.draw.line(bg, _lerp_color(BG_TOP, BG_BOTTOM, t), (0, y), (self.w, y))
-
-        # Weiche farbige Lichthöfe für Tiefe
-        for (cx, cy, r, col, a) in [
-            (self.w * 0.22, self.h * 0.18, 360, (90, 60, 160), 26),
-            (self.w * 0.85, self.h * 0.30, 420, (160, 110, 40), 22),
-            (self.w * 0.55, self.h * 0.95, 460, (50, 40, 110), 24),
-        ]:
-            halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-            for i in range(10):
-                rr = int(r * (1 - i / 10))
-                pygame.draw.circle(halo, (*col, int(a * (i + 1) / 10 / 3)),
-                                   (r, r), rr)
-            bg.blit(halo, (cx - r, cy - r))
+        scene = assets.load("ui", "bg_kneipe")
+        if scene:
+            # Gemalte Kneipen-Szene, abgedunkelt für Text-Kontrast
+            bg.blit(pygame.transform.smoothscale(scene, (self.w, self.h)), (0, 0))
+            dark = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+            dark.fill((6, 4, 14, 150))
+            bg.blit(dark, (0, 0))
+        else:
+            for y in range(self.h):
+                t = y / self.h
+                pygame.draw.line(bg, _lerp_color(BG_TOP, BG_BOTTOM, t), (0, y), (self.w, y))
+            # Weiche farbige Lichthöfe für Tiefe
+            for (cx, cy, r, col, a) in [
+                (self.w * 0.22, self.h * 0.18, 360, (90, 60, 160), 26),
+                (self.w * 0.85, self.h * 0.30, 420, (160, 110, 40), 22),
+                (self.w * 0.55, self.h * 0.95, 460, (50, 40, 110), 24),
+            ]:
+                halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+                for i in range(10):
+                    rr = int(r * (1 - i / 10))
+                    pygame.draw.circle(halo, (*col, int(a * (i + 1) / 10 / 3)),
+                                       (r, r), rr)
+                bg.blit(halo, (cx - r, cy - r))
 
         # Vignette (klein berechnet, hochskaliert = weich)
         sw, sh = 80, 53
@@ -333,9 +341,14 @@ class UIRenderer:
             border = ACCENT if hot else PANEL_LINE
             pygame.draw.rect(self.screen, col_bg, rect, border_radius=9)
             pygame.draw.rect(self.screen, border, rect, 2, border_radius=9)
-            em = self.font_medium.render(relic["emoji"], True, WHITE)
-            self.screen.blit(em, (x + chip // 2 - em.get_width() // 2,
-                                  ry + chip // 2 - em.get_height() // 2))
+            spr = assets.fit("relics", relic.get("id"), chip - 6, chip - 6)
+            if spr:
+                self.screen.blit(spr, (x + chip // 2 - spr.get_width() // 2,
+                                       ry + chip // 2 - spr.get_height() // 2))
+            else:
+                em = self.font_medium.render(relic["emoji"], True, WHITE)
+                self.screen.blit(em, (x + chip // 2 - em.get_width() // 2,
+                                      ry + chip // 2 - em.get_height() // 2))
             if hot:
                 hovered = relic
         if hovered:
@@ -405,7 +418,14 @@ class UIRenderer:
                                (width // 2, height // 2), int(70 * pulse) + 30)
             self.screen.blit(aura, (x, y))
 
-        if enemy.is_boss:
+        # Sprite (falls vorhanden) – sonst prozedurale Figur
+        sprite_h = int(min(height - 24, 210) * (1.15 if (enemy.is_boss or enemy.is_elite) else 1.0))
+        spr = assets.by_height("enemies", enemy.asset, sprite_h)
+        if spr:
+            sx = body_x - spr.get_width() // 2
+            sy = (y + height - 24) - spr.get_height() + wobble
+            self.screen.blit(spr, (sx, sy))
+        elif enemy.is_boss:
             pygame.draw.circle(self.screen, _darken(enemy.color, 0.2), (body_x, body_y), 56)
             pygame.draw.circle(self.screen, enemy.color, (body_x, body_y), 52)
             pygame.draw.circle(self.screen, _lighten(enemy.color, 0.3), (body_x, body_y), 52, 3)
@@ -823,13 +843,19 @@ class UIRenderer:
         t = self._anim_t
         self.draw_background()
 
-        pulse = abs(math.sin(t * 1.5)) * 0.12 + 0.88
-        title_color = (int(255 * pulse), int(198 * pulse), int(64 * pulse))
-        self._text("🎰  SLOTS & SWORDS  🎰", self.font_huge, title_color, self.w // 2, 70, center=True, shadow=True)
+        logo = assets.fit("ui", "logo", 660, 180)
+        if logo:
+            bob = int(4 * math.sin(t * 1.5))
+            self.screen.blit(logo, (self.w // 2 - logo.get_width() // 2, 30 + bob))
+        else:
+            pulse = abs(math.sin(t * 1.5)) * 0.12 + 0.88
+            title_color = (int(255 * pulse), int(198 * pulse), int(64 * pulse))
+            self._text("🎰  SLOTS & SWORDS  🎰", self.font_huge, title_color,
+                       self.w // 2, 70, center=True, shadow=True)
         self._text("Ein Roguelike-Kartenspiel-Slot-Gambling-Ding", self.font_title, INK_DIM,
-                   self.w // 2, 130, center=True)
+                   self.w // 2, 226, center=True)
         self._text('"Slay the Spire trifft Balatro in einer dubiosen Bahnhofskneipe"',
-                   self.font_small, _lighten(PURPLE, 0.3), self.w // 2, 166, center=True)
+                   self.font_small, _lighten(PURPLE, 0.3), self.w // 2, 258, center=True)
 
         # Rotierende Symbole
         symbols = ["💀", "🍀", "💰", "❤", "🎲", "🔥", "🐔", "⭐", "💣", "👑"]
@@ -916,8 +942,14 @@ class UIRenderer:
             if is_cur:
                 pygame.draw.circle(self.screen, WHITE, (n["x"], n["y"]), r + 5, 2)
 
-            ic = self.font_medium.render(icon, True, WHITE if not is_done else GREY)
-            self.screen.blit(ic, (n["x"] - ic.get_width() // 2, n["y"] - ic.get_height() // 2))
+            spr = assets.fit("map", n["type"], int(r * 1.5), int(r * 1.5))
+            if spr:
+                if is_done:
+                    spr = spr.copy(); spr.set_alpha(120)
+                self.screen.blit(spr, (n["x"] - spr.get_width() // 2, n["y"] - spr.get_height() // 2))
+            else:
+                ic = self.font_medium.render(icon, True, WHITE if not is_done else GREY)
+                self.screen.blit(ic, (n["x"] - ic.get_width() // 2, n["y"] - ic.get_height() // 2))
             if is_done:
                 self._text("✓", self.font_tiny, GREEN, n["x"] + r - 6, n["y"] - r - 2)
 

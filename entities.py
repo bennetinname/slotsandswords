@@ -246,6 +246,9 @@ class Enemy:
         self.is_boss = enemy_type.get("is_boss", False)
         self.is_elite = enemy_type.get("is_elite", False)
 
+        # Sprite-Asset (None -> prozedurale Darstellung)
+        self.asset = enemy_type.get("asset")
+
         # Einzigartige Mechanik
         self.mechanic = enemy_type.get("mechanic")
         self._undying_used = False
