@@ -1,10 +1,21 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.5.0"
+GAME_VERSION = "1.6.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
+
+# Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
+CHANGELOG = [
+    ("1.6.0", "In-Game 'Was ist neu' – diese Übersicht hier"),
+    ("1.5.0", "Optionsmenü: Lautstärke, Vollbild & Effekte einstellbar"),
+    ("1.4.0", "Pixel-Art-Grafik: Gegner, Slot-Symbole, Logo & Kulisse"),
+    ("1.3.0", "Gegner & Bosse mit eigenen Spezialfähigkeiten"),
+    ("1.2.0", "Pfad-Karte mit Akten – wähle deinen Weg"),
+    ("1.1.0", "Sound & Musik, Effekte und Schadens-Vorschau"),
+    ("1.0.0", "Erste Vollversion: Speichern & Fortsetzen"),
+]
 
 # Farben (Casino-Stil: dunkel, Gold, Rot)
 BLACK       = (0, 0, 0)

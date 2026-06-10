@@ -871,7 +871,37 @@ class UIRenderer:
         sc = layout["scores"]
         self.draw_button("🏆 Bestenliste", sc.x, sc.y, sc.w, sc.h, color=PURPLE, text_color=WHITE)
 
+        cl = layout.get("changelog")
+        if cl:
+            hot = cl.collidepoint(pygame.mouse.get_pos())
+            self._chip("🆕 Was ist neu?", self.font_small, cl.x, cl.y,
+                       text_col=ACCENT_SOFT if hot else INK_DIM, fill=(*PANEL_FILL, 200),
+                       border=ACCENT if hot else PANEL_LINE)
+
         self._text(f"v{GAME_VERSION}", self.font_tiny, INK_FAINT, self.w - 14, self.h - 22, right=True)
+
+    def draw_changelog(self, entries):
+        """Kompakte 'Was ist neu' – eine Zeile pro Version."""
+        self.draw_background()
+        self._dim(150)
+        pw, ph = 640, 440
+        px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2 - 10
+        self._panel((px, py, pw, ph), radius=18, border=ACCENT, border_w=3)
+        self._text("🆕  WAS IST NEU", self.font_huge, ACCENT, self.w // 2, py + 18, center=True, shadow=True)
+
+        y = py + 84
+        for i, (ver, line) in enumerate(entries[:7]):
+            newest = (i == 0)
+            # Versions-Pille
+            vcol = ACCENT if newest else INK_DIM
+            self._chip(f"v{ver}", self.font_small, px + 28, y,
+                       text_col=BLACK if newest else INK, fill=(255, 198, 64, 255) if newest else (*GREY_DARK, 220))
+            self._text(line, self.font_small, INK if newest else INK_DIM, px + 130, y + 4)
+            y += 46
+
+        back = pygame.Rect(self.w // 2 - 100, self.h - 62, 200, 44)
+        self.draw_button("⬅ Zurück", back.x, back.y, back.w, back.h, color=ACCENT, text_color=BLACK)
+        return back
 
     # ═══════════════════════════════════════════════
     # PFAD-/MAP-SCREEN

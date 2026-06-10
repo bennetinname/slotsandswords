@@ -21,6 +21,7 @@ import options
 # ═══════════════════════════════════════════════
 STATE_MENU        = "menu"
 STATE_TUTORIAL    = "tutorial"       # Tutorial-Bildschirm
+STATE_CHANGELOG   = "changelog"      # "Was ist neu" Kurz-Changelist
 STATE_OPTIONS     = "options"        # Optionen-/Einstellungsmenü
 STATE_PAUSE       = "pause"          # Pause-/Speichern-Menü
 STATE_MAP         = "map"            # Pfad-/Etagenkarte
@@ -158,6 +159,12 @@ class Game:
         self._apply_options()
         self._apply_fullscreen()
 
+        # "Was ist neu?": einmalig nach einem Update anzeigen
+        if self.options.get("last_seen") != GAME_VERSION:
+            self.state = STATE_CHANGELOG
+            self.options["last_seen"] = GAME_VERSION
+            options.save(self.options)
+
     # ═══════════════════════════════════════════════
     # OPTIONEN ANWENDEN
     # ═══════════════════════════════════════════════
@@ -243,7 +250,7 @@ class Game:
             self.state = STATE_PAUSE
         elif self.state == STATE_PAUSE:
             self.state = self._prev_state           # Weiter spielen
-        elif self.state in (STATE_TUTORIAL, STATE_SCORES,
+        elif self.state in (STATE_TUTORIAL, STATE_SCORES, STATE_CHANGELOG,
                             STATE_GAME_OVER, STATE_VICTORY):
             self.state = STATE_MENU
         else:  # Hauptmenü
@@ -252,6 +259,7 @@ class Game:
     def _compute_menu_layout(self):
         """Layout der Hauptmenü-Buttons. Quelle für Zeichnen UND Klick."""
         cx = SCREEN_W // 2
+        changelog = pygame.Rect(16, SCREEN_H - 50, 200, 34)
         if savegame.has_valid_save():
             return {
                 "resume":   pygame.Rect(cx - 130, 430, 260, 54),
@@ -259,6 +267,7 @@ class Game:
                 "tutorial": pygame.Rect(cx - 110, 540, 220, 40),
                 "options":  pygame.Rect(cx - 110, 586, 220, 40),
                 "scores":   pygame.Rect(cx - 110, 632, 220, 40),
+                "changelog": changelog,
             }
         return {
             "resume":   None,
@@ -266,6 +275,7 @@ class Game:
             "tutorial": pygame.Rect(cx - 110, 520, 220, 42),
             "options":  pygame.Rect(cx - 110, 570, 220, 42),
             "scores":   pygame.Rect(cx - 110, 620, 220, 42),
+            "changelog": changelog,
         }
 
     def _compute_pause_layout(self):
@@ -397,6 +407,15 @@ class Game:
             if lay["scores"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_SCORES
                 return
+            if lay["changelog"].collidepoint(pos):
+                audio.play("click"); self.state = STATE_CHANGELOG
+                return
+
+        elif self.state == STATE_CHANGELOG:
+            back = pygame.Rect(SCREEN_W//2 - 100, SCREEN_H - 62, 200, 44)
+            if back.collidepoint(pos):
+                audio.play("click"); self.state = STATE_MENU
+            return
 
         elif self.state == STATE_PAUSE:
             lay = self._compute_pause_layout()
@@ -1705,6 +1724,9 @@ class Game:
 
         elif self.state == STATE_TUTORIAL:
             self.ui.draw_tutorial()
+
+        elif self.state == STATE_CHANGELOG:
+            self.ui.draw_changelog(CHANGELOG)
 
         elif self.state == STATE_OPTIONS:
             self.ui.draw_options(self._compute_options_layout(), self.options)

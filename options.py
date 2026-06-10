@@ -12,6 +12,7 @@ DEFAULTS = {
     "fullscreen": False,
     "shake": True,      # Screen-Shake an/aus
     "particles": True,  # Partikeleffekte an/aus
+    "last_seen": "",    # zuletzt gesehene Version (für Changelog-Auto-Popup)
 }
 
 _FLOATS = ("master", "music", "sfx")

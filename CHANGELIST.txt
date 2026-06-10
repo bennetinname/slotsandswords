@@ -1,6 +1,17 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.0 – 2026-06-10]  IN-GAME "WAS IST NEU"
+--------------------------------------------
+* Kompakte In-Game-Changelist (eine Zeile pro Version, neueste oben).
+* Erreichbar über "🆕 Was ist neu?" im Hauptmenü (unten links).
+* Auto-Popup: wird nach einem Update einmalig automatisch gezeigt
+  (gemerkt via last_seen in options.json), danach nur manuell.
+* Gepflegt als kurze Liste im Code (CHANGELOG in constants.py) – die
+  ausführliche Datei hier bleibt für die Entwicklung.
+
+─────────────────────────────────────────────────────
+
 [v1.5.0 – 2026-06-10]  OPTIONEN & AUDIO-FEINSCHLIFF
 ---------------------------------------------------
 * OPTIONSMENÜ (erreichbar aus Hauptmenü UND Pause):
