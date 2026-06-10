@@ -1713,7 +1713,31 @@ class Game:
         if hits is None:
             return None
         return self._simulate_damage(hits)
-    
+
+    def _preview_heal(self, card):
+        """Voraussichtliche Heilung einer Karte (tatsächlich, bis Max-HP)."""
+        p = self.player
+        eff = card.effect
+        if eff in ("heal", "lifesteal"):
+            raw = card.heal
+        elif eff == "second_wind":
+            raw = (p.max_hp - p.hp) // 4
+        elif eff == "last_resort":
+            raw = p.max_hp - p.hp
+        else:
+            return 0
+        return max(0, min(raw, p.max_hp - p.hp))
+
+    def _incoming_damage(self):
+        """HP-Verlust beim nächsten Gegnerangriff (nach Block). 0 wenn kein Angriff."""
+        e = self.enemy
+        if not e or not e.is_alive() or e.intent not in ("attack", "heavy_attack"):
+            return 0
+        dmg = e.intent_value
+        if e.weakened > 0:
+            dmg //= 2
+        return max(0, dmg - self.player.block)
+
     # ═══════════════════════════════════════════════
     # DRAW
     # ═══════════════════════════════════════════════
@@ -1832,15 +1856,22 @@ class Game:
         if self.combo_count >= 2 and self.combo_type:
             self.ui.draw_combo_badge(self.combo_count, self.combo_type, self.combo_flash)
 
-        # Schadens-Vorschau für gehoverte Karte
-        if (self.hovered_card_idx is not None and self.enemy
+        # Schadens-/Heilungs-Vorschau für gehoverte Karte
+        heal_prev = 0
+        if (self.hovered_card_idx is not None
                 and 0 <= self.hovered_card_idx < len(self.player.hand)):
-            dmg = self._preview_damage(self.player.hand[self.hovered_card_idx])
-            if dmg is not None and dmg > 0:
-                self.ui.draw_damage_preview(self.enemy, dmg)
-                ex, ey = self.ENEMY_FX
-                self.ui._text(f"-{dmg}", self.ui.font_h1, (255, 130, 100),
-                              ex, ey - 96, center=True, shadow=True)
+            card = self.player.hand[self.hovered_card_idx]
+            if self.enemy:
+                dmg = self._preview_damage(card)
+                if dmg is not None and dmg > 0:
+                    self.ui.draw_damage_preview(self.enemy, dmg)
+                    ex, ey = self.ENEMY_FX
+                    self.ui._text(f"-{dmg}", self.ui.font_h1, (255, 130, 100),
+                                  ex, ey - 96, center=True, shadow=True)
+            heal_prev = self._preview_heal(card)
+
+        # Eigene HP: Heilungs-Vorschau (grün) + eingehender Schaden (rot)
+        self.ui.draw_player_hp_preview(self.player, heal_prev, self._incoming_damage())
 
         # Handkarten
         self.card_rects = self.ui.draw_hand(
@@ -1869,6 +1900,8 @@ class Game:
     
     def _draw_slot_ui(self):
         """UI für Slot-Phase"""
+        # Eingehender Schaden auch hier sichtbar (Block-Planung)
+        self.ui.draw_player_hp_preview(self.player, 0, self._incoming_damage())
         # Phase-Anzeige
         phase_txt = self.ui.font_title.render("🎰 SLOT-PHASE", True, GOLD)
         self.screen.blit(phase_txt, (SCREEN_W//2 - phase_txt.get_width()//2, 490))

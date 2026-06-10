@@ -25,10 +25,16 @@ def load_save():
         return None
     if not isinstance(data, dict):
         return None
-    if data.get("version") != GAME_VERSION:
-        # Stand stammt aus einer anderen Spielversion -> nicht laden
+    if _major_minor(data.get("version")) != _major_minor(GAME_VERSION):
+        # Andere Major.Minor-Version -> Save-Format evtl. inkompatibel
+        # (reine Patch-Updates wie 1.6.0 -> 1.6.1 bleiben kompatibel)
         return None
     return data
+
+
+def _major_minor(v):
+    parts = str(v).split(".")
+    return tuple(parts[:2]) if len(parts) >= 2 else (str(v),)
 
 
 def has_valid_save():

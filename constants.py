@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.6.0"
+GAME_VERSION = "1.6.1"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.6.1", "Vorschau: Heilung & eingehender Schaden auf der HP-Leiste"),
     ("1.6.0", "In-Game 'Was ist neu' – diese Übersicht hier"),
     ("1.5.0", "Optionsmenü: Lautstärke, Vollbild & Effekte einstellbar"),
     ("1.4.0", "Pixel-Art-Grafik: Gegner, Slot-Symbole, Logo & Kulisse"),

@@ -321,6 +321,41 @@ class UIRenderer:
             self.screen.blit(seg, (x1, by))
             pygame.draw.rect(self.screen, (255, 180, 160), (x1, by, x2 - x1, bh), 1)
 
+    def draw_player_hp_preview(self, player, heal, incoming):
+        """Vorschau auf der eigenen HP-Leiste: Heilung (grün vor) + Schaden (rot hinten)."""
+        bx, by, bw, bh = 14, 14, 210, 20
+        mx = max(1, player.max_hp)
+        hp = player.hp
+
+        def xat(v):
+            return bx + int(bw * max(0, min(mx, v)) / mx)
+
+        pulse = 0.5 + 0.5 * math.sin(self._anim_t * 8)
+        rx = bx + bw - 4
+
+        # Eingehender Schaden: rotes Verlust-Segment am rechten Ende der Füllung
+        if incoming > 0:
+            x1, x2 = xat(hp - incoming), xat(hp)
+            if x2 > x1:
+                seg = pygame.Surface((x2 - x1, bh), pygame.SRCALPHA)
+                seg.fill((255, 50, 50, int(120 + 90 * pulse)))
+                self.screen.blit(seg, (x1, by))
+                pygame.draw.rect(self.screen, (255, 170, 170), (x1, by, x2 - x1, bh), 1)
+            self._text(f"-{incoming}", self.font_tiny, (255, 215, 215), rx, by + 4,
+                       right=True, shadow=True)
+            rx -= self.font_tiny.size(f"-{incoming}")[0] + 8
+
+        # Heilung: grünes Gewinn-Segment hinter der aktuellen Füllung
+        if heal > 0:
+            x1, x2 = xat(hp), xat(hp + heal)
+            if x2 > x1:
+                seg = pygame.Surface((x2 - x1, bh), pygame.SRCALPHA)
+                seg.fill((90, 230, 120, int(120 + 90 * pulse)))
+                self.screen.blit(seg, (x1, by))
+                pygame.draw.rect(self.screen, (190, 255, 200), (x1, by, x2 - x1, bh), 1)
+            self._text(f"+{heal}", self.font_tiny, (200, 255, 210), rx, by + 4,
+                       right=True, shadow=True)
+
     # ═══════════════════════════════════════════════
     # RELIKTE
     # ═══════════════════════════════════════════════

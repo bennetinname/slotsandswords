@@ -1,6 +1,18 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.1 – 2026-06-10]  HP-VORSCHAU
+---------------------------------
+* HEILUNGS-VORSCHAU: Beim Hovern einer Heilkarte zeigt die eigene HP-Leiste
+  grün an, wie viel HP du dazubekommst (+X).
+* EINGEHENDER SCHADEN: Die HP-Leiste zeigt rot an, wie viel HP du beim
+  nächsten Gegnerangriff verlierst – BEREITS nach Abzug deines Blocks (−X).
+  Spielst du Verteidigungskarten, schrumpft die Anzeige live.
+* Save-Kompatibilität jetzt nach Major.Minor: reine Patch-Updates
+  (z.B. 1.6.0 -> 1.6.1) machen deinen Spielstand nicht mehr ungültig.
+
+─────────────────────────────────────────────────────
+
 [v1.6.0 – 2026-06-10]  IN-GAME "WAS IST NEU"
 --------------------------------------------
 * Kompakte In-Game-Changelist (eine Zeile pro Version, neueste oben).
