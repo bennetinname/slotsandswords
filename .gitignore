@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller Build-Artefakte (regenerierbar via build_exe.bat)
+build/
+dist/
+*.spec
+
+# Laufzeit-Daten
+savegame.json
+highscores.json
+
+# Test-Screenshots
+_shot_*.png
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Claude Code lokale (maschinenspezifische) Einstellungen
+.claude/settings.local.json

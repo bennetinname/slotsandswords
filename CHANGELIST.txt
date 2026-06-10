@@ -1,0 +1,172 @@
+CHANGELIST – SLOTS & SWORDS
+===========================
+
+[v1.3.0 – 2026-06-10]  EINZIGARTIGE GEGNER & BOSSE
+--------------------------------------------------
+Gegner haben jetzt echte Mechaniken statt nur skalierter Werte:
+* Steuerprüfer (gold_thief): klaut beim Angriff Gold ('Abgaben').
+* Wütender Koch / Pestratte (chili): Angriffe vergiften dich (+Burn).
+* Philosophischer Lich (undying): überlebt seinen ersten Tod einmal pro Kampf.
+* Betrunkener Ritter (reckless): wuchtige Hiebe – oder er stolpert.
+* Vampir-Croupier (siphon): heilt sich an deinem Blut, wenn er trifft.
+* Slot-Maschinendämon (slot_jammer): blockiert manchmal deine nächste Drehung.
+* BOSS Hühnerkönig (chicken_army): wird jede Runde stärker (legt Eier).
+* BOSS Glücksprüfer (rig_slots): löscht dein Glück, blockiert den Automaten
+  und saugt Leben.
+Neue Gegner: Pestratte (Tier 1), Vampir-Croupier (Tier 2).
+Mechaniken sind voll im Speicherstand enthalten (Undying-Status, Jam usw.).
+Tooltips warnen jetzt vor der jeweiligen Spezialfähigkeit.
+
+─────────────────────────────────────────────────────
+
+[v1.2.0 – 2026-06-10]  PFAD-/KARTEN-SYSTEM
+------------------------------------------
+* NEUE STRUKTUR: Statt linearer Etagen gibt es jetzt eine Pfad-Karte im
+  Slay-the-Spire-Stil. Pro Akt wählst du dich Knoten für Knoten nach oben.
+* KNOTEN-TYPEN: ⚔ Kampf · ⭐ Elite · ❓ Event · 🏪 Shop · 🔥 Rast ·
+  💠 Schatz · 👑 Boss. Jeder Weg ist anders – du entscheidest die Route.
+* LAGERFEUER (Rast): Heile 30% Max-HP ODER werte eine Karte auf (Schmiede).
+* SCHATZ-Knoten: garantiertes Gratis-Relikt (oder Gold, falls schon alle da).
+* AKTE: Nach dem Boss beginnt ein neuer, härterer Akt – endlos. Gegner
+  skalieren mit der Gesamttiefe über alle Akte.
+* Karte ist voll im Speicherstand enthalten (Fortsetzen lädt deinen Pfad).
+* Map zeigt Status (HP/Gold/Relikte), Legende und hebt erreichbare Knoten
+  pulsierend hervor; der gewählte Weg leuchtet.
+
+─────────────────────────────────────────────────────
+
+[v1.1.0 – 2026-06-10]  GAME-FEEL-UPDATE (Bang-for-Buck)
+------------------------------------------------------
+SOUND & MUSIK (komplett prozedural synthetisiert, keine Asset-Dateien):
+* SFX für Kartenspiel, Treffer, Block, Heilung, Gold, Slot-Dreh, Reel-Stop,
+  Jackpot, Sieg, Niederlage, Klick, Combo (Tonhöhe steigt), Relikt, Fehler.
+* Sanfter, schleifender Ambient-Musikloop.
+* Stummschalten mit Taste [M] (Indikator oben rechts).
+* Läuft still weiter, wenn kein Audiogerät vorhanden ist (robuster Fallback).
+
+JUICE / SPIELGEFÜHL:
+* Screen-Shake bei Treffern & Jackpots (skaliert mit Schadenshöhe).
+* Hit-Stop: kurze Bild-Einfrierung bei Wucht-Treffern.
+* Partikel-Effekte bei Treffern, Heilung, Gold, Combos, Jackpot, Sieg.
+* Schwebende Schadenszahlen mit echten Werten (-X / +X) statt Platzhalter.
+
+SCHADENS-VORSCHAU:
+* Beim Hovern einer Karte wird der voraussichtliche Schaden angezeigt:
+  großes "-X" über dem Gegner + Geist-Segment auf der Gegner-HP-Leiste.
+* Berücksichtigt Stärke, Rüstung und Block des Gegners.
+* Nur für deterministische Karten (zufällige Effekte zeigen keine Vorschau).
+
+BALANCE:
+* Belohnungskarten werden jetzt nach SELTENHEIT gewichtet (vorher
+  gleichverteilt – seltene Karten kamen viel zu oft). Elite-/Boss-Kämpfe
+  haben deutlich bessere Chancen auf Uncommon/Rare.
+
+─────────────────────────────────────────────────────
+
+[v1.0.0 – 2026-06-10]  ERSTE VOLLVERSION
+----------------------------------------
+SPEICHERN & VERSIONIERUNG:
+* SPEICHERN & BEENDEN: ESC während des Runs öffnet ein Pause-Menü. Dort kann
+  der laufende Run gespeichert und beendet werden (1 Speicherslot).
+* FORTSETZEN: Im Hauptmenü erscheint ein "Fortsetzen"-Button, sobald ein
+  Speicherstand existiert. Geladen wird der komplette Zustand: HP, Gold, Deck,
+  Hand, Relikte, Stärke, Etage, Gegner usw.
+* SAVE-VERSIONIERUNG: Jeder Spielstand speichert die Spielversion (GAME_VERSION).
+  Stände einer anderen/inkompatiblen Version werden erkannt und NICHT geladen
+  (verhindert Abstürze nach Updates). Korrupte Saves werden ebenfalls ignoriert.
+* Bei Tod, Sieg oder Start eines neuen Runs wird der Speicherstand gelöscht.
+
+NEUE FEATURES:
+* RELIKT-SYSTEM: 12 permanente passive Boni (z.B. Goldener Finger +30% Gold,
+  Eiserner Wille +12 Block, Glücksbringer +1 Slot-Dreh, Gezinkte Würfel = immer
+  Glück, Dornenpanzer reflektiert Schaden, Falsches Ass = 1. Karte gratis ...).
+  Relikte gibt es von Elite-Gegnern, Bossen und aus Events.
+* ZUFALLS-EVENTS: 7 Events zwischen den Etagen mit Risiko/Belohnungs-
+  Entscheidungen (Glücksbrunnen, Zwielichtiger Händler, Schrein, Hühnerorakel,
+  Geldautomat, Trainingsraum, Mysteriöse Truhe). Erscheinen zu ~45%.
+* COMBO-SYSTEM: Mehrere Karten desselben Typs hintereinander geben stapelnde
+  Boni (Angriff = Bonus-Schaden, Verteidigung = Bonus-Block, Special = Gold).
+  Auffälliges Combo-Abzeichen im Kampf.
+* ELITE-GEGNER: Jede 3. Etage ein stärkerer Elite (⭐) mit mehr HP/Schaden/
+  Rüstung – garantiert dafür ein Relikt.
+* KARTEN AUFWERTEN (SCHMIEDE): Neuer Shop-Service wertet Karten dauerhaft auf
+  (+50% Werte bzw. -1 Kosten bei Effektkarten). Aufgewertete Karten zeigen ✦.
+* EXHAUST-KARTEN: 3 mächtige Einmal-Karten (Vernichtung 60 Schaden,
+  Letzter Trumpf, Goldrausch) – verbrauchen sich nach Gebrauch.
+* FLUCH-KARTEN: Negative Karten die durch riskante Events ins Deck kommen.
+  Im Shop verbrennbar.
+* 7 weitere reguläre Karten aus v1.0-Erweiterung bleiben erhalten.
+
+KOMPLETTES UI-REDESIGN (modern, ohne Asset-Sprites):
+* Neuer Gradient-Hintergrund mit Vignette, Lichthöfen & schwebenden Symbolen.
+* Glas-Panels mit weichen Schlagschatten, Verlauf & Highlight-Kante.
+* Modernisierte Buttons mit Hover-Glow, Lift & Schatten.
+* Überarbeitete Karten (Schatten, Tönung, Kostenbadge, Marker für upgraded/
+  exhaust/curse), Statusleiste mit Stat-Chips, Reliktleiste (Hover-Tooltips),
+  Combo-Abzeichen, neue Event-/Belohnungs-/Shop-/Bestenlisten-Screens.
+* Konsistente Farbpalette & Typografie-Hierarchie.
+
+TECHNIK:
+* Version 1.0.0 (wird im Hauptmenü angezeigt).
+* .EXE-BUILD: One-File-Build via PyInstaller (build_exe.bat). Ergebnis:
+  dist\SlotsAndSwords.exe – kann ohne Python-Code weitergegeben werden.
+
+─────────────────────────────────────────────────────
+
+[Pre-Release / Entwicklung – 2026-06-09]
+----------------------------------------
+TODO #1  – Endlos-Modus: Kein Spielende mehr nach Etage 10. Das Spiel läuft
+           endlos bis zum Tod. Highscore wird beim Game Over gespeichert.
+
+TODO #2  – Tutorial: Neuer "Tutorial"-Button im Hauptmenü öffnet einen
+           Erklärungsbildschirm mit allen Spielmechaniken (separat, wird
+           nicht beim Spielstart automatisch gezeigt).
+
+TODO #3  – Neue Karten hinzugefügt:
+           • Pesthauch (attack, uncommon) – 8 Schaden + 2 Burn
+           • Schildwall (defense, uncommon) – Block = 3 × Handkarten
+           • Berserker (attack, uncommon) – 20 Schaden gratis, -3 Max HP
+           • Raubzug (attack, uncommon) – 12 Schaden + Gold = Gegner-Armor
+           • Eisensturm (attack, uncommon) – Schaden = aktueller Block
+           • Schattenschritt (special, rare) – +1 Energie, nächste Karte gratis
+           • Vergeltung (attack, rare) – Schaden basiert auf erhaltenem Schaden
+
+TODO #4  – Texte vollständig anzeigen: Combat-Log verwendet jetzt pygame
+           Clip-Rect statt harter Zeichenbegrenzung. Langer Text wird
+           korrekt im Panel gehalten statt abgeschnitten.
+
+TODO #5  – Neue Ideen: Neue Karteneffekte wie Schattenschritt (free-card),
+           Eisensturm (Block als Waffe), Vergeltung (kumul. Schaden).
+
+TODO #6  – Delay bei Slot-Tod: Wenn ein Gegner durch Slot-Schaden stirbt,
+           erscheint das Sieg-Fenster erst nach ~1,8 Sekunden. Der Text
+           "GEGNER BESIEGT!" wird kurz angezeigt.
+
+TODO #7  – Keine Gott-Referenzen:
+           • "DER GROSSE HÜHNERGOTT" → "DER GROSSE HÜHNERKÖNIG"
+           • "DAS HUHN IST EIN GOTT" → "DAS HUHN IST EINE LEGENDE"
+           • "HÜHNER-GOTT" → "HÜHNER-KÖNIG" (card_effects)
+
+TODO #8  – Slotmaschine nur in Slot-Phase sichtbar: Die Slotmaschine und
+           ihre Effekte werden nur während STATE_SLOT_SPIN angezeigt.
+
+TODO #9  – Gegneranzeige im UI: Statusleiste vergrößert (68px statt 55px).
+           Gegnername nutzt font_small statt font_medium. Texte werden
+           automatisch gekürzt wenn sie den Bildschirmrand überschreiten.
+
+TODO #10 – Kampflog scrollbar: Mausrad über dem Log-Panel scrollt durch
+           ältere Einträge. Scroll-Indikatoren zeigen Richtung an.
+
+TODO #11 – Shop-Text-Timer: Kauf-Bestätigungstexte verschwinden nach 2,0
+           Sekunden (war 2,5 Sekunden).
+
+TODO #12 – Diese Changelist wurde erstellt.
+
+TODO #13 – Shield/Block bleibt erhalten: Block wird nicht mehr am
+           Rundenanfang auf 0 zurückgesetzt. Er bleibt bis er durch
+           Gegner-Angriffe aufgebraucht wird.
+
+TODO #14 – Crash-Fix: Wenn keine Karten in der Hand sind und man in die
+           Slot-Phase geht, stürzte das Spiel ab (NoneType not iterable).
+           draw_hand() gibt jetzt [] statt None zurück. Zusätzliche
+           Null-Prüfung in _handle_click.
