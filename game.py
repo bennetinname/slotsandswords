@@ -27,6 +27,7 @@ STATE_OPTIONS     = "options"        # Optionen-/Einstellungsmenü
 STATE_PAUSE       = "pause"          # Pause-/Speichern-Menü
 STATE_MAP         = "map"            # Pfad-/Etagenkarte
 STATE_REST        = "rest"           # Lagerfeuer
+STATE_ACT_CLEAR   = "act_clear"      # "Akt geschafft"-Bildschirm (Boss besiegt)
 STATE_COMBAT      = "combat"
 STATE_PLAYER_TURN = "player_turn"    # Karten spielen
 STATE_SLOT_SPIN   = "slot_spin"      # Slot dreht sich
@@ -146,6 +147,7 @@ class Game:
 
         # Pfad-/Map-System
         self.act = 1
+        self._cleared_act = 1       # zuletzt abgeschlossener Akt (für Akt-Geschafft-Screen)
         self.gamemap = None
         self.map_current = None     # [row, col] des zuletzt besuchten Knotens
         self.current_node = None    # Knoten, der gerade gespielt wird
@@ -247,7 +249,8 @@ class Game:
     
     # Zustände, in denen ein laufender Run pausiert/gespeichert werden kann
     RUN_STATES = (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN,
-                  STATE_SHOP, STATE_EVENT, STATE_REWARD, STATE_MAP, STATE_REST)
+                  STATE_SHOP, STATE_EVENT, STATE_REWARD, STATE_MAP, STATE_REST,
+                  STATE_ACT_CLEAR)
 
     def _handle_escape(self):
         """ESC: kontextabhängig pausieren, zurück oder beenden"""
@@ -424,6 +427,12 @@ class Game:
             back = pygame.Rect(SCREEN_W//2 - 100, SCREEN_H - 62, 200, 44)
             if back.collidepoint(pos):
                 audio.play("click"); self.state = STATE_MENU
+            return
+
+        elif self.state == STATE_ACT_CLEAR:
+            cont = pygame.Rect(SCREEN_W//2 - 110, SCREEN_H - 110, 220, 50)
+            if cont.collidepoint(pos):
+                audio.play("click"); self.state = STATE_MAP
             return
 
         elif self.state == STATE_PAUSE:
@@ -698,20 +707,23 @@ class Game:
             was_boss = self.current_node["type"] == "boss"
             self.current_node = None
             if was_boss:
-                self._next_act()
+                self._begin_act_clear()
                 return
         self.state = STATE_MAP
 
-    def _next_act(self):
-        """Nächster (härterer) Akt nach besiegtem Boss"""
+    def _begin_act_clear(self):
+        """Boss besiegt -> 'Akt geschafft'-Bildschirm, nächster Akt schon vorbereitet."""
+        self._cleared_act = self.act
+        # Nächsten (härteren) Akt schon generieren, damit Speichern/Weiter sauber ist
         self.act += 1
         self.gamemap = mapgen.generate(self.act)
         self.map_current = None
         self.current_node = None
         self.map_message = f"🏔️ AKT {self.act} – es wird härter!"
         self.map_message_timer = 3.0
-        audio.play("relic")
-        self.state = STATE_MAP
+        audio.stop_spin()
+        audio.play("win")
+        self.state = STATE_ACT_CLEAR
     
     def _start_combat(self):
         self.state = STATE_PLAYER_TURN
@@ -1789,6 +1801,9 @@ class Game:
 
         elif self.state == STATE_REST:
             self.ui.draw_rest(self.player, self._compute_rest_layout())
+
+        elif self.state == STATE_ACT_CLEAR:
+            self.ui.draw_act_clear(self._cleared_act, self.player)
 
         elif self.state in (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN):
             self._draw_combat()

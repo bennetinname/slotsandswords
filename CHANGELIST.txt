@@ -1,6 +1,17 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.6.5 – 2026-06-10]  AKT-GESCHAFFT-BILDSCHIRM
+-----------------------------------------------
+* Nach jedem besiegten Boss erscheint jetzt ein "AKT X GESCHAFFT!"-Bildschirm
+  (mit Sieg-Art) – das Spiel läuft danach endlos im nächsten, härteren Akt
+  weiter ("Weiter"-Button).
+* Damit wird die Sieg-Art endlich genutzt; der alte (unerreichbare) Sieg-
+  Screen bleibt ungenutzt im Code (Endlos-Modus kennt kein finales Ende).
+* Speichern während des Akt-Screens lädt sauber in den neuen Akt.
+
+─────────────────────────────────────────────────────
+
 [v1.6.4 – 2026-06-10]  MEHR PIXEL-ART
 -------------------------------------
 * KARTEN-RAHMEN nach Seltenheit (common/uncommon/rare/curse) – Karten

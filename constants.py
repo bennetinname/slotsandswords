@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.6.4"
+GAME_VERSION = "1.6.5"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.6.5", "'Akt geschafft!'-Bildschirm nach jedem Boss (geht endlos weiter)"),
     ("1.6.4", "Karten-Rahmen, Spieler-Avatar, Sieg/Niederlage-Bilder, App-Icon"),
     ("1.6.3", "Fairer: mehr Shops/Heilung, sanftere Skalierung + Event-Bilder"),
     ("1.6.2", "Fix: Slot-Softlock (Glücksprüfer); Shop-Items nur 1x/Besuch"),

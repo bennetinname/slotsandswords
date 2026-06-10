@@ -908,6 +908,42 @@ class UIRenderer:
         self._text("R = nochmal   ·   ESC = Beenden", self.font_small, INK_FAINT,
                    self.w // 2, self.h - 56, center=True)
 
+    def draw_act_clear(self, cleared_act, player):
+        """'Akt geschafft'-Bildschirm nach einem Boss (Spiel geht endlos weiter)."""
+        self.draw_background()
+        t = self._anim_t
+        for i in range(14):
+            x = int((math.sin(t * 0.5 + i) * 0.5 + 0.5) * self.w)
+            y = int((math.cos(t * 0.3 + i * 0.7) * 0.5 + 0.5) * self.h)
+            r = int(abs(math.sin(t + i)) * 20 + 6)
+            s = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(s, (*ACCENT, 36), (r, r), r)
+            self.screen.blit(s, (x - r, y - r))
+        self._dim(60)
+
+        self._text(f"🏆  AKT {cleared_act} GESCHAFFT!", self.font_huge, ACCENT,
+                   self.w // 2, 84, center=True, shadow=True)
+        self._text("Der Boss ist besiegt. Aber das Casino gibt nicht auf …",
+                   self.font_title, INK, self.w // 2, 152, center=True)
+
+        art = assets.fit("ui", "victory_art", 340, 168)
+        if art:
+            ax = self.w // 2 - art.get_width() // 2
+            self.screen.blit(art, (ax, 210))
+            pygame.draw.rect(self.screen, _darken(ACCENT, 0.2),
+                             (ax, 210, art.get_width(), art.get_height()), 2, border_radius=6)
+            ny = 210 + art.get_height() + 18
+        else:
+            ny = 250
+
+        self._text(f"Auf in Akt {cleared_act + 1} – es wird härter!", self.font_medium,
+                   ACCENT_SOFT, self.w // 2, ny, center=True)
+        self._text(f"❤ {player.hp}/{player.max_hp}    💰 {player.gold}    💠 {len(player.relics)} Relikte",
+                   self.font_small, INK_DIM, self.w // 2, ny + 34, center=True)
+
+        self.draw_button("➡ Weiter", self.w // 2 - 110, self.h - 110, 220, 50,
+                         color=GREEN, text_color=BLACK, pulsing=True)
+
     # ═══════════════════════════════════════════════
     # HAUPTMENÜ
     # ═══════════════════════════════════════════════
