@@ -3,11 +3,16 @@
 import json
 import os
 from constants import SAVE_FILE, GAME_VERSION
+import paths
+
+
+def _path():
+    return paths.data_path(SAVE_FILE)
 
 
 def has_save():
     """True, wenn überhaupt eine Speicherdatei existiert"""
-    return os.path.exists(SAVE_FILE)
+    return os.path.exists(_path())
 
 
 def load_save():
@@ -16,10 +21,10 @@ def load_save():
     Gibt None zurück, wenn keine Datei da, sie korrupt oder die
     Version inkompatibel ist (Save-Versionierung).
     """
-    if not os.path.exists(SAVE_FILE):
+    if not os.path.exists(_path()):
         return None
     try:
-        with open(SAVE_FILE, "r", encoding="utf-8") as f:
+        with open(_path(), "r", encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, json.JSONDecodeError, ValueError):
         return None
@@ -47,7 +52,7 @@ def write_save(data):
     data = dict(data)
     data["version"] = GAME_VERSION
     try:
-        with open(SAVE_FILE, "w", encoding="utf-8") as f:
+        with open(_path(), "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return True
     except OSError:
@@ -57,7 +62,7 @@ def write_save(data):
 def delete_save():
     """Löscht den Speicherstand (z.B. bei Tod, Sieg oder neuem Run)"""
     try:
-        if os.path.exists(SAVE_FILE):
-            os.remove(SAVE_FILE)
+        if os.path.exists(_path()):
+            os.remove(_path())
     except OSError:
         pass

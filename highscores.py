@@ -4,12 +4,12 @@ import json
 import os
 from datetime import datetime
 from constants import HIGHSCORE_FILE, MAX_HIGHSCORES
+import paths
 
 
 def _score_path():
-    """Pfad zur Highscore-Datei (neben den Spieldateien)"""
-    base = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base, HIGHSCORE_FILE)
+    """Pfad zur Highscore-Datei (stabil neben der EXE, NICHT im _MEI-Temp)"""
+    return paths.data_path(HIGHSCORE_FILE)
 
 
 def load_highscores():

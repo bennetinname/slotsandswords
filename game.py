@@ -464,8 +464,8 @@ class Game:
                     self._try_play_card(card)
                     return
             
-            # "Runde beenden" Button
-            end_btn = pygame.Rect(SCREEN_W - 170, SCREEN_H//2 - 25, 160, 50)
+            # "Slot drehen"-Button (= Runde beenden) – mittig über dem Log
+            end_btn = pygame.Rect(SCREEN_W//2 - 95, 266, 190, 46)
             if end_btn.collidepoint(pos):
                 self._start_slot_phase()
                 return
@@ -640,7 +640,9 @@ class Game:
 
         # Gegner skaliert mit der Tiefe (über Akte hinweg) – etwas sanfter
         enemy_def = copy.deepcopy(enemy_def)
-        scale = 1.0 + (self.floor_num - 1) * 0.11
+        # Bosse skalieren deutlich flacher (waren in Akt 1 unfair)
+        per = 0.06 if node_type == "boss" else 0.11
+        scale = 1.0 + (self.floor_num - 1) * per
         enemy_def["hp"] = int(enemy_def["hp"] * scale)
         enemy_def["max_hp"] = enemy_def["hp"]
         enemy_def["damage"] = int(enemy_def["damage"] * scale)
@@ -1655,8 +1657,8 @@ class Game:
             self.screen.blit(surf, (int(x - s), int(y - s)))
 
     # Bildschirm-Ankerpunkte für Effekte
-    ENEMY_FX = (200, 220)
-    PLAYER_FX = (120, 36)
+    ENEMY_FX = (1000, 210)   # Gegner rechts
+    PLAYER_FX = (230, 210)   # Spieler-Avatar links
 
     def _fx_enemy_hit(self, dmg):
         """Treffer am Gegner: Sound, Partikel, Shake, Hit-Stop, Schadenszahl"""
@@ -1676,24 +1678,26 @@ class Game:
             return
         audio.play("hit", min(1.0, 0.5 + dmg / 60))
         x, y = self.PLAYER_FX
-        self._spawn_particles(150, 18, (255, 70, 70), count=min(24, 6 + dmg // 2),
+        self._spawn_particles(x, y, (255, 70, 70), count=min(24, 6 + dmg // 2),
                               speed=130 + dmg * 2, size=4)
         self._do_shake(min(13.0, 3 + dmg * 0.2))
         self._do_hitstop(min(0.1, 0.02 + dmg * 0.002))
-        self._add_damage_number(f"-{dmg}", 150, 26, (255, 90, 90))
+        self._add_damage_number(f"-{dmg}", x, y - 40, (255, 90, 90))
 
     def _fx_block(self, amount):
         if amount <= 0:
             return
         audio.play("block", 0.7)
-        self._spawn_particles(150, 24, (90, 160, 230), count=8, speed=120, size=3)
+        x, y = self.PLAYER_FX
+        self._spawn_particles(x, y, (90, 160, 230), count=8, speed=120, size=3)
 
     def _fx_heal(self, amount):
         if amount <= 0:
             return
         audio.play("heal", 0.7)
-        self._spawn_particles(150, 24, (80, 220, 120), count=10, speed=130, size=3)
-        self._add_damage_number(f"+{amount}", 150, 26, (90, 230, 130))
+        x, y = self.PLAYER_FX
+        self._spawn_particles(x, y, (80, 220, 120), count=10, speed=130, size=3)
+        self._add_damage_number(f"+{amount}", x, y - 40, (90, 230, 130))
 
     def _fx_gold(self, amount):
         if amount <= 0:
@@ -1853,17 +1857,15 @@ class Game:
         # Status-Leiste oben
         self.ui.draw_status_bar(self.player, self.enemy, self.floor_num, self.turn_num)
 
-        # Gegner (links-mitte)
+        # Spieler-Avatar LINKS (unter der Spieler-HP)
+        self.ui.draw_player_side(self.player, 84, 96, 290, 274)
+
+        # Reliktleiste ganz links (links neben dem Avatar)
+        self.ui.draw_relic_bar(self.player, 8, 96)
+
+        # Gegner RECHTS (unter der Gegner-HP)
         if self.enemy:
-            self.ui.draw_enemy(self.enemy, 50, 82, 300, 280)
-
-        # Reliktleiste NACH dem Gegner -> Hover-Tooltip liegt über dem Sprite
-        self.ui.draw_relic_bar(self.player, 8, 84)
-
-        # Spieler-Avatar (rechte Seite)
-        av = assets.by_height("ui", "player_avatar", 150)
-        if av:
-            self.screen.blit(av, (SCREEN_W - av.get_width() - 18, 430))
+            self.ui.draw_enemy(self.enemy, SCREEN_W - 360, 96, 320, 274)
 
         # Slot-Maschine nur in Slot-Phase (TODO #8)
         if self.state == STATE_SLOT_SPIN and self.slot_machine:
@@ -1875,8 +1877,8 @@ class Game:
         if self.state == STATE_SLOT_SPIN and self.slot_effects_shown:
             self._draw_slot_effects()
 
-        # Kampf-Log (mit Scroll)
-        self.ui.draw_combat_log(self.combat_log, 420, 290, 380, 195, scroll=self.log_scroll)
+        # Kampf-Log (mittig)
+        self.ui.draw_combat_log(self.combat_log, 410, 318, 380, 168, scroll=self.log_scroll)
         
         # Phasen-spezifische UI
         if self.state == STATE_PLAYER_TURN:
@@ -1890,7 +1892,10 @@ class Game:
         for text, x, y, color, timer in self.damage_numbers:
             offset = int((1.5 - timer) * 60)
             self.ui.draw_damage_number(text, x, y, color, offset)
-    
+
+        # Buff-Tooltip ganz zuletzt (über Avataren etc.)
+        self.ui.draw_pending_buff_tooltip()
+
     def _draw_player_turn_ui(self):
         """UI für Spieler-Karten-Phase"""
         # Phase-Anzeige
@@ -1925,11 +1930,11 @@ class Game:
             hovered_idx=self.hovered_card_idx
         )
         
-        # "Slot-Phase"-Button (= Runde beenden)
-        btn_x, btn_y, btn_w, btn_h = SCREEN_W - 170, SCREEN_H//2 - 25, 160, 50
-        self.ui.draw_button("🎰 Slot drehen", btn_x, btn_y, btn_w, btn_h,
+        # "Slot drehen"-Button (= Runde beenden) – mittig über dem Kampflog
+        btn_w, btn_h = 190, 46
+        self.ui.draw_button("🎰 Slot drehen", SCREEN_W//2 - btn_w//2, 266, btn_w, btn_h,
                            color=GOLD, pulsing=True)
-        
+
         # Energie-Anzeige
         energy_dots = ""
         for i in range(self.player.max_energy):

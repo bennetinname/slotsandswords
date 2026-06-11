@@ -237,6 +237,7 @@ class Enemy:
         self.hp = enemy_type["hp"]
         self.max_hp = enemy_type["max_hp"]
         self.damage = enemy_type["damage"]
+        self._base_damage = self.damage   # für Schaden-Eskalations-Deckel
         self.armor = enemy_type.get("armor", 0)
         self.block = 0
         self.gold_reward = enemy_type["gold_reward"]
@@ -268,16 +269,19 @@ class Enemy:
         """Bestimmt die nächste Aktion des Gegners"""
         roll = random.random()
         if self.is_boss:
-            # Bosse sind aggressiver
-            if roll < 0.6:
+            # Bosse: gefährlich, aber mit Verschnaufpausen (fairer)
+            if roll < 0.45:
                 self.intent = "attack"
                 self.intent_value = self.damage
-            elif roll < 0.8:
+            elif roll < 0.58:
                 self.intent = "heavy_attack"
-                self.intent_value = int(self.damage * 1.8)
-            else:
+                self.intent_value = int(self.damage * 1.5)
+            elif roll < 0.74:
                 self.intent = "defend"
                 self.intent_value = 8
+            else:
+                self.intent = "taunt"
+                self.intent_value = 0
         elif self.mechanic == "reckless":
             # Betrunkener Ritter: entweder wuchtig oder er stolpert
             if roll < 0.45:
@@ -338,6 +342,9 @@ class Enemy:
         """Führt die geplante Aktion aus, gibt Log-Text zurück"""
         result = []
         self.turn_count += 1
+
+        # Block vom letzten Zug läuft ab (sonst sammelt er sich unsichtbar an)
+        self.block = 0
 
         # Burn
         if self.burn > 0:
@@ -401,12 +408,11 @@ class Enemy:
                 out.append(f"🎰 {self.name} blockiert deinen Automaten! (−1 Dreh nächste Runde)")
 
         elif m == "chicken_army":
-            # Hühnerkönig wird jede Runde gefährlicher
-            self.damage += 3
-            if random.random() < 0.5:
-                out.append(f"🥚 {self.name} legt ein Ei … ein Huhn schlüpft! (Schaden steigt)")
-            else:
-                out.append(f"🐔 {self.name} ruft sein Gefolge! (Schaden steigt)")
+            # Hühnerkönig wird langsam gefährlicher – aber gedeckelt (war zu hart)
+            cap = int(self._base_damage * 1.6)
+            if attacked and self.damage < cap:
+                self.damage += 2
+                out.append(f"🐔 {self.name} ruft sein Gefolge! (Schaden steigt leicht)")
 
         elif m == "rig_slots":
             # Oberster Glücksprüfer: manipuliert Glück & Automat, saugt Leben

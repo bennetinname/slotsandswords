@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.6.5"
+GAME_VERSION = "1.7.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.7.0", "Highscores speichern · Kampf-UI neu · Bosse fairer · Block-Fix"),
     ("1.6.5", "'Akt geschafft!'-Bildschirm nach jedem Boss (geht endlos weiter)"),
     ("1.6.4", "Karten-Rahmen, Spieler-Avatar, Sieg/Niederlage-Bilder, App-Icon"),
     ("1.6.3", "Fairer: mehr Shops/Heilung, sanftere Skalierung + Event-Bilder"),
@@ -219,8 +220,8 @@ ENEMY_TYPES = [
     {
         "name": "DER GROSSE HÜHNERKÖNIG",
         "asset": "boss_huhnerkoenig",
-        "hp": 120, "max_hp": 120,
-        "damage": 18, "armor": 5,
+        "hp": 100, "max_hp": 100,
+        "damage": 12, "armor": 2,
         "gold_reward": (40, 60),
         "color": (255, 220, 50),
         "tooltip": "BOSS: Wird jede Runde gefährlicher – legt Eier, ruft sein Gefolge.",
@@ -231,8 +232,8 @@ ENEMY_TYPES = [
     {
         "name": "Oberster Glücksprüfer",
         "asset": "boss_glueckspruefer",
-        "hp": 150, "max_hp": 150,
-        "damage": 20, "armor": 8,
+        "hp": 120, "max_hp": 120,
+        "damage": 14, "armor": 3,
         "gold_reward": (50, 80),
         "color": PURPLE,
         "tooltip": "BOSS: Löscht dein Glück, blockiert den Automaten und saugt Leben.",

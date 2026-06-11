@@ -237,26 +237,44 @@ class UIRenderer:
         self._text(f"❤ {player.hp}/{player.max_hp}", self.font_small, WHITE,
                    bx + 10, by + 2, shadow=True)
 
-        # Block (unter HP)
+        # Buff-Chips (mit Hover-Erklärung) unter der HP
+        self._buff_tip = None
+        mx, my = pygame.mouse.get_pos()
+        hot = []
         col_x = bx
         cy = by + bh + 4
         if player.block > 0:
-            w, _ = self._chip(f"🛡 {player.block}", self.font_tiny, col_x, cy,
-                              text_col=CYAN, fill=(*BLUE_DARK, 150))
+            w, ch = self._chip(f"🛡 {player.block}", self.font_tiny, col_x, cy,
+                               text_col=CYAN, fill=(*BLUE_DARK, 150))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        "🛡 Block: absorbiert eingehenden Schaden. Bleibt bestehen, bis er aufgebraucht ist."))
             col_x += w + 6
         if player.strength > 0:
-            w, _ = self._chip(f"💪 {player.strength}", self.font_tiny, col_x, cy,
-                              text_col=ORANGE, fill=(60, 35, 10, 160))
+            w, ch = self._chip(f"💪 {player.strength}", self.font_tiny, col_x, cy,
+                               text_col=ORANGE, fill=(60, 35, 10, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"💪 Stärke: +{player.strength} Schaden auf JEDEN deiner Angriffe (dauerhaft)."))
             col_x += w + 6
         if player.burn > 0:
-            self._chip(f"🔥 {player.burn}", self.font_tiny, col_x, cy,
-                       text_col=ORANGE, fill=(60, 25, 10, 160))
+            w, ch = self._chip(f"🔥 {player.burn}", self.font_tiny, col_x, cy,
+                               text_col=ORANGE, fill=(60, 25, 10, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"🔥 Brennen: du verlierst {player.burn} HP zu Beginn der nächsten Runde (sinkt um 1)."))
 
         # Energie & Gold (Mitte-links)
-        self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
-                   text_col=CYAN, fill=(20, 50, 70, 170))
-        self._chip(f"💰 {player.gold}", self.font_medium, 240, 42,
-                   text_col=ACCENT, fill=(60, 45, 10, 170))
+        ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
+                            text_col=CYAN, fill=(20, 50, 70, 170))
+        hot.append((pygame.Rect(240, 12, ew, eh),
+                    "⚡ Energie: zahlt das Spielen von Karten. Füllt sich jede Runde wieder auf."))
+        gw, gh = self._chip(f"💰 {player.gold}", self.font_medium, 240, 42,
+                            text_col=ACCENT, fill=(60, 45, 10, 170))
+        hot.append((pygame.Rect(240, 42, gw, gh),
+                    "💰 Gold: Währung für Shop, Glücksrad und manche Karten."))
+
+        for rect, desc in hot:
+            if rect.collidepoint(mx, my):
+                self._buff_tip = (desc, rect.x, rect.bottom + 6)
+                break
 
         # Etage / Runde (Mitte) als Pille
         center_txt = f"ETAGE {floor_num}  ·  RUNDE {turn_num}"
@@ -271,6 +289,20 @@ class UIRenderer:
         # Gegner-Status rechts
         if enemy and enemy.is_alive():
             self._draw_enemy_status(enemy, self.w - 296, 8)
+
+    def draw_pending_buff_tooltip(self):
+        """Zeichnet den (in draw_status_bar erkannten) Buff-Tooltip – zuletzt, über allem."""
+        tip = getattr(self, "_buff_tip", None)
+        if not tip:
+            return
+        text, x, y = tip
+        lines = self._wrap_text(text, self.font_tiny, 250)
+        w = max((self.font_tiny.size(l)[0] for l in lines), default=0) + 22
+        h = 10 + len(lines) * 16 + 6
+        x = min(x, self.w - w - 6)
+        self._panel((x, y, w, h), radius=10, shadow=True)
+        for i, l in enumerate(lines):
+            self._text(l, self.font_tiny, INK, x + 11, y + 8 + i * 16)
 
     def _draw_enemy_status(self, enemy, x, y):
         """Gegner-Status-Block oben rechts"""
@@ -297,7 +329,8 @@ class UIRenderer:
         hp_txt = self.font_tiny.render(f"{enemy.hp}/{enemy.max_hp}", True, WHITE)
         self.screen.blit(hp_txt, (x + bar_w // 2 - hp_txt.get_width() // 2, y + 23))
 
-        info = f"🛡 {enemy.armor}   ·   {enemy.get_intent_text()}"
+        blk = f"  ⛊{enemy.block}" if getattr(enemy, "block", 0) > 0 else ""
+        info = f"🛡 {enemy.armor}{blk}   ·   {enemy.get_intent_text()}"
         intent_txt = self.font_tiny.render(info, True, INK_DIM)
         while intent_txt.get_width() > max_w and len(info) > 6:
             info = info[:-1]
@@ -415,7 +448,7 @@ class UIRenderer:
         w = int((tw + 36))
         h = 34
         x = self.w // 2 - w // 2
-        y = 232  # in der (während des Zuges leeren) Slot-Zone, über dem Log
+        y = 150  # oben mittig, unter der Etagen-Pille
         glow_a = int(60 + 120 * flash)
         glow = pygame.Surface((w + 20, h + 20), pygame.SRCALPHA)
         pygame.draw.rect(glow, (*col, glow_a), (0, 0, w + 20, h + 20), border_radius=20)
@@ -508,6 +541,50 @@ class UIRenderer:
         if enemy.weakened > 0:
             self._text(f"😵 {enemy.weakened}", self.font_tiny, PURPLE, body_x + 24, body_y - 84)
 
+        # Block-Schild (gut sichtbar, damit klar ist warum Schaden absorbiert wird)
+        if getattr(enemy, "block", 0) > 0:
+            self._block_badge(body_x, y + height - 44, enemy.block)
+
+    def _block_badge(self, cx, cy, amount):
+        """Blaues Schild mit Block-Zahl"""
+        pts = [(cx, cy - 16), (cx + 15, cy - 9), (cx + 15, cy + 4),
+               (cx, cy + 16), (cx - 15, cy + 4), (cx - 15, cy - 9)]
+        pygame.draw.polygon(self.screen, (40, 90, 160), pts)
+        pygame.draw.polygon(self.screen, (120, 180, 255), pts, 2)
+        bt = self.font_small.render(str(amount), True, WHITE)
+        self.screen.blit(bt, (cx - bt.get_width() // 2, cy - bt.get_height() // 2))
+
+    def draw_player_side(self, player, x, y, width, height):
+        """Spieler-Avatar (links) – analog zur Gegner-Darstellung."""
+        t = self._anim_t
+        body_x = x + width // 2
+        wobble = int(2 * math.sin(t * 1.8))
+        # Plattform
+        plat = pygame.Surface((200, 60), pygame.SRCALPHA)
+        for i in range(6):
+            a = 60 - i * 9
+            pygame.draw.ellipse(plat, (0, 0, 0, max(0, a)),
+                                (i * 4, 30 + i * 2, 200 - i * 8, 28 - i * 3))
+        self.screen.blit(plat, (body_x - 100, y + height - 36))
+
+        spr = assets.by_height("ui", "player_avatar", min(height - 24, 210))
+        if spr:
+            sx = body_x - spr.get_width() // 2
+            sy = (y + height - 24) - spr.get_height() + wobble
+            self.screen.blit(spr, (sx, sy))
+
+        # Namensplakette "DU"
+        nw = self.font_small.size("DU")[0]
+        plate = pygame.Surface((nw + 24, 26), pygame.SRCALPHA)
+        pygame.draw.rect(plate, (*DARKER_BG, 220), (0, 0, nw + 24, 26), border_radius=13)
+        pygame.draw.rect(plate, _darken(CYAN, 0.4), (0, 0, nw + 24, 26), 1, border_radius=13)
+        self.screen.blit(plate, (body_x - (nw + 24) // 2, y + height - 18))
+        self._text("DU", self.font_small, CYAN, body_x, y + height - 14, center=True)
+
+        # Block-Schild auch beim Spieler sichtbar
+        if player.block > 0:
+            self._block_badge(body_x, y + height - 44, player.block)
+
     # ═══════════════════════════════════════════════
     # HANDKARTEN
     # ═══════════════════════════════════════════════
@@ -515,23 +592,27 @@ class UIRenderer:
     def draw_hand(self, hand, selected_card=None, hovered_idx=None):
         if not hand:
             return []
-        card_w, card_h = 108, 146
-        total_w = len(hand) * (card_w + 10)
+        card_w, card_h = 130, 178
+        gap = 8
+        # Bei voller Hand etwas zusammenrücken, damit alles passt
+        total_w = len(hand) * (card_w + gap)
+        if total_w > self.w - 40:
+            gap = max(-18, (self.w - 40 - len(hand) * card_w) // max(1, len(hand)))
+            total_w = len(hand) * (card_w + gap)
         start_x = self.w // 2 - total_w // 2
-        card_y = self.h - card_h - 8
-        rects = []
+        card_y = self.h - card_h - 6
         # zuerst nicht-gehoverte, dann gehoverte (oben drauf)
         order = [i for i in range(len(hand)) if i != hovered_idx]
         if hovered_idx is not None and hovered_idx < len(hand):
             order.append(hovered_idx)
         rects = [None] * len(hand)
         for i in range(len(hand)):
-            cx = start_x + i * (card_w + 10)
+            cx = start_x + i * (card_w + gap)
             rects[i] = pygame.Rect(cx, card_y, card_w, card_h)
         for i in order:
             card = hand[i]
-            lift = 24 if hovered_idx == i else (30 if selected_card == card else 0)
-            cx = start_x + i * (card_w + 10)
+            lift = 28 if hovered_idx == i else (34 if selected_card == card else 0)
+            cx = start_x + i * (card_w + gap)
             rect = pygame.Rect(cx, card_y - lift, card_w, card_h)
             rects[i] = rect
             self._draw_card(card, rect, selected=(selected_card == card),
@@ -565,45 +646,57 @@ class UIRenderer:
 
         if frame:
             self.screen.blit(frame, (x, y))
+            # Dunkles Lese-Panel hinter dem Text -> Text bleibt trotz Rahmen lesbar
+            ins = max(9, int(w * 0.085))
+            inner = pygame.Surface((w - 2 * ins, h - 2 * ins), pygame.SRCALPHA)
+            pygame.draw.rect(inner, (12, 9, 20, 175), (0, 0, w - 2 * ins, h - 2 * ins), border_radius=8)
+            self.screen.blit(inner, (x + ins, y + ins))
         else:
-            # Typ-Akzentleiste oben (nur ohne Rahmen)
             pygame.draw.rect(self.screen, card.color, (x + 8, y + 7, w - 16, 5), border_radius=3)
+
+        pad = max(12, int(w * 0.11))   # Text-Innenabstand
+        scale = h / 178.0              # Layout skaliert mit Kartenhöhe
 
         # Kostenbadge
         cost_col = CYAN if card.cost == 0 else ACCENT
-        pygame.draw.circle(self.screen, _darken(cost_col, 0.55), (x + 18, y + 28), 14)
-        pygame.draw.circle(self.screen, cost_col, (x + 18, y + 28), 14, 2)
-        ct = self.font_small.render(str(card.cost), True, WHITE)
-        self.screen.blit(ct, (x + 18 - ct.get_width() // 2, y + 28 - ct.get_height() // 2))
+        cbx, cby, cr = x + pad + 6, int(y + 30 * scale), 16
+        pygame.draw.circle(self.screen, _darken(cost_col, 0.55), (cbx, cby), cr)
+        pygame.draw.circle(self.screen, cost_col, (cbx, cby), cr, 2)
+        ct = self.font_medium.render(str(card.cost), True, WHITE)
+        self.screen.blit(ct, (cbx - ct.get_width() // 2, cby - ct.get_height() // 2))
 
         # Typ-Icon oben rechts
-        self._text(card.get_type_icon(), self.font_small, card.color, x + w - 10, y + 19, right=True)
+        self._text(card.get_type_icon(), self.font_small, _lighten(card.color, 0.3),
+                   x + w - pad, int(y + 22 * scale), right=True, shadow=True)
 
-        # Name
-        name_lines = self._wrap_text(card.name, self.font_small, w - 14)
+        # Name (mit Schatten für Lesbarkeit)
+        name_lines = self._wrap_text(card.name, self.font_small, w - 2 * pad)
         for li, line in enumerate(name_lines[:2]):
-            self._text(line, self.font_small, INK, x + 8, y + 44 + li * 16)
+            self._text(line, self.font_small, INK, x + pad, int(y + 50 * scale) + li * 17, shadow=True)
 
         # Trennlinie
-        pygame.draw.line(self.screen, (*CARD_BORDER, 180), (x + 8, y + 78), (x + w - 8, y + 78))
+        dvy = int(y + 92 * scale)
+        pygame.draw.line(self.screen, (*ACCENT_SOFT, 70), (x + pad, dvy), (x + w - pad, dvy))
 
-        # Wert
+        # Wert (größer + Schatten)
+        vy = int(y + 98 * scale)
         if card.damage > 0:
-            self._text(f"⚔ {card.damage}", self.font_medium, _lighten(RED, 0.25), x + w // 2, y + 82, center=True)
+            self._text(f"⚔ {card.damage}", self.font_title, _lighten(RED, 0.35), x + w // 2, vy, center=True, shadow=True)
         elif card.block > 0:
-            self._text(f"🛡 {card.block}", self.font_medium, _lighten(BLUE, 0.2), x + w // 2, y + 82, center=True)
+            self._text(f"🛡 {card.block}", self.font_title, _lighten(BLUE, 0.35), x + w // 2, vy, center=True, shadow=True)
         elif card.heal > 0:
-            self._text(f"💚 {card.heal}", self.font_medium, _lighten(GREEN, 0.2), x + w // 2, y + 82, center=True)
+            self._text(f"💚 {card.heal}", self.font_title, _lighten(GREEN, 0.35), x + w // 2, vy, center=True, shadow=True)
         else:
             icon = "💀" if card.type == "curse" else "✨"
-            self._text(icon, self.font_medium, PURPLE, x + w // 2, y + 82, center=True)
+            self._text(icon, self.font_title, _lighten(PURPLE, 0.3), x + w // 2, vy, center=True, shadow=True)
 
-        # Marker: exhaust (upgraded ist schon am '+' im Namen erkennbar)
+        # Marker: exhaust
         if getattr(card, "exhaust", False):
-            self._text("♻", self.font_tiny, ORANGE, x + w - 12, y + 62, right=True)
+            self._text("♻", self.font_small, ORANGE, x + w - pad, int(y + 70 * scale), right=True, shadow=True)
 
         # Tooltip
-        self._draw_fitted_tooltip(card.tooltip, x + 6, y + 104, w - 12, y + h - 6 - (y + 104))
+        ty = int(y + 130 * scale)
+        self._draw_fitted_tooltip(card.tooltip, x + pad, ty, w - 2 * pad, (y + h - 10) - ty)
 
     def _draw_fitted_tooltip(self, text, x, y, w, h):
         candidates = [(self.font_tiny, 13), (self._font_micro, 11), (self._font_nano, 9)]
@@ -1111,15 +1204,22 @@ class UIRenderer:
                         top=(40, 60, 70), bottom=(20, 40, 50), border=CYAN, shadow=True)
             self._text(message, self.font_title, CYAN, self.w // 2, 68, center=True)
 
+    LEGEND = [("combat", "Kampf"), ("elite", "Elite"), ("event", "Event"),
+              ("shop", "Shop"), ("rest", "Rast"), ("treasure", "Schatz"), ("boss", "Boss")]
+
     def _map_legend(self):
-        items = [("⚔", "Kampf"), ("⭐", "Elite"), ("❓", "Event"),
-                 ("🏪", "Shop"), ("🔥", "Rast"), ("💠", "Schatz"), ("👑", "Boss")]
-        x = 16
-        y = self.h - 30
-        for icon, label in items:
-            s = f"{icon} {label}"
-            self._text(s, self.font_tiny, INK_FAINT, x, y)
-            x += self.font_tiny.size(s)[0] + 16
+        x = 14
+        y = self.h - 32
+        for ntype, label in self.LEGEND:
+            spr = assets.scaled("map", ntype, 22, 22)
+            if spr:
+                self.screen.blit(spr, (x, y - 5))
+                x += 25
+            else:
+                icon = self.NODE_STYLE.get(ntype, ("?", GREY))[0]
+                self._text(icon, self.font_tiny, INK_DIM, x, y)
+                x += 18
+            x += self._text(label, self.font_tiny, INK_FAINT, x, y) + 16
 
     def draw_rest(self, player, layout):
         """Lagerfeuer: Heilen oder Karte aufwerten"""
@@ -1256,6 +1356,23 @@ class UIRenderer:
             pygame.draw.line(self.screen, _darken(hcolor, 0.2), (sx + 16, sy + 40), (sx + col_w - 16, sy + 40))
             for li, line in enumerate(lines):
                 self._text("•  " + line, self.font_tiny, INK, sx + 16, sy + 50 + li * 31)
+
+        # Knoten-Legende mit echten Sprites (zeigt, welches Symbol was ist)
+        self._text("Knoten auf der Karte:", self.font_small, INK_DIM, self.w // 2, 512, center=True)
+        cellw = 150
+        total = len(self.LEGEND) * cellw
+        lx = self.w // 2 - total // 2
+        ly = 542
+        for ntype, label in self.LEGEND:
+            cx = lx + cellw // 2
+            spr = assets.scaled("map", ntype, 40, 40)
+            if spr:
+                self.screen.blit(spr, (cx - 20, ly))
+            else:
+                self._text(self.NODE_STYLE.get(ntype, ("?", GREY))[0], self.font_title,
+                           WHITE, cx, ly + 6, center=True)
+            self._text(label, self.font_tiny, INK, cx, ly + 44, center=True)
+            lx += cellw
 
         back_rect = pygame.Rect(self.w // 2 - 100, self.h - 62, 200, 44)
         self.draw_button("⬅ Zurück zum Menü", back_rect.x, back_rect.y, back_rect.w, back_rect.h,

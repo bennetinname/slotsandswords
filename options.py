@@ -2,8 +2,13 @@
 
 import json
 import os
+import paths
 
 OPTIONS_FILE = "options.json"
+
+
+def _path():
+    return paths.data_path(OPTIONS_FILE)
 
 DEFAULTS = {
     "master": 0.8,      # Gesamtlautstärke 0..1
@@ -22,7 +27,7 @@ _BOOLS = ("fullscreen", "shake", "particles")
 def load():
     o = dict(DEFAULTS)
     try:
-        with open(OPTIONS_FILE, "r", encoding="utf-8") as f:
+        with open(_path(), "r", encoding="utf-8") as f:
             d = json.load(f)
         if isinstance(d, dict):
             for k in DEFAULTS:
@@ -43,7 +48,7 @@ def load():
 
 def save(o):
     try:
-        with open(OPTIONS_FILE, "w", encoding="utf-8") as f:
+        with open(_path(), "w", encoding="utf-8") as f:
             json.dump({k: o.get(k, DEFAULTS[k]) for k in DEFAULTS}, f, indent=2)
     except OSError:
         pass

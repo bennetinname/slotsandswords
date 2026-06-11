@@ -1,6 +1,31 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.7.0 – 2026-06-11]  PERSISTENZ, KAMPF-UI & BALANCE
+----------------------------------------------------
+WICHTIGER FIX:
+* Highscores blieben in der EXE nach Neustart NICHT erhalten (wurden in den
+  temporären _MEI-Ordner geschrieben). Jetzt werden Highscores, Spielstand
+  und Optionen stabil NEBEN der EXE gespeichert -> bleiben erhalten.
+
+KAMPF-UI:
+* Spieler-Avatar links (unter der Spieler-HP), Gegner-Avatar rechts (unter
+  der Gegner-HP). "Slot drehen"-Button jetzt mittig über dem Kampflog.
+* Buff-Hover: über Stärke/Block/Brennen/Energie/Gold fahren zeigt, was sie tun.
+
+FIXES & BALANCE:
+* Gegner-Block war verbuggt: er sammelte sich unsichtbar an. Jetzt wird er
+  pro Gegnerzug zurückgesetzt UND deutlich angezeigt (blaues Schild).
+* Bosse entschärft (waren in Akt 1 fast unmöglich): weniger HP/Schaden/Rüstung,
+  flachere Boss-Skalierung, ausgewogenere Aktionen, gedeckelte Hühnerkönig-
+  Schaden-Eskalation.
+
+OPTIK (aus letzter Runde):
+* Karten größer & Text besser lesbar (dunkles Lese-Panel hinter dem Text).
+* Tutorial & Karten-Legende nutzen die echten Knoten-Sprites.
+
+─────────────────────────────────────────────────────
+
 [v1.6.5 – 2026-06-10]  AKT-GESCHAFFT-BILDSCHIRM
 -----------------------------------------------
 * Nach jedem besiegten Boss erscheint jetzt ein "AKT X GESCHAFFT!"-Bildschirm
