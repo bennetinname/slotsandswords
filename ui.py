@@ -1389,7 +1389,7 @@ class UIRenderer:
     # SHOP
     # ═══════════════════════════════════════════════
 
-    def draw_shop(self, items, player, message="", purchased=None):
+    def draw_shop(self, items, player, message="", purchased=None, gamble_bet=25):
         purchased = purchased or set()
         self.draw_background()
         merch = assets.by_height("ui", "merchant", 116)
@@ -1446,10 +1446,10 @@ class UIRenderer:
                     border=PURPLE if gh else PURPLE_DARK, border_w=2)
         self._text("🎰  GLÜCKSRAD", self.font_title, _lighten(PURPLE, 0.4),
                    gamble_rect.centerx, gamble_rect.y + 14, center=True)
-        for li, line in enumerate(["Einsatz: 25 Gold", "Gewinne bis zu 10×!", "(Meist verlierst du. Aber hey.)"]):
+        for li, line in enumerate([f"Einsatz: {gamble_bet} Gold", "Gewinne bis zu 8×!", "(Jeder Dreh wird teurer. Haus gewinnt.)"]):
             self._text(line, self._font_micro, INK_DIM, gamble_rect.centerx, gamble_rect.y + 54 + li * 16, center=True)
-        can_gamble = player.gold >= 25
-        self.draw_button("🎲 DREHEN (25💰)", gamble_rect.x + 55, gamble_rect.y + 116, 200, 40,
+        can_gamble = player.gold >= gamble_bet
+        self.draw_button(f"🎲 DREHEN ({gamble_bet}💰)", gamble_rect.x + 55, gamble_rect.y + 116, 200, 40,
                          color=PURPLE if can_gamble else GREY_DARK, text_color=WHITE, disabled=not can_gamble)
 
         # Zustands-Panel

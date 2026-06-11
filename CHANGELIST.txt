@@ -1,6 +1,26 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.7.2 – 2026-06-11]  GLÜCKSRAD-BALANCE & SLOT-SIEG-FIX
+--------------------------------------------------------
+BUGFIX – Weiterdrehen nach Kill:
+* Wenn der erste von mehreren Spins den Gegner bereits tötete, konnte man
+  trotzdem weiterdrehen. Folge: der Dreh-Sound lief endlos und man landete
+  doppelt/verzögert im Sieg. Jetzt: sobald der Gegner liegt, verschwindet der
+  DREHEN-Button, es erscheint sofort "GEGNER BESIEGT", und ein weiterer Spin
+  wird hart blockiert (Guard in _do_spin + Klick-Handler + Zeichnung).
+
+BALANCE – Glücksrad (Shop):
+* Die alte Auszahltabelle hatte einen Erwartungswert von ~+49% pro Dreh –
+  mit genug Gold war Spammen ein garantierter Geld-Generator. Neu:
+  Erwartungswert ~-14% (das Haus gewinnt langfristig), Tabelle 55% Niete /
+  22% Einsatz zurück / 15% 2× / 6% 3× / 2% Jackpot 8×.
+* Der Einsatz STEIGT mit jeder Drehung pro Shop-Besuch (25 → 40 → 55 → …),
+  die Auszahlung skaliert mit – großer Reiz, aber Dauer-Spammen frisst Gold.
+  Beim Betreten eines neuen Shops wird der Einsatz wieder auf 25 zurückgesetzt.
+
+─────────────────────────────────────────────────────
+
 [v1.7.1 – 2026-06-11]  KARTEN-LESBARKEIT
 ----------------------------------------
 * Karten-Beschreibungen sitzen jetzt auf einem eigenen dunklen Kasten,

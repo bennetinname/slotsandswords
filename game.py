@@ -130,6 +130,7 @@ class Game:
         self.shop_upgrade_rects = []
         self.shop_pending_cost = 0
         self.shop_purchased = set()    # bereits gekaufte Items im aktuellen Shop
+        self.shop_gamble_count = 0     # Anzahl Glücksrad-Drehungen im aktuellen Shop
         
         # Highscore-Zustand
         self.highscores = load_highscores()
@@ -474,8 +475,10 @@ class Game:
             self.selected_card = None
         
         elif self.state == STATE_SLOT_SPIN:
-            # Spin-Button
-            if self.spins_remaining > 0 and not self.slot_machine.spinning:
+            # Spin-Button (nicht, wenn Gegner schon tot ist -> Sieg läuft)
+            if (self.spins_remaining > 0 and not self.slot_machine.spinning
+                    and not self.slot_death_pending
+                    and self.enemy is not None and self.enemy.hp > 0):
                 spin_btn = pygame.Rect(SCREEN_W//2 - 80, 680, 160, 45)
                 if spin_btn.collidepoint(pos):
                     self._do_spin()
@@ -929,6 +932,10 @@ class Game:
         """Startet einen Spin"""
         if self.spins_remaining <= 0 or self.slot_machine.spinning:
             return
+        # Gegner schon tot (z.B. erster von mehreren Spins) -> nicht weiterdrehen,
+        # sonst läuft der Dreh-Sound endlos und man landet doppelt im Sieg.
+        if self.slot_death_pending or self.enemy is None or self.enemy.hp <= 0:
+            return
 
         self.spins_remaining -= 1
         self.player.slots_spun += 1
@@ -1262,6 +1269,7 @@ class Game:
         self.shop_message = ""
         self.shop_message_timer = 0.0
         self.shop_purchased = set()   # bereits gekaufte Item-IDs (pro Shop-Besuch)
+        self.shop_gamble_count = 0    # Glücksrad-Einsatz beim Betreten zurücksetzen
 
         # Schmiede ist immer verfügbar + 4 zufällige feste Items
         forge = {"id": "upgrade_card", "name": "Schmiede", "emoji": "⚒️", "cost": 50,
@@ -1376,35 +1384,42 @@ class Game:
         else:
             self.upgrade_ctx = None
     
+    def _gamble_bet(self):
+        """Aktueller Glücksrad-Einsatz – steigt mit jeder Drehung pro Shop-Besuch."""
+        return 25 + self.shop_gamble_count * 15
+
     def _gamble(self):
-        """Slot-Gambling im Shop: Setze 25 Gold, Glücksrad-Auszahlung"""
-        bet = 25
+        """Glücksrad im Shop: steigender Einsatz, House-Edge (~−14% Erwartungswert),
+        Auszahlung skaliert mit dem Einsatz. Kein Endlos-Geld-Exploit mehr."""
+        bet = self._gamble_bet()
         if self.player.gold < bet:
-            self._shop_message("❌ Mindesteinsatz 25 Gold!")
+            self._shop_message(f"❌ Einsatz {bet} Gold – nicht genug!")
             return
-        
+
         self.player.spend_gold(bet)
+        self.shop_gamble_count += 1
         audio.play("reel", 0.8)
         roll = random.random()
-        # Auszahltabelle: meistens Verlust, selten großer Gewinn
-        if roll < 0.40:
-            self._shop_message("🎰 NICHTS. Das Haus gewinnt. (−25 Gold)")
-        elif roll < 0.65:
+        # Auszahltabelle (brutto, Einsatz ist bereits weg). Erwartungswert ~0.86×
+        # -> das Haus gewinnt langfristig. Selten großer Jackpot bleibt drin.
+        if roll < 0.55:
+            self._shop_message(f"🎰 NICHTS. Das Haus gewinnt. (−{bet} Gold)")
+        elif roll < 0.77:
             win = bet  # Einsatz zurück
             self.player.add_gold(win)
             self._shop_message(f"🎰 Einsatz zurück (+{win} Gold)")
-        elif roll < 0.85:
+        elif roll < 0.92:
             win = bet * 2
             self.player.add_gold(win)
-            self._shop_message(f"🎰 GEWINN! +{win} Gold (2x)")
-        elif roll < 0.96:
-            win = bet * 4
+            self._shop_message(f"🎰 GEWINN! +{win} Gold (2×)")
+        elif roll < 0.98:
+            win = bet * 3
             self.player.add_gold(win)
-            self._shop_message(f"🎰 GROSSER GEWINN! +{win} Gold (4x)!")
+            self._shop_message(f"🎰 GROSSER GEWINN! +{win} Gold (3×)!")
         else:
-            win = bet * 10
+            win = bet * 8
             self.player.add_gold(win)
-            self._shop_message(f"🎰💰 JACKPOT!!! +{win} Gold (10x)!!!")
+            self._shop_message(f"🎰💰 JACKPOT!!! +{win} Gold (8×)!!!")
             audio.play("jackpot")
             self._spawn_particles(self.shop_gamble_rect.centerx if self.shop_gamble_rect else 300,
                                   430, (255, 210, 80), count=26, speed=220, size=4)
@@ -1957,7 +1972,13 @@ class Game:
         self.screen.blit(phase_txt, (SCREEN_W//2 - phase_txt.get_width()//2, 490))
         
         spin_y = 680
-        if self.spins_remaining > 0 and not self.slot_machine.spinning:
+        # Gegner schon besiegt (auch wenn noch Spins offen wären): Sieg-Hinweis,
+        # kein Dreh-Button mehr.
+        enemy_down = self.slot_death_pending or (self.enemy is not None and self.enemy.hp <= 0)
+        if enemy_down:
+            win_txt = self.ui.font_title.render("🏆 GEGNER BESIEGT!", True, GOLD)
+            self.screen.blit(win_txt, (SCREEN_W//2 - win_txt.get_width()//2, 735))
+        elif self.spins_remaining > 0 and not self.slot_machine.spinning:
             self.ui.draw_button(
                 f"🎰 DREHEN! ({self.spins_remaining}x)",
                 SCREEN_W//2 - 80, spin_y, 160, 45,
@@ -1966,20 +1987,15 @@ class Game:
         elif self.slot_machine.spinning:
             self.ui.draw_button("⚡ Dreht...", SCREEN_W//2 - 80, spin_y, 160, 45,
                                color=GREY_DARK, disabled=True)
-        
-        if self.spins_remaining == 0 and not self.slot_machine.spinning:
-            if self.slot_death_pending:
-                # Gegner tot durch Slot – kurz warten, dann Belohnung
-                win_txt = self.ui.font_title.render("🏆 GEGNER BESIEGT!", True, GOLD)
-                self.screen.blit(win_txt, (SCREEN_W//2 - win_txt.get_width()//2, 735))
-            else:
-                if not self.slot_done:
-                    # 0 Spins (z.B. durch Slot-Jam) -> Hinweis statt leerer Phase
-                    hint = self.ui.font_small.render("🎰 Automat blockiert – keine Drehung!",
-                                                     True, ORANGE)
-                    self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, 700))
-                self.ui.draw_button("➡️ Weiter", SCREEN_W//2 - 80, 735, 160, 40,
-                                   color=GREEN, pulsing=True)
+
+        if not enemy_down and self.spins_remaining == 0 and not self.slot_machine.spinning:
+            if not self.slot_done:
+                # 0 Spins (z.B. durch Slot-Jam) -> Hinweis statt leerer Phase
+                hint = self.ui.font_small.render("🎰 Automat blockiert – keine Drehung!",
+                                                 True, ORANGE)
+                self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, 700))
+            self.ui.draw_button("➡️ Weiter", SCREEN_W//2 - 80, 735, 160, 40,
+                               color=GREEN, pulsing=True)
     
     def _draw_slot_effects(self):
         """Zeigt Slot-Effekte als modernes Panel"""
@@ -2024,7 +2040,8 @@ class Game:
         """Shop-Bildschirm (Overlays werden global gezeichnet)"""
         (self.shop_item_rects, self.shop_gamble_rect,
          self.shop_leave_rect) = self.ui.draw_shop(
-            self.shop_items, self.player, self.shop_message, self.shop_purchased)
+            self.shop_items, self.player, self.shop_message, self.shop_purchased,
+            gamble_bet=self._gamble_bet())
 
     def _draw_scores(self):
         """Highscore-Bildschirm"""

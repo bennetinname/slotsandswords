@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.7.1"
+GAME_VERSION = "1.7.2"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.7.2", "Glücksrad fairer (Haus gewinnt) · kein Weiterdrehen nach Kill"),
     ("1.7.1", "Karten-Beschreibungen jetzt deutlich besser lesbar"),
     ("1.7.0", "Highscores speichern · Kampf-UI neu · Bosse fairer · Block-Fix"),
     ("1.6.5", "'Akt geschafft!'-Bildschirm nach jedem Boss (geht endlos weiter)"),
