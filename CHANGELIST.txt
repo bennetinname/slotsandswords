@@ -1,6 +1,14 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.7.1 – 2026-06-11]  KARTEN-LESBARKEIT
+----------------------------------------
+* Karten-Beschreibungen sitzen jetzt auf einem eigenen dunklen Kasten,
+  mit hellerem Text + Schatten und größerer passender Schrift. Der Text
+  war durch die verzierten Rahmen kaum lesbar – jetzt klar erkennbar.
+
+─────────────────────────────────────────────────────
+
 [v1.7.0 – 2026-06-11]  PERSISTENZ, KAMPF-UI & BALANCE
 ----------------------------------------------------
 WICHTIGER FIX:

@@ -649,7 +649,7 @@ class UIRenderer:
             # Dunkles Lese-Panel hinter dem Text -> Text bleibt trotz Rahmen lesbar
             ins = max(9, int(w * 0.085))
             inner = pygame.Surface((w - 2 * ins, h - 2 * ins), pygame.SRCALPHA)
-            pygame.draw.rect(inner, (12, 9, 20, 175), (0, 0, w - 2 * ins, h - 2 * ins), border_radius=8)
+            pygame.draw.rect(inner, (10, 8, 16, 200), (0, 0, w - 2 * ins, h - 2 * ins), border_radius=8)
             self.screen.blit(inner, (x + ins, y + ins))
         else:
             pygame.draw.rect(self.screen, card.color, (x + 8, y + 7, w - 16, 5), border_radius=3)
@@ -672,45 +672,51 @@ class UIRenderer:
         # Name (mit Schatten für Lesbarkeit)
         name_lines = self._wrap_text(card.name, self.font_small, w - 2 * pad)
         for li, line in enumerate(name_lines[:2]):
-            self._text(line, self.font_small, INK, x + pad, int(y + 50 * scale) + li * 17, shadow=True)
+            self._text(line, self.font_small, INK, x + pad, int(y + 46 * scale) + li * 17, shadow=True)
 
         # Trennlinie
-        dvy = int(y + 92 * scale)
+        dvy = int(y + 80 * scale)
         pygame.draw.line(self.screen, (*ACCENT_SOFT, 70), (x + pad, dvy), (x + w - pad, dvy))
 
-        # Wert (größer + Schatten)
-        vy = int(y + 98 * scale)
+        # Wert + Schatten
+        vy = int(y + 84 * scale)
         if card.damage > 0:
-            self._text(f"⚔ {card.damage}", self.font_title, _lighten(RED, 0.35), x + w // 2, vy, center=True, shadow=True)
+            self._text(f"⚔ {card.damage}", self.font_medium, _lighten(RED, 0.4), x + w // 2, vy, center=True, shadow=True)
         elif card.block > 0:
-            self._text(f"🛡 {card.block}", self.font_title, _lighten(BLUE, 0.35), x + w // 2, vy, center=True, shadow=True)
+            self._text(f"🛡 {card.block}", self.font_medium, _lighten(BLUE, 0.4), x + w // 2, vy, center=True, shadow=True)
         elif card.heal > 0:
-            self._text(f"💚 {card.heal}", self.font_title, _lighten(GREEN, 0.35), x + w // 2, vy, center=True, shadow=True)
+            self._text(f"💚 {card.heal}", self.font_medium, _lighten(GREEN, 0.4), x + w // 2, vy, center=True, shadow=True)
         else:
             icon = "💀" if card.type == "curse" else "✨"
-            self._text(icon, self.font_title, _lighten(PURPLE, 0.3), x + w // 2, vy, center=True, shadow=True)
+            self._text(icon, self.font_medium, _lighten(PURPLE, 0.3), x + w // 2, vy, center=True, shadow=True)
 
         # Marker: exhaust
         if getattr(card, "exhaust", False):
-            self._text("♻", self.font_small, ORANGE, x + w - pad, int(y + 70 * scale), right=True, shadow=True)
+            self._text("♻", self.font_small, ORANGE, x + w - pad, int(y + 64 * scale), right=True, shadow=True)
 
-        # Tooltip
-        ty = int(y + 130 * scale)
+        # Beschreibung: eigener dunkler Kasten + heller Text -> gut lesbar
+        ty = int(y + 110 * scale)
+        tb = pygame.Rect(x + pad - 4, ty - 3, w - 2 * pad + 8, (y + h - 8) - ty + 6)
+        box = pygame.Surface((tb.w, tb.h), pygame.SRCALPHA)
+        pygame.draw.rect(box, (4, 3, 8, 225), (0, 0, tb.w, tb.h), border_radius=6)
+        self.screen.blit(box, (tb.x, tb.y))
         self._draw_fitted_tooltip(card.tooltip, x + pad, ty, w - 2 * pad, (y + h - 10) - ty)
 
     def _draw_fitted_tooltip(self, text, x, y, w, h):
-        candidates = [(self.font_tiny, 13), (self._font_micro, 11), (self._font_nano, 9)]
-        for font, line_h in candidates:
-            lines = self._wrap_text(text, font, w)
-            if len(lines) * line_h <= h:
-                for li, line in enumerate(lines):
-                    self._text(line, font, INK_DIM, x, y + li * line_h)
-                return
-        font, line_h = candidates[-1]
-        lines = self._wrap_text(text, font, w)
-        max_lines = max(1, h // line_h)
-        for li, line in enumerate(lines[:max_lines]):
-            self._text(line, font, INK_DIM, x, y + li * line_h)
+        """Beschreibungstext: größte passende Schrift, hell + Schatten."""
+        candidates = [(self.font_small, 16), (self.font_tiny, 14),
+                      (self._font_micro, 12), (self._font_nano, 10)]
+        col = (232, 234, 244)
+        font, line_h, lines = candidates[-1][0], candidates[-1][1], None
+        for f, lh in candidates:
+            wl = self._wrap_text(text, f, w)
+            if len(wl) * lh <= h:
+                font, line_h, lines = f, lh, wl
+                break
+        if lines is None:
+            lines = self._wrap_text(text, font, w)[: max(1, h // line_h)]
+        for li, line in enumerate(lines):
+            self._text(line, font, col, x, y + li * line_h, shadow=True)
 
     def _wrap_text(self, text, font, max_width):
         words = text.split()
