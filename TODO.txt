@@ -1,49 +1,41 @@
 TODO / IDEEN – Slots & Swords
 =============================
-(kurz gehalten, nicht priorisiert)
+(kurz gehalten, nicht priorisiert; Stand v1.8.1)
 
 GAMEPLAY
-- Status-Effekt-System: Vulnerable, Weak, Gift, Regeneration
-- Mehr Karten, Relikte, Events, Slot-Effekte
-- Mehr Gegner-/Boss-Varianten, akt-spezifische Gegner
+- Mehr Slot-Effekte / Slot-Symbol-Synergien
+- Akt-spezifische Gegner-Pools (Akt 2/3 mit eigenem Thema)
 - Multiplikator-/Scaling-System (Balatro-Stil)
-- Deck-Archetypen & Synergien (Burn, Hühner, Gold, Block)
+- Deck-Archetypen weiter ausbauen (Burn, Hühner, Gold, Block, Gift)
 - Balancing/Economy-Pass (Gold-Inflation spät)
-
-SCHWIERIGKEIT (Spiel evtl. zu schwer, da seltener Shop) – Ideen:
-- Garantiert 1 Shop pro Akt (z.B. eine Reihe immer als Shop)
-- Shop-Knoten häufiger gewichten in mapgen
-- Heilung nach jedem normalen Kampf (kleiner %-Wert)
-- Rast-Knoten häufiger / Rast heilt mehr
-- Startgold + Gold-Belohnungen leicht erhöhen, Shop-Preise senken
-- Gegner-Skalierung pro Tiefe abflachen (0.13 -> z.B. 0.10)
-- Erste 1-2 Etagen bewusst leichter halten
-- Mobiler Händler als häufigeres Event
 - Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart
-- Mehr/garantierte Relikte früh (z.B. Akt-Start-Relikt)
 
 ASSETS / OPTIK
+- Neue Gegner-Sprites generieren (Prompts in asset_prompts.txt, v1.8.0-Block)
 - Karten-Effekt-Icons auf den Karten anzeigen (liegen schon bereit)
 - Slot-Cabinet-Rahmen um die Walzen setzen
-- Status-Effekt-Icons (siehe asset_prompts.txt)
-- Karten-Rahmen/Backs als Sprites
-- Player-Avatar im Kampf, Merchant im Shop
-- Event-Illustrationen
-- .ico App-Icon für die EXE
+- Status-Effekt-Icons (Gift/Verwundbar/Regen/Dornen) als Sprites
+- Casino-Event-Illustration (Prompt liegt bereit)
 
 UX / KOMFORT
 - Tastatur-Steuerung (1–7 Karten spielen, Space = drehen/Zug beenden)
-- Settings-Menü (Lautstärke, Vollbild)
-- Schadens-/Effekt-Tooltips überall
 - Autosave zwischen Knoten (zusätzlich zum Pause-Save)
+- Erfolge-Screen: anzeigen WAS ein Erfolg freischaltet (Karte/Relikt)
 
 META / REPLAY
-- Daily Run mit festem Seed + eigene Bestenliste
-- Unlocks über Runs (neue Karten/Relikte/Charaktere)
+- Daily: Tages-Bestenliste mit mehreren Einträgen (aktuell nur Bestwert)
+- Daily-Status mitspeichern (fortgesetzter Tages-Run zählt aktuell normal)
 - Mehrere Startcharaktere/Klassen
-- Run-Statistik-Screen am Ende
+- Mehr Erfolge (Gift-Build, Casino, Daily-Streak)
 
 TECHNIK
-- Seeded RNG zentral (für Daily/Reproduzierbarkeit)
+- Seeded RNG zentral kapseln (aktuell nur global geseedet beim Daily)
 - Emoji-Font bündeln (Fallback auf fremden PCs)
 - EN-Lokalisierung
+
+ERLEDIGT (zur Referenz, Details in CHANGELIST.txt)
+- v1.8.1: Tages-Challenge+Streak, Meta-Unlocks, Casino-Event, Run-Stats
+- v1.8.0: Statuseffekte (Gift/Verwundbar/Regen/Dornen), 8 Karten,
+  6 Gegner, 6 Relikte
+- v1.7.x: Erfolge, RAM-Optimierung, Glücksrad-Fix, Highscore-Persistenz,
+  Optionen, Kampf-UI, Karten-Lesbarkeit
