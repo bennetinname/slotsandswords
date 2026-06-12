@@ -91,3 +91,8 @@ assets/enemies/
                         wheel of fate behind her, playing cards
                         orbiting, pink-gold dress, theatrical pose,
                         sinister smile (groesser, ~200x220)
+
+assets/events/
+  casino.png         -  underground casino entrance, trapdoor with neon
+                        arrow pointing down, smoky stairs, dice and cards
+                        scattered, red-purple glow (~220x140)

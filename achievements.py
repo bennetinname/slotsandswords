@@ -49,6 +49,29 @@ DEFS = [
 _DEF_BY_ID = {d["id"]: d for d in DEFS}
 _unlocked = {}   # id -> Unix-Timestamp
 
+# ─── Meta-Unlocks: Inhalte, die hinter Erfolgen stecken ───
+# (kind, name) -> Erfolgs-ID. Gesperrte Inhalte tauchen nicht in
+# Belohnungen/Shops auf, bis der Erfolg freigeschaltet ist.
+UNLOCK_REWARDS = {
+    ("card", "Säurefass"):    "triple",
+    ("card", "Henkersbeil"):  "boss_kill",
+    ("card", "Blutpakt"):     "near_death",
+    ("card", "Stachelhaut"):  "elite_kill",
+    ("relic", "Trophäensammlung"): "act1",
+    ("relic", "Vampirzahn"):       "combo_5",
+}
+
+
+def content_unlocked(kind, name):
+    """True, wenn die Karte/das Relikt verfügbar ist (kein Lock oder Erfolg geschafft)."""
+    req = UNLOCK_REWARDS.get((kind, name))
+    return req is None or req in _unlocked
+
+
+def rewards_for(aid):
+    """Liste der (kind, name), die dieser Erfolg freischaltet."""
+    return [k for k, v in UNLOCK_REWARDS.items() if v == aid]
+
 
 def _path():
     return paths.data_path(ACHIEVEMENT_FILE)

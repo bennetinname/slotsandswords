@@ -16,6 +16,8 @@ import mapgen
 import options
 import assets
 import achievements
+import daily
+import stats
 
 
 # ═══════════════════════════════════════════════
@@ -136,6 +138,12 @@ class Game:
         self.shop_purchased = set()    # bereits gekaufte Items im aktuellen Shop
         self.shop_gamble_count = 0     # Anzahl Glücksrad-Drehungen im aktuellen Shop
         
+        # Tages-Challenge-Zustand
+        self.daily_mode = False
+        self.daily_mod = None
+        self.daily_result = None
+        self.lifetime_stats = stats.load()
+
         # Erfolge: laden + Toast-Warteschlange [(def, restzeit), ...]
         achievements.load()
         self.achievement_toasts = []
@@ -284,21 +292,23 @@ class Game:
         changelog = pygame.Rect(16, SCREEN_H - 50, 200, 34)
         if savegame.has_valid_save():
             return {
-                "resume":   pygame.Rect(cx - 130, 430, 260, 54),
-                "play":     pygame.Rect(cx - 130, 490, 260, 44),
-                "tutorial": pygame.Rect(cx - 110, 540, 220, 40),
-                "options":  pygame.Rect(cx - 110, 586, 220, 40),
-                "scores":   pygame.Rect(cx - 110, 632, 220, 40),
-                "achievements": pygame.Rect(cx - 110, 678, 220, 40),
+                "resume":   pygame.Rect(cx - 130, 414, 260, 50),
+                "play":     pygame.Rect(cx - 130, 470, 260, 42),
+                "daily":    pygame.Rect(cx - 130, 516, 260, 42),
+                "tutorial": pygame.Rect(cx - 110, 562, 220, 38),
+                "options":  pygame.Rect(cx - 110, 606, 220, 38),
+                "scores":   pygame.Rect(cx - 110, 650, 220, 38),
+                "achievements": pygame.Rect(cx - 110, 694, 220, 38),
                 "changelog": changelog,
             }
         return {
             "resume":   None,
-            "play":     pygame.Rect(cx - 110, 458, 220, 54),
-            "tutorial": pygame.Rect(cx - 110, 520, 220, 42),
-            "options":  pygame.Rect(cx - 110, 570, 220, 42),
-            "scores":   pygame.Rect(cx - 110, 620, 220, 42),
-            "achievements": pygame.Rect(cx - 110, 668, 220, 42),
+            "play":     pygame.Rect(cx - 110, 440, 220, 50),
+            "daily":    pygame.Rect(cx - 110, 496, 220, 42),
+            "tutorial": pygame.Rect(cx - 110, 544, 220, 40),
+            "options":  pygame.Rect(cx - 110, 590, 220, 40),
+            "scores":   pygame.Rect(cx - 110, 636, 220, 40),
+            "achievements": pygame.Rect(cx - 110, 682, 220, 40),
             "changelog": changelog,
         }
 
@@ -429,6 +439,9 @@ class Game:
                 return
             if lay["play"].collidepoint(pos):
                 audio.play("click"); self._start_game()
+                return
+            if lay["daily"].collidepoint(pos):
+                audio.play("click"); self._start_game(daily_mode=True)
                 return
             if lay["tutorial"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_TUTORIAL
@@ -633,8 +646,13 @@ class Game:
     # SPIELSTART / NEUSTART
     # ═══════════════════════════════════════════════
     
-    def _start_game(self):
+    def _start_game(self, daily_mode=False):
         savegame.delete_save()   # Neuer Run verwirft alten Speicherstand
+        self.daily_mode = daily_mode
+        self.daily_mod = daily.modifier_for_today() if daily_mode else None
+        if daily_mode:
+            # Fester Tages-Seed: alle Spieler bekommen heute dieselbe Karte
+            random.seed(daily.seed_for_today())
         self.player = Player()
         self.floor_num = 1
         self.turn_num = 1
@@ -644,9 +662,24 @@ class Game:
         self.last_score = 0
         self.last_rank = None
         self.last_is_record = False
+        self.daily_result = None   # (new_best, streak) nach Tages-Run
         self.gamemap = mapgen.generate(self.act)
         self.map_current = None
         self.current_node = None
+
+        # Tages-Modifikator auf den Spieler anwenden
+        m = self.daily_mod or {}
+        if "max_hp" in m:
+            self.player.max_hp = m["max_hp"]; self.player.hp = m["max_hp"]
+        if "bonus_energy" in m:
+            self.player.max_energy += m["bonus_energy"]
+        if "start_gold" in m:
+            self.player.gold = m["start_gold"]
+        if "start_strength" in m:
+            self.player.strength += m["start_strength"]
+        if "heal_mult" in m:
+            self.player.heal_mult = m["heal_mult"]
+
         self.state = STATE_MAP
     
     def _restart(self):
@@ -677,6 +710,14 @@ class Game:
         enemy_def["max_hp"] = enemy_def["hp"]
         enemy_def["damage"] = int(enemy_def["damage"] * scale)
 
+        # Tages-Modifikatoren (Gegner-Seite)
+        m = self.daily_mod or {}
+        if m.get("enemy_hp_mult"):
+            enemy_def["hp"] = int(enemy_def["hp"] * m["enemy_hp_mult"])
+            enemy_def["max_hp"] = enemy_def["hp"]
+        if m.get("enemy_dmg_mult"):
+            enemy_def["damage"] = int(enemy_def["damage"] * m["enemy_dmg_mult"])
+
         if is_elite:
             enemy_def["name"] = "⭐ Elite-" + enemy_def["name"]
             enemy_def["hp"] = int(enemy_def["hp"] * 1.4)
@@ -686,6 +727,8 @@ class Game:
             enemy_def["is_elite"] = True
 
         self.enemy = Enemy(enemy_def)
+        if (self.daily_mod or {}).get("enemy_start_poison"):
+            self.enemy.poison = self.daily_mod["enemy_start_poison"]
 
     # ═══════════════════════════════════════════════
     # PFAD-/MAP-NAVIGATION
@@ -839,6 +882,9 @@ class Game:
         if p.has_relic("fortune_cookie"):
             p.lucky += 1
             self._log("🥠 Glückskeks: +1 Glücksrunde!")
+        if (self.daily_mod or {}).get("start_lucky"):
+            p.lucky += self.daily_mod["start_lucky"]
+            self._log(f"📅 Glückstag: +{self.daily_mod['start_lucky']} Glücksrunde!")
 
     def _reset_combo(self):
         self.combo_type = None
@@ -856,6 +902,7 @@ class Game:
             self.combo_type = card.type
             self.combo_count = 1
 
+        self.player.best_combo = max(self.player.best_combo, self.combo_count)
         if self.combo_count >= 2:
             if self.combo_count >= 5:
                 self._award("combo_5")
@@ -1139,6 +1186,12 @@ class Game:
         """Schaltet einen Erfolg frei und zeigt einen Toast (nur beim 1. Mal)."""
         if achievements.unlock(aid):
             self.achievement_toasts.append([achievements.get(aid), 4.5])
+            # Meta-Unlock: Erfolg schaltet neue Karte/Relikt frei -> eigener Toast
+            for kind, name in achievements.rewards_for(aid):
+                label = "Neue Karte" if kind == "card" else "Neues Relikt"
+                self.achievement_toasts.append([
+                    {"emoji": "🔓", "name": f"{label}: {name}",
+                     "desc": "Ab jetzt in Belohnungen zu finden!"}, 5.5])
             audio.play("relic", 0.8)
 
     def _enemy_defeated(self):
@@ -1168,6 +1221,8 @@ class Game:
         gold = self.enemy.get_gold_reward()
         if self.player.has_relic("gold_boost"):
             gold = int(gold * 1.3)
+        if (self.daily_mod or {}).get("gold_mult"):
+            gold = int(gold * self.daily_mod["gold_mult"])
         self.gold_reward = gold
         self.player.add_gold(gold)
         self._log(f"🏆 {self.enemy.name} besiegt! +{gold} Gold!")
@@ -1207,7 +1262,9 @@ class Game:
             "uncommon": 38 if boss else 27,
             "rare":     22 if boss else 5,
         }
-        avail = list(CARD_DEFINITIONS)  # Flüche sind separat, nicht enthalten
+        # Flüche sind separat; Meta-Unlocks: gesperrte Karten erst nach Erfolg
+        avail = [c for c in CARD_DEFINITIONS
+                 if achievements.content_unlocked("card", c["name"])]
         chosen = []
         for _ in range(min(n, len(avail))):
             ws = [weights.get(c.get("rarity", "common"), 10) for c in avail]
@@ -1219,7 +1276,8 @@ class Game:
     def _grant_random_relic(self):
         """Vergibt ein zufälliges noch nicht besessenes Relikt"""
         owned = {r["id"] for r in self.player.relics}
-        available = [r for r in RELIC_DEFINITIONS if r["id"] not in owned]
+        available = [r for r in RELIC_DEFINITIONS if r["id"] not in owned
+                     and achievements.content_unlocked("relic", r["name"])]
         if not available:
             return None
         relic = random.choice(available)
@@ -1321,6 +1379,45 @@ class Game:
                 p.add_gold(40); msg = "Er knickt ein! +40 Gold."
             else:
                 self._add_curse(); msg = "Er verflucht dich! Ein Fluch im Deck."
+        elif eff == "casino_double_or_nothing":
+            if p.gold <= 0:
+                msg = "Du hast nichts zum Setzen. Der Croupier lacht."
+            elif random.random() < 0.5:
+                won = p.gold
+                p.add_gold(won)
+                msg = f"🎉 ROT! Gold verdoppelt: +{won} Gold!"
+                audio.play("jackpot")
+            else:
+                lost = p.gold
+                p.gold = 0
+                msg = f"💸 SCHWARZ. {lost} Gold – einfach weg. Das Haus nickt."
+        elif eff == "casino_blood_poker":
+            p.take_damage(20, ignore_block=True)
+            if random.random() < 0.6:
+                r = self._grant_random_relic()
+                msg = (f"−20 HP, aber du gewinnst: {r['emoji']} {r['name']}!" if r
+                       else "−20 HP. Gewonnen – aber alle Relikte hast du schon.")
+            else:
+                msg = "−20 HP. Dein Blatt war Müll. Der Tisch schweigt."
+        elif eff == "casino_mystery_box":
+            if not p.spend_gold(val):
+                msg = "Nicht genug Gold für die Box!"
+            else:
+                roll = random.random()
+                if roll < 0.30:
+                    cd = random.choice([c for c in CARD_DEFINITIONS
+                                        if achievements.content_unlocked("card", c["name"])])
+                    p.add_card_to_deck(cd)
+                    msg = f"📦 In der Box: Karte '{cd['name']}'!"
+                elif roll < 0.55:
+                    r = self._grant_random_relic()
+                    msg = f"📦 In der Box: {r['emoji']} {r['name']}!" if r else "📦 Leer. Alle Relikte schon da."
+                elif roll < 0.80:
+                    h = p.heal_hp(25)
+                    msg = f"📦 Heiltrank! +{h} HP."
+                else:
+                    self._add_curse()
+                    msg = "📦 Ein FLUCH springt heraus. Reingefallen."
         elif eff == "hack_atm":
             if random.random() < 0.5:
                 p.add_gold(50); msg = "Hack erfolgreich! +50 Gold."
@@ -1551,6 +1648,12 @@ class Game:
         self.score_saved = True
         savegame.delete_save()   # Run beendet -> Speicherstand entfernen
 
+        # Lifetime-Stats + Tages-Challenge melden
+        self.lifetime_stats = stats.report_run(
+            self.floor_num, self.player.enemies_defeated, self.player.gold_earned)
+        if self.daily_mode:
+            self.daily_result = daily.report_run(self.last_score)
+
     # ═══════════════════════════════════════════════
     # SPEICHERN / LADEN
     # ═══════════════════════════════════════════════
@@ -1585,7 +1688,7 @@ class Game:
             "stats": {
                 "damage_dealt": p.damage_dealt, "gold_earned": p.gold_earned,
                 "slots_spun": p.slots_spun, "chickens_summoned": p.chickens_summoned,
-                "enemies_defeated": p.enemies_defeated,
+                "enemies_defeated": p.enemies_defeated, "best_combo": p.best_combo,
             },
         }
 
@@ -1609,6 +1712,7 @@ class Game:
         p.slots_spun = st.get("slots_spun", 0)
         p.chickens_summoned = st.get("chickens_summoned", 0)
         p.enemies_defeated = st.get("enemies_defeated", 0)
+        p.best_combo = st.get("best_combo", 0)
         return p
 
     def _serialize_enemy(self, e):
@@ -1917,6 +2021,10 @@ class Game:
         elif self.state == STATE_MAP:
             self.ui.draw_map(self.gamemap, self.map_current, self._map_available(),
                              self.hovered_node, self.player, self.act, self.map_message)
+            if self.daily_mode and self.daily_mod:
+                self.ui._chip(f"📅 {self.daily_mod['name']}: {self.daily_mod['desc']}",
+                              self.ui.font_tiny, SCREEN_W // 2 - 280, 8,
+                              text_col=CYAN, fill=(15, 45, 55, 220))
 
         elif self.state == STATE_REST:
             self.ui.draw_rest(self.player, self._compute_rest_layout())
@@ -1946,7 +2054,9 @@ class Game:
         
         elif self.state == STATE_GAME_OVER:
             self.ui.draw_game_over(self.player, self.floor_num,
-                                   self.last_score, self.last_rank)
+                                   self.last_score, self.last_rank,
+                                   lifetime=self.lifetime_stats,
+                                   daily_result=self.daily_result)
 
         elif self.state == STATE_VICTORY:
             self.ui.draw_victory(self.player, self.last_score, self.last_rank)

@@ -97,7 +97,11 @@ class Player:
         # Relikte (permanente passive Boni)
         self.relics = []   # Liste von Relikt-Dicts
         
+        # Heilungs-Multiplikator (Tages-Challenge "Giftiger Boden")
+        self.heal_mult = 1.0
+
         # Statistiken
+        self.best_combo = 0
         self.damage_dealt = 0
         self.gold_earned = 0
         self.slots_spun = 0
@@ -200,8 +204,9 @@ class Player:
         return amount  # tatsächlicher Schaden
     
     def heal_hp(self, amount):
-        """Heilt HP bis zum Maximum"""
+        """Heilt HP bis zum Maximum (heal_mult z.B. für Tages-Modifikatoren)"""
         old = self.hp
+        amount = int(amount * self.heal_mult)
         self.hp = min(self.max_hp, self.hp + amount)
         return self.hp - old
     

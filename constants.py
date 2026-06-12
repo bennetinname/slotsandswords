@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.8.0"
+GAME_VERSION = "1.8.1"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.8.1", "Tages-Challenge mit Streak · Meta-Unlocks · Casino-Event · Run-Stats"),
     ("1.8.0", "GROSSES CONTENT-UPDATE: Gift & neue Status, 8 Karten, 6 Gegner, 6 Relikte"),
     ("1.7.5", "16 Erfolge! Dauerhaft über Runs, mit Einblendung beim Freischalten"),
     ("1.7.4", "Verspotten gibt −2 Stärke · Deck-Scrollen · weniger Deko-Emojis"),
@@ -927,6 +928,22 @@ RELIC_DEFINITIONS = [
 # ZUFALLS-EVENTS (zwischen den Etagen)
 # ═══════════════════════════════════════════════
 EVENT_DEFINITIONS = [
+    {
+        "title": "Das Untergrund-Casino",
+        "asset": "casino",
+        "emoji": "🎲",
+        "text": "Eine Falltür, rauchige Luft, große Einsätze. Hier verliert man "
+                "mehr als nur Gold – oder gewinnt alles.",
+        "options": [
+            {"label": "Alles auf Rot", "desc": "50%: Gold VERDOPPELN. 50%: ALLES Gold weg.",
+             "effect": "casino_double_or_nothing"},
+            {"label": "Blutpoker", "desc": "Setze 20 HP: 60% gewinnst du ein Relikt, 40% nur Schmerz.",
+             "effect": "casino_blood_poker"},
+            {"label": "Mystery-Box", "desc": "30 Gold: Karte, Relikt, Heilung – oder ein Fluch.",
+             "effect": "casino_mystery_box", "value": 30},
+            {"label": "Nüchtern bleiben", "desc": "+10 Gold fürs Türsteher-Spielen", "effect": "gold", "value": 10},
+        ],
+    },
     {
         "title": "Der Glücksbrunnen",
         "asset": "brunnen",

@@ -5,6 +5,7 @@ import math
 from constants import *
 import mapgen
 import assets
+import daily
 
 
 def _lerp(a, b, t):
@@ -972,7 +973,8 @@ class UIRenderer:
     # GAME OVER / SIEG
     # ═══════════════════════════════════════════════
 
-    def draw_game_over(self, player, floor_num, score=0, rank=None):
+    def draw_game_over(self, player, floor_num, score=0, rank=None,
+                       lifetime=None, daily_result=None):
         self.draw_background()
         self._dim(150)
         self._text("💀  DU BIST TOT  💀", self.font_huge, RED, self.w // 2, 80, center=True, shadow=True)
@@ -981,13 +983,21 @@ class UIRenderer:
         self._panel((self.w // 2 - pw // 2, 150, pw, 70), radius=14, border=ACCENT)
         self._text(f"PUNKTE: {score:,}".replace(",", "."), self.font_h1, ACCENT,
                    self.w // 2, 162, center=True)
-        if rank == 1:
+        if daily_result:
+            new_best, streak = daily_result
+            txt = "📅 Tages-Challenge: NEUE TAGES-BESTLEISTUNG!" if new_best \
+                else "📅 Tages-Challenge abgeschlossen"
+            if streak > 1:
+                txt += f"  ·  🔥 {streak} Tage in Folge!"
+            self._text(txt, self.font_small, CYAN, self.w // 2, 196, center=True)
+        elif rank == 1:
             self._text("🥇 NEUER REKORD!", self.font_small, ACCENT_SOFT, self.w // 2, 196, center=True)
         elif rank:
             self._text(f"Platz {rank} in der Bestenliste", self.font_small, CYAN, self.w // 2, 196, center=True)
 
         msgs = [
             f"🏯 Etage {floor_num} erreicht",
+            f"🔥 Beste Kombo: x{player.best_combo}" if player.best_combo >= 2 else
             f"🐔 Hühner beschworen: {player.chickens_summoned}",
             f"💰 Gold verdient: {player.gold_earned}",
             f"⚔ Schaden verursacht: {player.damage_dealt}",
@@ -996,6 +1006,12 @@ class UIRenderer:
         ]
         for i, msg in enumerate(msgs):
             self._text(msg, self.font_medium, INK, self.w // 2, 250 + i * 34, center=True)
+
+        if lifetime:
+            lt = (f"Run #{lifetime.get('runs_played', '?')}  ·  "
+                  f"Beste Etage aller Zeiten: {lifetime.get('best_floor', floor_num)}  ·  "
+                  f"Kills gesamt: {lifetime.get('total_kills', 0)}")
+            self._text(lt, self.font_tiny, INK_DIM, self.w // 2, 250 + 6 * 34, center=True)
 
         art = assets.fit("ui", "defeat_art", 300, 142)
         if art:
@@ -1116,6 +1132,22 @@ class UIRenderer:
         p = layout["play"]
         self.draw_button(play_label, p.x, p.y, p.w, p.h, color=ACCENT, text_color=BLACK,
                          pulsing=(r is None))
+        d = layout.get("daily")
+        if d:
+            self.draw_button("📅 Tages-Challenge", d.x, d.y, d.w, d.h,
+                             color=CYAN, text_color=BLACK)
+            # Heutiger Modifikator + Streak daneben
+            mod = daily.modifier_for_today()
+            streak = daily.get_streak()
+            best = daily.get_today_best()
+            info = f"Heute: {mod['name']}"
+            if best > 0:
+                info += f" · Best: {best:,}".replace(",", ".")
+            if streak > 1:
+                info += f" · 🔥{streak} Tage"
+            if d.collidepoint(pygame.mouse.get_pos()):
+                info = f"{mod['name']}: {mod['desc']}"
+            self._text(info, self.font_tiny, INK_DIM, d.right + 12, d.y + d.h // 2 - 7)
         tu = layout["tutorial"]
         self.draw_button("📖 Tutorial", tu.x, tu.y, tu.w, tu.h, color=CYAN, text_color=BLACK)
         op = layout["options"]

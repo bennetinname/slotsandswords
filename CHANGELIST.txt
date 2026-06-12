@@ -1,6 +1,40 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.1 – 2026-06-12]  RETENTION-UPDATE: TAGES-CHALLENGE & META-UNLOCKS
+-----------------------------------------------------------------------
+TAGES-CHALLENGE (neuer Menüpunkt 📅):
+* Jeden Tag derselbe Seed für alle Spieler (Karte ist deterministisch) +
+  ein täglicher Modifikator aus 7 (Goldrausch, Glasknochen, Die Horde,
+  Glückstag, Giftiger Boden, High Roller, Berserker-Tag).
+* Eigene Tagesbestleistung (daily.json) + 🔥 STREAK: an wie vielen Tagen
+  in Folge gespielt – wird im Menü und beim Game Over angezeigt.
+* Aktiver Modifikator wird auf der Karte als Banner gezeigt; im Menü
+  zeigt Hovern über dem Button die Beschreibung.
+
+META-UNLOCKS (nutzt das Erfolgssystem):
+* 4 Karten + 2 Relikte starten GESPERRT und erscheinen erst in
+  Belohnungen, wenn der passende Erfolg geschafft ist:
+  Säurefass<-Drilling, Henkersbeil<-Boss, Blutpakt<-1-HP-Überleben,
+  Stachelhaut<-Elite, Trophäensammlung<-Akt 1, Vampirzahn<-5er-Kombo.
+* Beim Freischalten erscheint ein zweiter Toast "Neue Karte: ...".
+
+RUN-STATISTIKEN:
+* Beste Kombo wird pro Run getrackt und beim Game Over gezeigt.
+* Lifetime-Stats (stats.json): Run-Nummer, beste Etage aller Zeiten,
+  Kills gesamt – als Zeile auf dem Game-Over-Screen.
+
+NEUES EVENT – DAS UNTERGRUND-CASINO (High Stakes):
+* "Alles auf Rot": 50% Gold verdoppeln / 50% ALLES weg.
+* "Blutpoker": −20 HP, 60% Chance auf ein Relikt.
+* "Mystery-Box" (30 Gold): Karte, Relikt, Heilung – oder Fluch.
+
+(Save-Format kompatibel -> Patch-Bump, Spielstände bleiben gültig.)
+Hinweis: Ein gespeicherter & fortgesetzter Tages-Run zählt als normaler
+Run (Daily-Status wird nicht mitgespeichert) – bewusst simpel gehalten.
+
+─────────────────────────────────────────────────────
+
 [v1.8.0 – 2026-06-12]  GROSSES CONTENT-UPDATE
 ---------------------------------------------
 (Minor-Bump: Save-Format erweitert -> alte Spielstände werden verworfen.)
