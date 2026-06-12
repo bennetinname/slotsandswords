@@ -1097,6 +1097,10 @@ class UIRenderer:
         self.draw_button("⚙ Optionen", op.x, op.y, op.w, op.h, color=BLUE, text_color=WHITE)
         sc = layout["scores"]
         self.draw_button("🏆 Bestenliste", sc.x, sc.y, sc.w, sc.h, color=PURPLE, text_color=WHITE)
+        ac = layout.get("achievements")
+        if ac:
+            self.draw_button("🎖 Erfolge", ac.x, ac.y, ac.w, ac.h,
+                             color=_darken(PURPLE, 0.25), text_color=WHITE)
 
         cl = layout.get("changelog")
         if cl:
@@ -1556,6 +1560,63 @@ class UIRenderer:
     # Rückwärtskompatibilität (falls noch referenziert)
     def draw_card_removal(self, player):
         return self.draw_card_grid(player, "🔥 Welche Karte verbrennen?", ORANGE)
+
+    # ═══════════════════════════════════════════════
+    # ERFOLGE
+    # ═══════════════════════════════════════════════
+
+    def draw_achievement_toasts(self, toasts):
+        """Erfolgs-Einblendungen oben rechts (gestapelt, mit Einfade-Slide)."""
+        y = 84
+        for adef, t in toasts[:3]:
+            # Slide-in in den ersten 0.3s, Fade-out in den letzten 0.6s
+            age = 4.5 - t
+            slide = max(0.0, 1.0 - age / 0.3) if age < 0.3 else 0.0
+            alpha = min(1.0, t / 0.6)
+            w, h = 320, 64
+            x = self.w - w - 16 + int(slide * (w + 24))
+            box = pygame.Surface((w, h), pygame.SRCALPHA)
+            pygame.draw.rect(box, (18, 14, 30, int(235 * alpha)), (0, 0, w, h), border_radius=12)
+            pygame.draw.rect(box, (*ACCENT, int(255 * alpha)), (0, 0, w, h), 2, border_radius=12)
+            self.screen.blit(box, (x, y))
+            self._text(f"{adef['emoji']} Erfolg: {adef['name']}", self.font_medium, ACCENT,
+                       x + 14, y + 9, shadow=True)
+            self._text(adef["desc"], self.font_tiny, INK, x + 14, y + 36)
+            y += h + 10
+
+    def draw_achievements(self, defs, is_unlocked, prog):
+        """Erfolge-Übersicht (2 Spalten). Gibt das Zurück-Rect zurück."""
+        self.draw_background()
+        done, total = prog
+        self._text("🎖  ERFOLGE", self.font_huge, ACCENT, self.w // 2, 30, center=True, shadow=True)
+        self._text(f"{done} von {total} freigeschaltet", self.font_small, INK_DIM,
+                   self.w // 2, 86, center=True)
+
+        cols = 2
+        cell_w, cell_h, gap = 560, 64, 12
+        start_x = self.w // 2 - (cols * cell_w + (cols - 1) * gap) // 2
+        start_y = 120
+        for i, d in enumerate(defs):
+            row, col = i // cols, i % cols
+            x = start_x + col * (cell_w + gap)
+            y = start_y + row * (cell_h + gap)
+            unlocked = is_unlocked(d["id"])
+            self._panel((x, y, cell_w, cell_h), radius=12,
+                        border=ACCENT if unlocked else PANEL_LINE,
+                        border_w=2, shadow=False)
+            if unlocked:
+                self._text(d["emoji"], self.font_title, WHITE, x + 14, y + 16)
+                self._text(d["name"], self.font_medium, ACCENT, x + 58, y + 10)
+                self._text(d["desc"], self.font_tiny, INK, x + 58, y + 36)
+            else:
+                self._text("🔒", self.font_title, GREY, x + 14, y + 16)
+                self._text("???", self.font_medium, GREY, x + 58, y + 10)
+                self._text(d["desc"], self.font_tiny, INK_FAINT, x + 58, y + 36)
+
+        back = pygame.Rect(self.w // 2 - 100, self.h - 58, 200, 44)
+        self.draw_button("Zurück", back.x, back.y, back.w, back.h,
+                         color=ACCENT, text_color=BLACK)
+        return back
 
     # ═══════════════════════════════════════════════
     # HIGHSCORES

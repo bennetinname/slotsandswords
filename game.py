@@ -15,6 +15,7 @@ import audio
 import mapgen
 import options
 import assets
+import achievements
 
 
 # ═══════════════════════════════════════════════
@@ -38,6 +39,7 @@ STATE_SHOP        = "shop"           # Laden zwischen Etagen
 STATE_GAME_OVER   = "game_over"
 STATE_VICTORY     = "victory"
 STATE_SCORES      = "scores"         # Highscore-Anzeige
+STATE_ACHIEVEMENTS = "achievements"  # Erfolge-Anzeige
 
 
 class Game:
@@ -134,6 +136,11 @@ class Game:
         self.shop_purchased = set()    # bereits gekaufte Items im aktuellen Shop
         self.shop_gamble_count = 0     # Anzahl Glücksrad-Drehungen im aktuellen Shop
         
+        # Erfolge: laden + Toast-Warteschlange [(def, restzeit), ...]
+        achievements.load()
+        self.achievement_toasts = []
+        self.achievements_back_rect = None
+
         # Highscore-Zustand
         self.highscores = load_highscores()
         self.last_score = 0
@@ -266,7 +273,7 @@ class Game:
         elif self.state == STATE_PAUSE:
             self.state = self._prev_state           # Weiter spielen
         elif self.state in (STATE_TUTORIAL, STATE_SCORES, STATE_CHANGELOG,
-                            STATE_GAME_OVER, STATE_VICTORY):
+                            STATE_ACHIEVEMENTS, STATE_GAME_OVER, STATE_VICTORY):
             self.state = STATE_MENU
         else:  # Hauptmenü
             self.running = False
@@ -282,6 +289,7 @@ class Game:
                 "tutorial": pygame.Rect(cx - 110, 540, 220, 40),
                 "options":  pygame.Rect(cx - 110, 586, 220, 40),
                 "scores":   pygame.Rect(cx - 110, 632, 220, 40),
+                "achievements": pygame.Rect(cx - 110, 678, 220, 40),
                 "changelog": changelog,
             }
         return {
@@ -290,6 +298,7 @@ class Game:
             "tutorial": pygame.Rect(cx - 110, 520, 220, 42),
             "options":  pygame.Rect(cx - 110, 570, 220, 42),
             "scores":   pygame.Rect(cx - 110, 620, 220, 42),
+            "achievements": pygame.Rect(cx - 110, 668, 220, 42),
             "changelog": changelog,
         }
 
@@ -430,6 +439,9 @@ class Game:
             if lay["scores"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_SCORES
                 return
+            if lay["achievements"].collidepoint(pos):
+                audio.play("click"); self.state = STATE_ACHIEVEMENTS
+                return
             if lay["changelog"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_CHANGELOG
                 return
@@ -519,6 +531,10 @@ class Game:
         elif self.state == STATE_SCORES:
             if self.scores_back_rect and self.scores_back_rect.collidepoint(pos):
                 self.state = STATE_MENU
+
+        elif self.state == STATE_ACHIEVEMENTS:
+            if self.achievements_back_rect and self.achievements_back_rect.collidepoint(pos):
+                audio.play("click"); self.state = STATE_MENU
         
         elif self.state == STATE_GAME_OVER:
             # Klick auf "Bestenliste"
@@ -730,6 +746,10 @@ class Game:
     def _begin_act_clear(self):
         """Boss besiegt -> 'Akt geschafft'-Bildschirm, nächster Akt schon vorbereitet."""
         self._cleared_act = self.act
+        if self._cleared_act >= 1:
+            self._award("act1")
+        if self._cleared_act >= 3:
+            self._award("act3")
         # Nächsten (härteren) Akt schon generieren, damit Speichern/Weiter sauber ist
         self.act += 1
         self.gamemap = mapgen.generate(self.act)
@@ -830,6 +850,8 @@ class Game:
             self.combo_count = 1
 
         if self.combo_count >= 2:
+            if self.combo_count >= 5:
+                self._award("combo_5")
             self.combo_flash = 0.6
             audio.play_combo(self.combo_count)
             self._spawn_particles(600, 250, (255, 160, 40), count=10, speed=140, size=3)
@@ -973,6 +995,7 @@ class Game:
             self._log(f"  {eff}")
 
         if is_triple:
+            self._award("triple")
             audio.play("jackpot")
             self._do_shake(12)
             self._spawn_particles(590, 150, (255, 210, 80), count=30, speed=240, size=5)
@@ -1000,6 +1023,16 @@ class Game:
     def _update(self, dt):
         # Animationen laufen immer (auch während Hit-Stop)
         self._update_particles(dt)
+        # Erfolgs-Toasts ticken (laufen über jedem State weiter)
+        if self.achievement_toasts:
+            self.achievement_toasts = [[d, t - dt] for d, t in self.achievement_toasts
+                                       if t - dt > 0]
+        # Schwellen-Erfolge (billig, einmalig dank unlock-Sperre)
+        if self.player:
+            if self.player.gold >= 300:
+                self._award("rich")
+            if self.player.strength >= 10:
+                self._award("muscles")
         if self.shake > 0:
             self.shake = max(0.0, self.shake - dt * 60)
         if self.combo_flash > 0:
@@ -1069,7 +1102,11 @@ class Game:
             self._enemy_defeated()
             return
 
+        if self.player.hp == 1:
+            self._award("near_death")
+
         if not self.player.is_alive():
+            self._award("first_death")
             self.state = STATE_GAME_OVER
             self._save_highscore()
             audio.stop_spin()
@@ -1082,10 +1119,29 @@ class Game:
     # SIEG / BELOHNUNG
     # ═══════════════════════════════════════════════
     
+    def _award(self, aid):
+        """Schaltet einen Erfolg frei und zeigt einen Toast (nur beim 1. Mal)."""
+        if achievements.unlock(aid):
+            self.achievement_toasts.append([achievements.get(aid), 4.5])
+            audio.play("relic", 0.8)
+
     def _enemy_defeated(self):
         """Gegner besiegt: Belohnung vorbereiten"""
         self.player.damage_dealt += self.enemy.max_hp
         self.player.enemies_defeated += 1
+
+        # ─── Erfolge ───
+        self._award("first_blood")
+        if self.enemy.is_boss:
+            self._award("boss_kill")
+            if self.player.hp >= self.player.max_hp:
+                self._award("flawless_boss")
+            if len(self.player.deck + self.player.discard + self.player.hand) <= 8:
+                self._award("slim_deck")
+        if self.enemy.is_elite:
+            self._award("elite_kill")
+        if self.floor_num >= 20:
+            self._award("marathon")
 
         # Goldener Finger: +30% Gold
         gold = self.enemy.get_gold_reward()
@@ -1147,6 +1203,8 @@ class Game:
             return None
         relic = random.choice(available)
         self.player.add_relic(relic)
+        if len(self.player.relics) >= 5:
+            self._award("relic_5")
         audio.play("relic")
         return relic
 
@@ -1433,6 +1491,7 @@ class Game:
             win = bet * 8
             self.player.add_gold(win)
             self._shop_message(f"🎰💰 JACKPOT!!! +{win} Gold (8×)!!!")
+            self._award("gamble_jackpot")
             audio.play("jackpot")
             self._spawn_particles(self.shop_gamble_rect.centerx if self.shop_gamble_rect else 300,
                                   430, (255, 210, 80), count=26, speed=220, size=4)
@@ -1852,6 +1911,10 @@ class Game:
         
         elif self.state == STATE_SCORES:
             self._draw_scores()
+
+        elif self.state == STATE_ACHIEVEMENTS:
+            self.achievements_back_rect = self.ui.draw_achievements(
+                achievements.DEFS, achievements.is_unlocked, achievements.progress())
         
         elif self.state == STATE_GAME_OVER:
             self.ui.draw_game_over(self.player, self.floor_num,
@@ -1872,6 +1935,9 @@ class Game:
 
         # Partikel über allem
         self._draw_particles()
+        # Erfolgs-Toasts (oben rechts, über allem)
+        if self.achievement_toasts:
+            self.ui.draw_achievement_toasts(self.achievement_toasts)
         # Mute-Indikator
         if audio.is_muted():
             self.ui._text("🔇", self.ui.font_small, GREY, SCREEN_W - 30, 6)

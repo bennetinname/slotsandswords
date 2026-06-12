@@ -1,6 +1,22 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.7.5 – 2026-06-12]  ERFOLGE (ACHIEVEMENTS)
+---------------------------------------------
+NEU – 16 Erfolge, dauerhaft über alle Runs:
+* Neues Modul achievements.py: Definitionen + JSON-Persistenz neben der EXE
+  (via paths.py, wie Highscores/Optionen). Save-Format unberührt -> Patch.
+* Beispiele: Erstes Blut, Königsmörder, Makellos (Boss mit vollen HP),
+  Drilling, Hausverbot (Glücksrad-Jackpot), Kombo-Künstler (5er-Kombo),
+  Dem Tod von der Schippe (1 HP überleben), Weniger ist mehr (Boss mit
+  ≤8 Karten), Marathon (Etage 20), Lehrgeld (erster Tod) u.v.m.
+* Freischalten zeigt einen goldenen Toast oben rechts (Slide-in, stapelt
+  bis 3, läuft über jedem Bildschirm).
+* Neuer Menüpunkt "Erfolge": Übersicht mit Fortschritt (x von 16);
+  gesperrte Erfolge zeigen ??? + Beschreibung als Hinweis.
+
+─────────────────────────────────────────────────────
+
 [v1.7.4 – 2026-06-12]  VERSPOTTEN, DECK-SCROLLEN & EMOJI-DIÄT
 -------------------------------------------------------------
 GAMEPLAY – Verspotten hat jetzt Biss:
