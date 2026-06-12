@@ -63,3 +63,31 @@ CHARAKTERE / SZENEN
 APP-ICON
   icon.ico  –  64x64 (und 256x256) App-Icon fuer die EXE (Logo-Krone/Schwert)
 
+
+
+============================================================
+ NEU AB v1.8.0  -  NEUE GEGNER  (~140x180, Bosse ~200x220)
+============================================================
+Gleicher [STYLE] + [TECH] wie oben. Magenta-Hintergrund (#FF00FF),
+klar abgegrenzt, pro Sprite Abstand lassen.
+
+assets/enemies/
+  schleim.png        -  wobbly toxic swamp slime, dripping green ooze,
+                        single big lazy eye, tiny air bubbles, sickly
+                        green-purple glow
+  schlaeger.png      -  burly bar brawler, torn shirt, bandaged fists,
+                        broken bottle in one hand, angry red face,
+                        veins popping
+  pilzkoenigin.png   -  elegant mushroom queen, wide spotted cap as
+                        crown, spore clouds drifting around her,
+                        regal but creepy, purple-green palette
+  spiegel.png        -  cursed standing mirror, ornate twisted gold
+                        frame, dark reflective surface showing a
+                        screaming distorted face, floating slightly
+  gluecksgeist.png   -  translucent mischievous ghost, cyan-white glow,
+                        clutching stolen golden clover charms,
+                        smug grin, wispy tail
+  boss_fortuna.png   -  BOSS: glamorous fortune teller diva, spinning
+                        wheel of fate behind her, playing cards
+                        orbiting, pink-gold dress, theatrical pose,
+                        sinister smile (groesser, ~200x220)

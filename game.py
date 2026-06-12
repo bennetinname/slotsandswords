@@ -777,6 +777,10 @@ class Game:
         self.player.hand = []
         self.player.energy = self.player.max_energy
         self.player.block = 0
+        # Kampf-gebundene Status laufen zwischen Kämpfen ab
+        self.player.poison = 0
+        self.player.regen = 0
+        self.player.thorns = 0
         self.player.next_free_card = self.player.has_relic("first_free")
         self.player.draw_initial_hand()
         self.damage_numbers = []
@@ -832,6 +836,9 @@ class Game:
         if p.has_relic("chicken_relic") and random.random() < 0.4:
             log = self.slot_machine._chicken_effect(p, self.enemy) if self.slot_machine else None
             self._log(f"🐔 Hühner-Totem: {log}" if log else "🐔 Hühner-Totem: Ein Huhn erscheint!")
+        if p.has_relic("fortune_cookie"):
+            p.lucky += 1
+            self._log("🥠 Glückskeks: +1 Glücksrunde!")
 
     def _reset_combo(self):
         self.combo_type = None
@@ -996,6 +1003,10 @@ class Game:
 
         if is_triple:
             self._award("triple")
+            if self.player.has_relic("vamp_tooth"):
+                healed = self.player.heal_hp(10)
+                if healed > 0:
+                    self._log(f"🦷 Vampirzahn: Drilling heilt +{healed} HP!")
             audio.play("jackpot")
             self._do_shake(12)
             self._spawn_particles(590, 150, (255, 210, 80), count=30, speed=240, size=5)
@@ -1090,6 +1101,11 @@ class Game:
             thorn = self.enemy.take_damage(5)
             self._log(f"🌵 Dornenpanzer: {thorn} Schaden zurück!")
 
+        # Dornen-Status (Stachelhaut-Karte): reflektiert pro Treffer
+        if self.player.thorns > 0 and dmg_taken > 0 and self.enemy.is_alive():
+            thorn = self.enemy.take_damage(self.player.thorns)
+            self._log(f"🌵 Dornen: {thorn} Schaden zurück!")
+
         # Reflektor: Spieler reflektiert erlittenen Schaden zurück
         if self.player.reflect:
             if dmg_taken > 0:
@@ -1129,6 +1145,11 @@ class Game:
         """Gegner besiegt: Belohnung vorbereiten"""
         self.player.damage_dealt += self.enemy.max_hp
         self.player.enemies_defeated += 1
+
+        # Trophäensammlung: +1 Stärke dauerhaft pro Boss
+        if self.enemy.is_boss and self.player.has_relic("trophy"):
+            self.player.strength += 1
+            self._log("🏆 Trophäensammlung: +1 Stärke dauerhaft!")
 
         # ─── Erfolge ───
         self._award("first_blood")
@@ -1456,7 +1477,10 @@ class Game:
             self.upgrade_ctx = None
     
     def _gamble_bet(self):
-        """Aktueller Glücksrad-Einsatz – steigt mit jeder Drehung pro Shop-Besuch."""
+        """Aktueller Glücksrad-Einsatz – steigt mit jeder Drehung pro Shop-Besuch.
+        Würfelbecher-Relikt friert den Einsatz bei 25 ein."""
+        if self.player and self.player.has_relic("gamble_discount"):
+            return 25
         return 25 + self.shop_gamble_count * 15
 
     def _gamble(self):
@@ -1550,6 +1574,7 @@ class Game:
             "max_hp": p.max_hp, "hp": p.hp, "gold": p.gold, "block": p.block,
             "energy": p.energy, "max_energy": p.max_energy,
             "burn": p.burn, "strength": p.strength, "lucky": p.lucky,
+            "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
             "shield_up": p.shield_up, "reflect": p.reflect,
             "coin_rain_active": p.coin_rain_active, "next_free_card": p.next_free_card,
             "total_damage_taken": p._total_damage_taken, "bonus_spins": p.bonus_spins,
@@ -1569,6 +1594,7 @@ class Game:
         p.max_hp = d["max_hp"]; p.hp = d["hp"]; p.gold = d["gold"]; p.block = d["block"]
         p.energy = d["energy"]; p.max_energy = d["max_energy"]
         p.burn = d["burn"]; p.strength = d["strength"]; p.lucky = d["lucky"]
+        p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
         p.shield_up = d["shield_up"]; p.reflect = d["reflect"]
         p.coin_rain_active = d["coin_rain_active"]; p.next_free_card = d["next_free_card"]
         p._total_damage_taken = d.get("total_damage_taken", 0)
@@ -1593,6 +1619,7 @@ class Game:
             "is_boss": e.is_boss, "is_elite": e.is_elite, "mechanic": e.mechanic,
             "asset": e.asset,
             "burn": e.burn, "weakened": e.weakened,
+            "poison": e.poison, "vulnerable": e.vulnerable,
             "intent": e.intent, "intent_value": e.intent_value,
             "undying_used": e._undying_used, "jam_next": e.jam_next,
             "turn_count": e.turn_count,
@@ -1609,6 +1636,7 @@ class Game:
         }
         e = Enemy(etype)
         e.block = d["block"]; e.burn = d["burn"]; e.weakened = d["weakened"]
+        e.poison = d.get("poison", 0); e.vulnerable = d.get("vulnerable", 0)
         e.intent = d["intent"]; e.intent_value = d["intent_value"]
         e._undying_used = d.get("undying_used", False)
         e.jam_next = d.get("jam_next", False)

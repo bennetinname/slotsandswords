@@ -77,7 +77,10 @@ class Player:
         self.max_energy = PLAYER_ENERGY_PER_TURN
         
         # Status-Effekte
-        self.burn = 0          # Schaden pro Runde
+        self.burn = 0          # Schaden pro Runde (sinkt um 1)
+        self.poison = 0        # Gift: Schaden pro Runde, ignoriert Block (sinkt um 1)
+        self.regen = 0         # Regeneration: heilt pro Runde (sinkt um 1)
+        self.thorns = 0        # Dornen: reflektiert Schaden bei Gegnertreffer (ganzer Kampf)
         self.strength = 0      # Schadensbonus
         self.lucky = 0         # Slot-Bonus-Runden
         self.shield_up = False # Doppel-Block diese Runde
@@ -170,10 +173,18 @@ class Player:
         self.next_free_card = False
         if self.shield_up:
             self.shield_up = False
+        # Regeneration zuerst (heilen vor dem DoT fühlt sich fairer an)
+        if self.regen > 0:
+            self.heal_hp(self.regen)
+            self.regen -= 1
         # Burn-Schaden
         if self.burn > 0:
             self.take_damage(self.burn, ignore_block=True)
             self.burn = max(0, self.burn - 1)
+        # Gift-Schaden (ignoriert Block, sinkt um 1)
+        if self.poison > 0:
+            self.take_damage(self.poison, ignore_block=True)
+            self.poison -= 1
         # Nur nachziehen (ungespielte Karten bleiben in der Hand)
         self.draw_hand()
     
@@ -258,6 +269,8 @@ class Enemy:
 
         # Status
         self.burn = 0
+        self.poison = 0     # Gift: tickt jede Runde, sinkt NICHT (Build-up-Archetyp)
+        self.vulnerable = 0 # Runden mit +50% Schadensaufnahme
         self.weakened = 0   # Runden mit halbiertem Schaden
         
         # KI: Was plant der Gegner diese Runde?
@@ -307,6 +320,11 @@ class Enemy:
                 self.intent = "heavy_attack"
                 self.intent_value = int(self.damage * 1.5)
 
+        # Kneipenschläger: unter halben HP schlägt er 50% härter zu
+        if (self.mechanic == "enrage" and self.hp < self.max_hp // 2
+                and self.intent in ("attack", "heavy_attack")):
+            self.intent_value = int(self.intent_value * 1.5)
+
     def try_undying(self):
         """Lich-Mechanik: einmal pro Kampf den Tod überleben. Gibt Log oder None."""
         if self.hp <= 0 and self.mechanic == "undying" and not self._undying_used:
@@ -331,6 +349,8 @@ class Enemy:
     
     def take_damage(self, amount):
         """Gegner nimmt Schaden"""
+        if self.vulnerable > 0:
+            amount = int(amount * 1.5)
         effective = max(0, amount - self.armor)
         absorbed = min(self.block, effective)
         self.block -= absorbed
@@ -353,9 +373,20 @@ class Enemy:
             result.append(f"{self.name} brennt! ({burn_dmg} Schaden)")
             self.burn = max(0, self.burn - 1)
 
-        # Schwächungs-Abbau
+        # Gift (sinkt nicht – belohnt Gift-Aufbau über mehrere Runden)
+        if self.poison > 0:
+            self.hp = max(0, self.hp - self.poison)
+            result.append(f"☠️ {self.name} leidet unter Gift! ({self.poison} Schaden)")
+
+        # Status-Abbau
         if self.weakened > 0:
             self.weakened -= 1
+        if self.vulnerable > 0:
+            self.vulnerable -= 1
+
+        # Gift kann töten, bevor der Gegner handelt
+        if self.hp <= 0:
+            return result
 
         dealt = 0
         if self.intent == "attack":
@@ -434,6 +465,43 @@ class Enemy:
             healed = self.heal(max(1, dealt // 2))
             if healed > 0:
                 out.append(f"🩸 {self.name} heilt sich um {healed}!")
+
+        elif m == "venom" and attacked:
+            player.poison += 2
+            out.append(f"☠️ {self.name} vergiftet dich! (+2 Gift)")
+
+        elif m == "spores":
+            player.poison += 2
+            out.append(f"🍄 {self.name} verströmt Sporen! (+2 Gift, ohne Angriff)")
+
+        elif m == "curse_gift":
+            if random.random() < 0.35:
+                curse = random.choice(CURSE_DEFINITIONS)
+                player.add_card_to_deck(curse)
+                out.append(f"🪞 {self.name} zeigt dir dein Spiegelbild: '{curse['name']}' liegt in deinem Deck!")
+
+        elif m == "luck_eater":
+            if player.lucky > 0:
+                player.lucky -= 1
+                healed = self.heal(6)
+                out.append(f"👻 {self.name} frisst eine Glücksrunde! (+{healed} HP für ihn)")
+
+        elif m == "fortuna":
+            wheel = random.choice(["poison", "steal", "heal", "double"])
+            if wheel == "poison":
+                player.poison += 3
+                out.append(f"🎡 Schicksalsrad: GIFT! (+3 Gift auf dich)")
+            elif wheel == "steal":
+                stolen = min(player.gold, 10)
+                if stolen > 0:
+                    player.gold -= stolen
+                    out.append(f"🎡 Schicksalsrad: DIEBSTAHL! (−{stolen} Gold)")
+            elif wheel == "heal":
+                healed = self.heal(12)
+                out.append(f"🎡 Schicksalsrad: HEILUNG! (+{healed} HP für sie)")
+            else:
+                extra = player.take_damage(max(1, self.damage // 2))
+                out.append(f"🎡 Schicksalsrad: DOPPELSCHLAG! ({extra} Extra-Schaden)")
 
         return out
     

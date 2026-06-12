@@ -331,6 +331,61 @@ class CardEffectResolver:
             player.energy = max(0, player.energy - 1)
             logs.append("⛓️ FLUCH LAST: -1 Energie. Schwer wie Blei.")
 
+        # ═══ Neue Effekte v1.8.0: Gift, Debuff, Risiko ═══
+        elif effect == "poison_blade":
+            dmg = card.damage + player.strength
+            actual = enemy.take_damage(dmg)
+            stacks = 3 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            logs.append(f"🐍 {card.name}: {actual} Schaden + {stacks} Gift!")
+
+        elif effect == "toxic_cloud":
+            stacks = 5 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            logs.append(f"☠️ {card.name}: +{stacks} Gift! Der Gegner hat jetzt {enemy.poison} Gift.")
+
+        elif effect == "acid_barrel":
+            dmg = card.damage + player.strength
+            actual = enemy.take_damage(dmg)
+            if enemy.poison > 0:
+                bonus = 1 if player.has_relic("poison_boost") else 0
+                enemy.poison = enemy.poison * 2 + bonus
+                logs.append(f"🧪 {card.name}: {actual} Schaden, Gift VERDOPPELT auf {enemy.poison}!")
+            else:
+                logs.append(f"🧪 {card.name}: {actual} Schaden. (Kein Gift zum Verdoppeln ...)")
+
+        elif effect == "expose":
+            dmg = card.damage + player.strength
+            actual = enemy.take_damage(dmg)
+            rounds = 2 + (1 if player.has_relic("anatomy") else 0)
+            enemy.vulnerable += rounds
+            logs.append(f"🎯 {card.name}: {actual} Schaden + {rounds} Runden Verwundbar!")
+
+        elif effect == "executioner":
+            dmg = card.damage + player.strength
+            if enemy.poison > 0:
+                dmg = int(dmg * 1.5)
+            actual = enemy.take_damage(dmg)
+            note = " (Gift-Bonus!)" if enemy.poison > 0 else ""
+            logs.append(f"🪓 {card.name}: {actual} Schaden{note}")
+
+        elif effect == "regen_potion":
+            player.regen += 4
+            logs.append(f"🌿 {card.name}: +4 Regeneration (heilt 4, 3, 2, 1 HP)!")
+
+        elif effect == "spike_skin":
+            block_amount = card.block
+            if player.shield_up:
+                block_amount *= 2
+            player.block += block_amount
+            player.thorns += 4
+            logs.append(f"🌵 {card.name}: +{block_amount} Block, +4 Dornen (ganzer Kampf)!")
+
+        elif effect == "blood_pact":
+            player.take_damage(5, ignore_block=True)
+            player.energy += 2
+            logs.append(f"🩸 {card.name}: −5 HP, +2 Energie. Der Pakt ist besiegelt.")
+
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")
 

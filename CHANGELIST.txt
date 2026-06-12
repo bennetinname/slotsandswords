@@ -1,6 +1,40 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.0 – 2026-06-12]  GROSSES CONTENT-UPDATE
+---------------------------------------------
+(Minor-Bump: Save-Format erweitert -> alte Spielstände werden verworfen.)
+
+NEUE STATUSEFFEKTE:
+* GIFT (Gegner): tickt JEDE Runde, sinkt nicht – belohnt Gift-Aufbau.
+  Kann den Gegner töten, bevor er handelt.
+* GIFT (Spieler): tickt zu Rundenbeginn, ignoriert Block, sinkt um 1.
+* VERWUNDBAR (Gegner): nimmt +50% Schaden, baut pro Zug 1 Runde ab.
+* REGENERATION (Spieler): heilt zu Rundenbeginn, sinkt um 1.
+* DORNEN (Spieler): reflektiert Schaden bei jedem Gegnertreffer (Kampf).
+* Alle Status als Hover-Chips beim Spieler bzw. Icons über dem Gegner.
+
+8 NEUE KARTEN (Gift-/Debuff-/Risiko-Archetypen):
+* Giftklinge (6 dmg +3 Gift), Toxische Wolke (+5 Gift), Säurefass
+  (8 dmg, Gift VERDOPPELN), Schwachstelle (8 dmg +2 Verwundbar),
+  Henkersbeil (12 dmg, +50% gegen Vergiftete), Regenerationstrank
+  (+4 Regen), Stachelhaut (+8 Block +4 Dornen), Blutpakt (−5 HP +2 Energie).
+
+6 NEUE GEGNER (Sprites folgen – Prompts in asset_prompts.txt, bis dahin
+prozeduraler Fallback):
+* Sumpfschleim (T1, vergiftet), Kneipenschläger (T1, wütet unter 50% HP),
+  Pilzkönigin (T2, Sporen: Gift ohne Angriff), Verfluchter Spiegel
+  (T2, legt Flüche ins Deck), Glücksgeist (T2, frisst Glücksrunden),
+  MADAME FORTUNA (BOSS, dreht jede Runde ihr Schicksalsrad:
+  Gift/Diebstahl/Heilung/Doppelschlag).
+
+6 NEUE RELIKTE:
+* Giftring (+1 Gift auf alles), Würfelbecher (Glücksrad-Einsatz bleibt 25),
+  Trophäensammlung (+1 Stärke pro Boss), Vampirzahn (Drilling heilt 10),
+  Anatomiebuch (Verwundbar +1 Runde), Glückskeks (+1 Glücksrunde/Kampf).
+
+─────────────────────────────────────────────────────
+
 [v1.7.5 – 2026-06-12]  ERFOLGE (ACHIEVEMENTS)
 ---------------------------------------------
 NEU – 16 Erfolge, dauerhaft über alle Runs:

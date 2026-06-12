@@ -279,6 +279,24 @@ class UIRenderer:
                                text_col=ORANGE, fill=(60, 25, 10, 160))
             hot.append((pygame.Rect(col_x, cy, w, ch),
                         f"🔥 Brennen: du verlierst {player.burn} HP zu Beginn der nächsten Runde (sinkt um 1)."))
+            col_x += w + 6
+        if player.poison > 0:
+            w, ch = self._chip(f"☠️ {player.poison}", self.font_tiny, col_x, cy,
+                               text_col=GREEN, fill=(15, 50, 20, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"☠️ Gift: {player.poison} HP Schaden zu Rundenbeginn, ignoriert Block (sinkt um 1)."))
+            col_x += w + 6
+        if player.regen > 0:
+            w, ch = self._chip(f"🌿 {player.regen}", self.font_tiny, col_x, cy,
+                               text_col=GREEN, fill=(15, 50, 30, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"🌿 Regeneration: heilt {player.regen} HP zu Rundenbeginn (sinkt um 1)."))
+            col_x += w + 6
+        if player.thorns > 0:
+            w, ch = self._chip(f"🌵 {player.thorns}", self.font_tiny, col_x, cy,
+                               text_col=ORANGE, fill=(50, 40, 10, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"🌵 Dornen: reflektiert {player.thorns} Schaden bei jedem Gegnertreffer (ganzer Kampf)."))
 
         # Energie & Gold (Mitte-links)
         ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
@@ -555,10 +573,17 @@ class UIRenderer:
         self.screen.blit(plate, (body_x - (nw + 24) // 2, y + height - 18))
         self._text(name, nf, ncol, body_x, y + height - 14, center=True)
 
-        if enemy.burn > 0:
-            self._text(f"🔥×{enemy.burn}", self.font_small, ORANGE, body_x - 18, body_y - 84)
-        if enemy.weakened > 0:
-            self._text(f"😵 {enemy.weakened}", self.font_tiny, PURPLE, body_x + 24, body_y - 84)
+        # Status-Icons nebeneinander über dem Kopf
+        sx = body_x - 50
+        for cond, txt, col in [
+            (enemy.burn > 0,       f"🔥{enemy.burn}",      ORANGE),
+            (enemy.poison > 0,     f"☠️{enemy.poison}",     GREEN),
+            (enemy.vulnerable > 0, f"🎯{enemy.vulnerable}", RED),
+            (enemy.weakened > 0,   f"😵{enemy.weakened}",   PURPLE),
+        ]:
+            if cond:
+                self._text(txt, self.font_small, col, sx, body_y - 84, shadow=True)
+                sx += 36
 
         # Block-Schild (gut sichtbar, damit klar ist warum Schaden absorbiert wird)
         if getattr(enemy, "block", 0) > 0:

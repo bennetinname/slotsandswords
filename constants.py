@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.7.5"
+GAME_VERSION = "1.8.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.8.0", "GROSSES CONTENT-UPDATE: Gift & neue Status, 8 Karten, 6 Gegner, 6 Relikte"),
     ("1.7.5", "16 Erfolge! Dauerhaft über Runs, mit Einblendung beim Freischalten"),
     ("1.7.4", "Verspotten gibt −2 Stärke · Deck-Scrollen · weniger Deko-Emojis"),
     ("1.7.3", "Weniger RAM-Verbrauch (~−14 MB) · flüssigeres Rendern"),
@@ -245,6 +246,74 @@ ENEMY_TYPES = [
         "tier": 3,
         "is_boss": True,
         "mechanic": "rig_slots"
+    },
+    # ─── Neue Gegner (v1.8.0) ───
+    {
+        "name": "Sumpfschleim",
+        "asset": "schleim",
+        "hp": 26, "max_hp": 26,
+        "damage": 4, "armor": 0,
+        "gold_reward": (8, 14),
+        "color": GREEN_DARK,
+        "tooltip": "Glibbert bedrohlich. Seine Treffer vergiften dich (Gift tickt jede Runde).",
+        "tier": 1,
+        "mechanic": "venom"
+    },
+    {
+        "name": "Kneipenschläger",
+        "asset": "schlaeger",
+        "hp": 38, "max_hp": 38,
+        "damage": 7, "armor": 0,
+        "gold_reward": (10, 16),
+        "color": RED_DARK,
+        "tooltip": "Wird WÜTEND, wenn er blutet: unter halben HP schlägt er härter zu.",
+        "tier": 1,
+        "mechanic": "enrage"
+    },
+    {
+        "name": "Pilzkönigin",
+        "asset": "pilzkoenigin",
+        "hp": 58, "max_hp": 58,
+        "damage": 9, "armor": 1,
+        "gold_reward": (18, 26),
+        "color": PURPLE_DARK,
+        "tooltip": "Verströmt jede Runde Sporen: +2 Gift auf dich, ganz ohne Angriff.",
+        "tier": 2,
+        "mechanic": "spores"
+    },
+    {
+        "name": "Verfluchter Spiegel",
+        "asset": "spiegel",
+        "hp": 64, "max_hp": 64,
+        "damage": 10, "armor": 3,
+        "gold_reward": (20, 30),
+        "color": GREY,
+        "tooltip": "Zeigt dir dein schlechtestes Ich: legt dir manchmal Flüche ins Deck.",
+        "tier": 2,
+        "mechanic": "curse_gift"
+    },
+    {
+        "name": "Glücksgeist",
+        "asset": "gluecksgeist",
+        "hp": 48, "max_hp": 48,
+        "damage": 8, "armor": 0,
+        "gold_reward": (16, 24),
+        "color": CYAN,
+        "tooltip": "Halb durchsichtig, ganz gemein: stiehlt deine Glücksrunden für sich.",
+        "tier": 2,
+        "mechanic": "luck_eater"
+    },
+    {
+        "name": "MADAME FORTUNA",
+        "asset": "boss_fortuna",
+        "hp": 130, "max_hp": 130,
+        "damage": 13, "armor": 2,
+        "gold_reward": (50, 85),
+        "color": (240, 90, 160),
+        "tooltip": "BOSS: Dreht jede Runde ihr Schicksalsrad – Gift, Diebstahl, Heilung oder Doppelschlag.",
+        "tier": 3,
+        "is_boss": True,
+        "mechanic": "fortuna"
     },
 ]
 
@@ -690,6 +759,89 @@ CARD_DEFINITIONS = [
         "effect": "gold_rush",
         "exhaust": True
     },
+    # ═══ NEUE KARTEN v1.8.0: Gift-, Debuff- & Risiko-Archetypen ═══
+    {
+        "name": "Giftklinge",
+        "type": "attack",
+        "cost": 1,
+        "damage": 6,
+        "color": GREEN_DARK,
+        "tooltip": "6 Schaden + 3 Gift. Gift tickt JEDE Runde und sinkt nicht. Geduld zahlt sich aus.",
+        "rarity": "common",
+        "effect": "poison_blade"
+    },
+    {
+        "name": "Toxische Wolke",
+        "type": "special",
+        "cost": 2,
+        "damage": 0,
+        "color": GREEN_DARK,
+        "tooltip": "5 Gift auf den Gegner. Kein Schaden jetzt – dafür ein langsamer, hässlicher Tod.",
+        "rarity": "uncommon",
+        "effect": "toxic_cloud"
+    },
+    {
+        "name": "Säurefass",
+        "type": "attack",
+        "cost": 2,
+        "damage": 8,
+        "color": GREEN_DARK,
+        "tooltip": "8 Schaden, dann VERDOPPELT sich das Gift auf dem Gegner. Chemie ist toll.",
+        "rarity": "rare",
+        "effect": "acid_barrel"
+    },
+    {
+        "name": "Schwachstelle",
+        "type": "attack",
+        "cost": 1,
+        "damage": 8,
+        "color": ORANGE,
+        "tooltip": "8 Schaden + 2 Runden Verwundbar (Gegner nimmt +50% Schaden).",
+        "rarity": "uncommon",
+        "effect": "expose"
+    },
+    {
+        "name": "Henkersbeil",
+        "type": "attack",
+        "cost": 2,
+        "damage": 12,
+        "color": RED_DARK,
+        "tooltip": "12 Schaden. +50% gegen vergiftete Gegner. Das Beil kennt keine Gnade.",
+        "rarity": "rare",
+        "effect": "executioner"
+    },
+    {
+        "name": "Regenerationstrank",
+        "type": "special",
+        "cost": 1,
+        "damage": 0,
+        "heal": 0,
+        "color": GREEN,
+        "tooltip": "+4 Regeneration: heilt 4, dann 3, dann 2 ... HP pro Rundenstart.",
+        "rarity": "common",
+        "effect": "regen_potion"
+    },
+    {
+        "name": "Stachelhaut",
+        "type": "defense",
+        "cost": 1,
+        "damage": 0,
+        "block": 8,
+        "color": ORANGE,
+        "tooltip": "+8 Block und +4 Dornen (reflektiert Schaden bei jedem Gegnertreffer, ganzer Kampf).",
+        "rarity": "uncommon",
+        "effect": "spike_skin"
+    },
+    {
+        "name": "Blutpakt",
+        "type": "special",
+        "cost": 0,
+        "damage": 0,
+        "color": RED_DARK,
+        "tooltip": "Zahle 5 HP, erhalte +2 Energie. Der Pakt fragt nicht zweimal.",
+        "rarity": "rare",
+        "effect": "blood_pact"
+    },
 ]
 
 # ═══════════════════════════════════════════════
@@ -756,6 +908,19 @@ RELIC_DEFINITIONS = [
      "desc": "+20 Max HP (sofort & dauerhaft).", "rarity": "common"},
     {"id": "chicken_relic",  "name": "Hühner-Totem",    "emoji": "🐔",
      "desc": "Kampfbeginn: 40% Chance ein Huhn zu beschwören.", "rarity": "uncommon"},
+    # ─── Neue Relikte (v1.8.0) ───
+    {"id": "poison_boost",   "name": "Giftring",        "emoji": "🐍",
+     "desc": "Alle deine Gift-Effekte geben +1 Gift extra.", "rarity": "uncommon"},
+    {"id": "gamble_discount","name": "Würfelbecher",    "emoji": "🥤",
+     "desc": "Glücksrad-Einsatz steigt nicht mehr (bleibt bei 25 Gold).", "rarity": "uncommon"},
+    {"id": "trophy",         "name": "Trophäensammlung","emoji": "🏆",
+     "desc": "+1 Stärke dauerhaft für jeden besiegten Boss.", "rarity": "rare"},
+    {"id": "vamp_tooth",     "name": "Vampirzahn",      "emoji": "🦷",
+     "desc": "Drilling im Slot heilt dich um 10 HP.", "rarity": "uncommon"},
+    {"id": "anatomy",        "name": "Anatomiebuch",    "emoji": "📕",
+     "desc": "Verwundbar, das du verursachst, hält +1 Runde länger.", "rarity": "common"},
+    {"id": "fortune_cookie", "name": "Glückskeks",      "emoji": "🥠",
+     "desc": "Kampfbeginn: +1 Glücksrunde für den Slot.", "rarity": "common"},
 ]
 
 # ═══════════════════════════════════════════════
