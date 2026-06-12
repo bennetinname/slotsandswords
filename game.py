@@ -113,6 +113,8 @@ class Game:
 
         # Kampflog-Scroll (TODO #10)
         self.log_scroll = 0
+        # Scroll im Karten-Raster (Aufwerten/Verbrennen), in Reihen
+        self.grid_scroll = 0
 
         # Bonus-Spins-Counter
         self.spins_remaining = 1
@@ -378,7 +380,15 @@ class Game:
                     break
 
     def _handle_scroll(self, delta_y):
-        """Mausrad-Scrolling für das Kampflog"""
+        """Mausrad-Scrolling: Karten-Raster (Overlay) vor Kampflog"""
+        # Karten-Raster (Aufwerten/Verbrennen): bei großen Decks scrollen
+        if self.shop_remove_mode or self.shop_upgrade_mode:
+            total = len(self.player.deck + self.player.discard + self.player.hand)
+            rows = (total + 7) // 8                  # 8 Karten pro Reihe
+            max_scroll = max(0, rows - 3)            # 3 Reihen passen auf den Schirm
+            self.grid_scroll = max(0, min(max_scroll, self.grid_scroll - delta_y))
+            return
+
         log_rect = pygame.Rect(420, 290, 380, 195)
         if log_rect.collidepoint(pygame.mouse.get_pos()):
             max_scroll = max(0, len(self.combat_log) - 5)
@@ -586,6 +596,7 @@ class Game:
                 return
             self.upgrade_ctx = "rest"
             self.shop_upgrade_mode = True
+            self.grid_scroll = 0
         elif lay["leave"].collidepoint(pos):
             audio.play("click")
             self._finish_node()
@@ -1303,6 +1314,7 @@ class Game:
                 self._shop_message("❌ Dein Deck ist schon klein genug!")
                 return
             self.shop_remove_mode = True
+            self.grid_scroll = 0
             self.shop_pending_cost = cost
             return
 
@@ -1315,6 +1327,7 @@ class Game:
                 return
             self.upgrade_ctx = "shop"
             self.shop_upgrade_mode = True
+            self.grid_scroll = 0
             self.shop_pending_cost = cost
             return
 
@@ -1850,10 +1863,12 @@ class Game:
         # Globale Overlays (Schmiede/Verbrennen) über dem aktuellen Screen
         if self.shop_remove_mode:
             self.shop_remove_rects = self.ui.draw_card_grid(
-                self.player, "🔥 Welche Karte verbrennen?", ORANGE, only_upgradeable=False)
+                self.player, "🔥 Welche Karte verbrennen?", ORANGE, only_upgradeable=False,
+                scroll=self.grid_scroll)
         elif self.shop_upgrade_mode:
             self.shop_upgrade_rects = self.ui.draw_card_grid(
-                self.player, "⚒️ Welche Karte aufwerten?", GOLD, only_upgradeable=True)
+                self.player, "⚒️ Welche Karte aufwerten?", GOLD, only_upgradeable=True,
+                scroll=self.grid_scroll)
 
         # Partikel über allem
         self._draw_particles()
@@ -1985,7 +2000,7 @@ class Game:
                 color=GOLD, pulsing=True
             )
         elif self.slot_machine.spinning:
-            self.ui.draw_button("⚡ Dreht...", SCREEN_W//2 - 80, spin_y, 160, 45,
+            self.ui.draw_button("Dreht ...", SCREEN_W//2 - 80, spin_y, 160, 45,
                                color=GREY_DARK, disabled=True)
 
         if not enemy_down and self.spins_remaining == 0 and not self.slot_machine.spinning:
@@ -1994,7 +2009,7 @@ class Game:
                 hint = self.ui.font_small.render("🎰 Automat blockiert – keine Drehung!",
                                                  True, ORANGE)
                 self.screen.blit(hint, (SCREEN_W//2 - hint.get_width()//2, 700))
-            self.ui.draw_button("➡️ Weiter", SCREEN_W//2 - 80, 735, 160, 40,
+            self.ui.draw_button("Weiter", SCREEN_W//2 - 80, 735, 160, 40,
                                color=GREEN, pulsing=True)
     
     def _draw_slot_effects(self):

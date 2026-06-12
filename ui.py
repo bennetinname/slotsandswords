@@ -41,12 +41,16 @@ class UIRenderer:
         self.font_huge   = pygame.font.SysFont("Segoe UI Emoji", 44, bold=True)
         self.font_h1     = pygame.font.SysFont("Segoe UI Emoji", 30, bold=True)
         self.font_title  = pygame.font.SysFont("Segoe UI Emoji", 22, bold=True)
-        self.font_large  = pygame.font.SysFont("Segoe UI Emoji", 34)
+        # RAM-Sparen: large teilt sich das Font-Objekt mit h1 (Emoji-Fonts kosten
+        # je ~8 MB). 'large' wird nur dekorativ/selten genutzt -> 30px bold reicht.
+        self.font_large  = self.font_h1
         self.font_medium = pygame.font.SysFont("Segoe UI Emoji", 19, bold=True)
         self.font_small  = pygame.font.SysFont("Segoe UI Emoji", 15)
         self.font_tiny   = pygame.font.SysFont("Segoe UI Emoji", 13)
-        self._font_micro = pygame.font.SysFont("Segoe UI Emoji", 11)
-        self._font_nano  = pygame.font.SysFont("Segoe UI Emoji", 9)
+        # micro + nano teilen sich ein 10px-Objekt (spart ein weiteres Font-Objekt).
+        # Bleibt als kleine Tooltip-Fallback-Stufe erhalten, ohne Überlauf-Risiko.
+        self._font_micro = pygame.font.SysFont("Segoe UI Emoji", 10)
+        self._font_nano  = self._font_micro
 
         self._anim_t = 0.0
 
@@ -111,18 +115,23 @@ class UIRenderer:
 
         self._bg = bg
 
+        # Schwebende Deko-Glyphen EINMAL vorrendern (statt 8×/Frame neu) -> weniger
+        # CPU/GC-Druck. Position wird pro Frame animiert, das Surface bleibt gleich.
+        self._bg_glyphs = []
+        for g in ["♠", "♥", "♦", "♣", "🎰", "💰", "🍀", "⭐"]:
+            surf = self.font_large.render(g, True, _lighten(BG_TOP, 0.12))
+            surf.set_alpha(26)
+            self._bg_glyphs.append(surf)
+
     def draw_background(self):
         """Zeichnet den vorberechneten Hintergrund + dezente Animation"""
         self.screen.blit(self._bg, (0, 0))
-        # Schwebende, sehr dezente Symbole
+        # Schwebende, sehr dezente Symbole (vorgerenderte Surfaces, nur bewegt)
         t = self._anim_t
-        glyphs = ["♠", "♥", "♦", "♣", "🎰", "💰", "🍀", "⭐"]
-        for i, g in enumerate(glyphs):
+        for i, surf in enumerate(self._bg_glyphs):
             ph = i * 1.7
             x = (math.sin(t * 0.12 + ph) * 0.5 + 0.5) * self.w
             y = ((t * 14 + i * 110) % (self.h + 100)) - 50
-            surf = self.font_large.render(g, True, _lighten(BG_TOP, 0.12))
-            surf.set_alpha(26)
             self.screen.blit(surf, (x, y))
 
     def _shadow(self, rect, radius=14, spread=10, alpha=120, dy=7):
@@ -140,6 +149,8 @@ class UIRenderer:
                 pygame.draw.rect(surf, (0, 0, 0, a),
                                  (inset, inset, w + (spread - inset) * 2, h + (spread - inset) * 2),
                                  border_radius=radius + spread - inset)
+            if len(self._shadow_cache) > 160:   # Schutz gegen Endlos-Wachstum
+                self._shadow_cache.clear()
             self._shadow_cache[key] = surf
         self.screen.blit(surf, (x - spread, y - spread + dy))
 
@@ -160,6 +171,8 @@ class UIRenderer:
         base.blit(hi, (0, 0))
         if border_w > 0:
             pygame.draw.rect(base, border, (0, 0, w, h), border_w, border_radius=radius)
+        if len(self._panel_cache) > 320:        # Schutz gegen Endlos-Wachstum
+            self._panel_cache.clear()
         self._panel_cache[key] = base
         return base
 
@@ -192,10 +205,12 @@ class UIRenderer:
         pygame.draw.rect(self.screen, bg, (x, y, w, h), border_radius=radius)
         fw = int(w * ratio)
         if fw > 0:
-            fill = self._panel_surface(fw, h, min(radius, h // 2),
+            # EIN Vollbreiten-Gradient cachen und nur den linken Teil blitten,
+            # statt pro HP-Breite ein eigenes Surface zu cachen (vermeidet Cache-Flut).
+            fill = self._panel_surface(w, h, min(radius, h // 2),
                                        _lighten(col, 0.3), _darken(col, 0.15),
                                        (0, 0, 0), 0)
-            self.screen.blit(fill, (x, y))
+            self.screen.blit(fill, (x, y), area=(0, 0, fw, h))
             # Glanzlinie
             pygame.draw.line(self.screen, _lighten(col, 0.5),
                              (x + 2, y + 2), (x + fw - 2, y + 2))
@@ -249,11 +264,15 @@ class UIRenderer:
             hot.append((pygame.Rect(col_x, cy, w, ch),
                         "🛡 Block: absorbiert eingehenden Schaden. Bleibt bestehen, bis er aufgebraucht ist."))
             col_x += w + 6
-        if player.strength > 0:
-            w, ch = self._chip(f"💪 {player.strength}", self.font_tiny, col_x, cy,
-                               text_col=ORANGE, fill=(60, 35, 10, 160))
+        if player.strength != 0:
+            # Negative Stärke (z.B. durch Verspotten) rot anzeigen
+            neg = player.strength < 0
+            w, ch = self._chip(f"💪 {player.strength:+d}", self.font_tiny, col_x, cy,
+                               text_col=(HP_RED if neg else ORANGE),
+                               fill=((60, 12, 12, 160) if neg else (60, 35, 10, 160)))
             hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"💪 Stärke: +{player.strength} Schaden auf JEDEN deiner Angriffe (dauerhaft)."))
+                        f"💪 Stärke: {player.strength:+d} Schaden auf JEDEN deiner Angriffe (dauerhaft). "
+                        + ("Verspotten hat dich geschwächt!" if neg else "")))
             col_x += w + 6
         if player.burn > 0:
             w, ch = self._chip(f"🔥 {player.burn}", self.font_tiny, col_x, cy,
@@ -855,7 +874,7 @@ class UIRenderer:
             self._draw_card(card, rect, hovered=hov)
 
         skip_rect = pygame.Rect(self.w // 2 - 90, py + ph - 58, 180, 42)
-        self.draw_button("Überspringen ➡", skip_rect.x, skip_rect.y, skip_rect.w, skip_rect.h,
+        self.draw_button("Überspringen", skip_rect.x, skip_rect.y, skip_rect.w, skip_rect.h,
                          color=GREY_DARK, text_color=WHITE)
         return card_rects, skip_rect
 
@@ -920,7 +939,7 @@ class UIRenderer:
             for i, line in enumerate(res_lines):
                 self._text(line, self.font_medium, ACCENT_SOFT, self.w // 2, oy + i * 26, center=True)
             continue_rect = pygame.Rect(self.w // 2 - 100, py + ph - 64, 200, 46)
-            self.draw_button("Weiter ➡", continue_rect.x, continue_rect.y,
+            self.draw_button("Weiter", continue_rect.x, continue_rect.y,
                              continue_rect.w, continue_rect.h, color=GREEN, pulsing=True)
         return option_rects, continue_rect
 
@@ -1040,7 +1059,7 @@ class UIRenderer:
         self._text(f"❤ {player.hp}/{player.max_hp}    💰 {player.gold}    💠 {len(player.relics)} Relikte",
                    self.font_small, INK_DIM, self.w // 2, ny + 34, center=True)
 
-        self.draw_button("➡ Weiter", self.w // 2 - 110, self.h - 110, 220, 50,
+        self.draw_button("Weiter", self.w // 2 - 110, self.h - 110, 220, 50,
                          color=GREEN, text_color=BLACK, pulsing=True)
 
     # ═══════════════════════════════════════════════
@@ -1108,7 +1127,7 @@ class UIRenderer:
             y += 46
 
         back = pygame.Rect(self.w // 2 - 100, self.h - 62, 200, 44)
-        self.draw_button("⬅ Zurück", back.x, back.y, back.w, back.h, color=ACCENT, text_color=BLACK)
+        self.draw_button("Zurück", back.x, back.y, back.w, back.h, color=ACCENT, text_color=BLACK)
         return back
 
     # ═══════════════════════════════════════════════
@@ -1252,7 +1271,7 @@ class UIRenderer:
                 self._text(line, self.font_tiny, INK_DIM, rc.centerx, oy + 92 + i * 15, center=True)
 
         lv = layout["leave"]
-        self.draw_button("➡ Weiter (ohne Rast)", lv.x, lv.y, lv.w, lv.h,
+        self.draw_button("Weiter (ohne Rast)", lv.x, lv.y, lv.w, lv.h,
                          color=GREY_DARK, text_color=WHITE)
 
     def draw_pause(self, layout):
@@ -1312,7 +1331,7 @@ class UIRenderer:
                        pill.x - 8, pill.centery - 7, right=True)
 
         b = layout["back"]
-        self.draw_button("⬅ Zurück", b.x, b.y, b.w, b.h, color=ACCENT, text_color=BLACK)
+        self.draw_button("Zurück", b.x, b.y, b.w, b.h, color=ACCENT, text_color=BLACK)
         d = layout["defaults"]
         self.draw_button("↺ Standard", d.x, d.y, d.w, d.h, color=GREY_DARK, text_color=WHITE)
         self._text("Tipp: [M] schaltet den Ton schnell stumm.", self.font_tiny, INK_FAINT,
@@ -1381,7 +1400,7 @@ class UIRenderer:
             lx += cellw
 
         back_rect = pygame.Rect(self.w // 2 - 100, self.h - 62, 200, 44)
-        self.draw_button("⬅ Zurück zum Menü", back_rect.x, back_rect.y, back_rect.w, back_rect.h,
+        self.draw_button("Zurück zum Menü", back_rect.x, back_rect.y, back_rect.w, back_rect.h,
                          color=ACCENT, text_color=BLACK)
         return back_rect
 
@@ -1473,12 +1492,13 @@ class UIRenderer:
             self._text(message, self.font_title, CYAN, self.w // 2, 524, center=True)
 
         leave_rect = pygame.Rect(self.w // 2 - 150, self.h - 72, 300, 50)
-        self.draw_button("Weiter zur nächsten Etage ➡", leave_rect.x, leave_rect.y,
+        self.draw_button("Weiter zur nächsten Etage", leave_rect.x, leave_rect.y,
                          leave_rect.w, leave_rect.h, color=GREEN, text_color=BLACK, pulsing=True)
         return item_rects, gamble_rect, leave_rect
 
-    def draw_card_grid(self, player, title, accent, only_upgradeable=False):
-        """Karten-Auswahlraster (Verbrennen oder Aufwerten). Gibt [(rect, card)] zurück."""
+    def draw_card_grid(self, player, title, accent, only_upgradeable=False, scroll=0):
+        """Karten-Auswahlraster (Verbrennen oder Aufwerten). Gibt [(rect, card)] zurück.
+        scroll = Anzahl ausgeblendeter Reihen oben (Mausrad)."""
         self._dim(215)
         self._text(title, self.font_h1, accent, self.w // 2, 26, center=True, shadow=True)
         if only_upgradeable:
@@ -1494,10 +1514,16 @@ class UIRenderer:
         start_y = 92
         mouse = pygame.mouse.get_pos()
 
+        total_rows = (len(all_cards) + per_row - 1) // per_row
+        visible_rows = max(1, (self.h - 90 - start_y + spacing) // (card_h + spacing))
+        scroll = max(0, min(scroll, max(0, total_rows - visible_rows)))
+
         for i, card in enumerate(all_cards):
             row, col = i // per_row, i % per_row
+            if row < scroll:
+                continue
             cx = start_x + col * (card_w + spacing)
-            cy = start_y + row * (card_h + spacing)
+            cy = start_y + (row - scroll) * (card_h + spacing)
             if cy + card_h > self.h - 90:
                 break
             selectable = (not only_upgradeable) or card.can_upgrade()
@@ -1510,6 +1536,18 @@ class UIRenderer:
                 self.screen.blit(veil, (cx, cy))
             if selectable:
                 rects.append((rect, card))
+
+        # Scroll-Hinweis + schlanker Balken rechts, wenn nicht alles passt
+        if total_rows > visible_rows:
+            self._text(f"Mausrad: scrollen ({scroll + 1}–{min(total_rows, scroll + visible_rows)} von {total_rows} Reihen)",
+                       self.font_tiny, INK_DIM, self.w // 2, self.h - 88, center=True)
+            track_x = start_x + per_row * (card_w + spacing) + 4
+            track_y, track_h = start_y, visible_rows * (card_h + spacing) - spacing
+            pygame.draw.rect(self.screen, GREY_DARK, (track_x, track_y, 6, track_h), border_radius=3)
+            thumb_h = max(24, int(track_h * visible_rows / total_rows))
+            denom = max(1, total_rows - visible_rows)
+            thumb_y = track_y + int((track_h - thumb_h) * scroll / denom)
+            pygame.draw.rect(self.screen, accent, (track_x, thumb_y, 6, thumb_h), border_radius=3)
 
         self.draw_button("Abbrechen", self.w // 2 - 80, self.h - 70, 160, 42,
                          color=GREY_DARK, text_color=WHITE)
@@ -1564,6 +1602,6 @@ class UIRenderer:
                     self._text(val, self.font_small, row_color, cx, ry)
 
         back_rect = pygame.Rect(self.w // 2 - 90, self.h - 66, 180, 44)
-        self.draw_button("⬅ Zurück", back_rect.x, back_rect.y, back_rect.w, back_rect.h,
+        self.draw_button("Zurück", back_rect.x, back_rect.y, back_rect.w, back_rect.h,
                          color=ACCENT, text_color=BLACK)
         return back_rect

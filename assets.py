@@ -55,6 +55,8 @@ def scaled(cat, name, w, h):
     s = _scaled_cache.get(key)
     if s is None:
         s = pygame.transform.smoothscale(base, (max(1, w), max(1, h)))
+        if len(_scaled_cache) > 256:            # Schutz gegen Endlos-Wachstum
+            _scaled_cache.clear()
         _scaled_cache[key] = s
     return s
 

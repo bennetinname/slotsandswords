@@ -325,7 +325,7 @@ class Enemy:
             "attack":       f"⚔️ {self.intent_value} Schaden",
             "heavy_attack": f"💢 {self.intent_value} Schaden (stark!)",
             "defend":       f"🛡️ {self.intent_value} Block",
-            "taunt":        "😤 Verspottet dich (tut nichts)",
+            "taunt":        "😤 Verspottet dich (−2 Stärke!)",
         }
         return icons.get(self.intent, "?")
     
@@ -377,7 +377,9 @@ class Enemy:
             result.append(f"{self.name} blockt! (+{self.intent_value} Block)")
 
         elif self.intent == "taunt":
-            result.append(f"{self.name}: 'Du kannst mich nicht besiegen!' (leer)")
+            # Spott demoralisiert: −2 Stärke, darf ins Minus gehen (weniger Schaden)
+            player.strength -= 2
+            result.append(f"{self.name} verspottet dich! −2 Stärke (jetzt {player.strength:+d})")
 
         # ─── Einzigartige Mechaniken ───
         result.extend(self._apply_mechanic(player, dealt))

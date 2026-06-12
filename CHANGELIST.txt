@@ -1,6 +1,48 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.7.4 – 2026-06-12]  VERSPOTTEN, DECK-SCROLLEN & EMOJI-DIÄT
+-------------------------------------------------------------
+GAMEPLAY – Verspotten hat jetzt Biss:
+* "Verspotten" tat bisher gar nichts. Jetzt: −2 Stärke für den Spieler,
+  darf ins MINUS gehen (negative Stärke = weniger Schaden auf alle Angriffe).
+  Intent-Anzeige und Kampflog sagen das klar an.
+* Stärke-Chip in der Statusleiste zeigt jetzt auch negative Werte (rot,
+  mit Vorzeichen) inkl. angepasstem Hover-Tooltip. Schaden kann durch
+  negative Stärke nie unter 0 fallen (kein "Heilen" des Gegners).
+
+UI – Karten-Raster (Aufwerten/Verbrennen) scrollbar:
+* Bei großen Decks waren Karten jenseits von 3 Reihen unsichtbar und damit
+  nicht aufwertbar. Jetzt: Mausrad scrollt das Raster, rechts läuft ein
+  schlanker Scrollbalken mit, unten steht welcher Reihen-Ausschnitt sichtbar
+  ist. Scroll wird beim Öffnen zurückgesetzt und sauber geclampt.
+
+UI – Emojis nur noch, wo sie etwas bedeuten:
+* Deko-Pfeile/Emojis von reinen Navigations-Buttons entfernt ("Weiter",
+  "Zurück", "Überspringen", "Weiter zur nächsten Etage", "Dreht ...").
+  Funktions-Icons (Slot, Speichern, Bestenliste, Optionen, Tutorial) bleiben.
+
+─────────────────────────────────────────────────────
+
+[v1.7.3 – 2026-06-11]  RAM-OPTIMIERUNG
+--------------------------------------
+Analyse: KEIN Speicher-Leak – der Verbrauch war stabil bei ~110 MB. Davon
+entfielen ~70 MB allein auf 9 Emoji-Schriftgrößen (je ~8 MB Glyph-Atlas).
+
+Maßnahmen (RAM ~110 -> ~96 MB, -13%; Lesbarkeit unverändert geprüft):
+* Zwei selten/dekorativ genutzte Schriftgrößen teilen sich nun ein Font-Objekt
+  (font_large -> h1; micro+nano -> ein 10px-Fallback). Spart 2 Emoji-Atlanten.
+  Die kleinen Karten-/Tooltip-Schriften (small/tiny) bleiben unverändert, damit
+  die Lesbarkeit erhalten bleibt.
+* Schwebende Hintergrund-Glyphen werden EINMAL vorgerendert statt 8×/Frame neu
+  -> weniger CPU/GC-Druck (flüssigeres Bild).
+* HP-/Fortschrittsbalken nutzen jetzt EIN gecachtes Vollbreiten-Surface und
+  blitten nur den gefüllten Teil – kein Surface pro Pixelbreite mehr.
+* Schutz-Caps auf allen Surface-Caches (Panel/Schatten/Skaliert), damit in sehr
+  langen Endlos-Läufen nichts unbegrenzt wächst.
+
+─────────────────────────────────────────────────────
+
 [v1.7.2 – 2026-06-11]  GLÜCKSRAD-BALANCE & SLOT-SIEG-FIX
 --------------------------------------------------------
 BUGFIX – Weiterdrehen nach Kill:
