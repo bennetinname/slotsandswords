@@ -1,0 +1,117 @@
+====================================================================
+ SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.9.0)
+====================================================================
+Sammlung der Bild-Prompts fuer alles, wofuer noch Grafik fehlt.
+Aufbau wie gehabt:  [STYLE] + [SUBJECT] + [TECH].
+STYLE/TECH unten einmal definiert, pro Bild nur den SUBJECT-Teil tauschen.
+Tipp: gleichen Seed + ganzen Block zusammen generieren -> konsistenter Stil.
+
+EINBINDEN (wie bei den letzten Runden):
+- Sprites kommen auf MAGENTA-Hintergrund (#FF00FF), klar abgegrenzt,
+  pro Sprite etwas Abstand lassen (ein grosses Sheet ist ok).
+- Claude schneidet sie per Connected-Components, keyt Magenta transparent,
+  trimmt eng und legt sie in den jeweiligen Zielordner (je Block angegeben).
+- AUSNAHME Hintergruende: das sind VOLLBILD-Szenen OHNE Magenta, randlos.
+
+--------------------------------------------------------------------
+[STYLE]
+16-bit pixel art, dark "dive-bar casino" dark-fantasy theme, grimy
+neon-and-gold palette (deep purple #1a1228, gold #ffc640, red #dc3232,
+teal accent #32dcdc), humorous-grotesque design, chunky readable
+silhouette, bold 1px dark outline, limited ~32-color palette, dramatic
+light from top-left, subtle dithering for shading, clean cel shading.
+
+[TECH]
+crisp pixels, nearest-neighbor, no anti-aliasing on outer edge,
+export PNG with alpha, generate at 4x then downscale to target size.
+
+====================================================================
+ 1) AKT-HINTERGRUENDE   (VOLLBILD ~1200x800, KEIN Magenta, randlos)
+====================================================================
+Weite, atmosphaerische Kulisse, dunkel + leicht unscharf gehalten, damit
+UI/Text davor lesbar bleibt (Vorbild: vorhandenes assets/ui/bg_kneipe.png).
+KEIN zentrales Vordergrund-Objekt, eher Tiefe/Stimmung.
+Ziel: assets/ui/<name>.png  (Code muss Hintergrund je Akt-Thema waehlen –
+aktuell wird nur bg_kneipe geladen; das ist noch ein kleiner Code-Schritt.)
+
+  bg_kneipe.png   (VORHANDEN)  – grimy tavern, Akt 1 "Die Kneipe"
+  bg_casino.png   NEU – underground casino hall, neon slot machines along
+                        the walls, roulette glow, cigar smoke, red-gold
+                        light, velvet ropes; Akt 2 "Untergrund-Casino"
+  bg_cursed.png   NEU – haunted cursed hall, ghostly green-purple fog,
+                        cracked mirrors, floating candles, scattered bones,
+                        cobwebs; Akt 3 "Verfluchtes Reich"
+  bg_void.png     OPTIONAL – surreal endless "deeper acts" void: swirling
+                        playing cards & gold coins in deep darkness, for
+                        Akt 4+ (zyklische Wiederholung mit Twist)
+
+====================================================================
+ 2) NEUE RELIKT-ICONS   (64x64, Magenta-HG)  ->  assets/relics/<id>.png
+====================================================================
+Einzelnes leuchtendes Schmuck-/Relikt-Objekt, zentriert. Dateiname = Relikt-ID.
+Diese 9 Relikte (ab v1.8.0/v1.9.0) haben noch KEIN Sprite und nutzen
+bisher nur ihr Emoji:
+
+  poison_boost.png    – Giftring: green snake-coiled ring, dripping venom
+  gamble_discount.png – Wuerfelbecher: worn leather dice cup with two dice
+  trophy.png          – Trophaeensammlung: small golden victory trophy
+  vamp_tooth.png      – Vampirzahn: single bloody fang on a chain
+  anatomy.png         – Anatomiebuch: open red anatomy tome with diagrams
+  fortune_cookie.png  – Glueckskeks: cracked fortune cookie + paper slip
+  witch_cauldron.png  – Hexenkessel: bubbling green potion cauldron
+  watchtower.png      – Wachturm: small stone watchtower topped with a shield
+  four_leaf.png       – Vierblaettriger Klee: glowing four-leaf clover
+
+(Bereits vorhanden: always_lucky, bonus_energy, bonus_spin, chicken_relic,
+ combat_strength, first_free, gold_boost, heal_on_kill, interest,
+ max_hp_relic, start_block, thorns.)
+
+====================================================================
+ 3) KLASSEN-PORTRAITS   (~200x260, Magenta-HG)  ->  assets/ui/<name>.png
+====================================================================
+Halbkoerper-Heldenportrait, Blick zum Betrachter, fuer den Klassenauswahl-
+Screen (ersetzt dort das grosse Emoji). Ziel: assets/ui/class_<id>.png
+
+  class_knight.png  – Der Ritter: dented plate armor, big tower shield,
+                      stoic face, blue accents, beer mug on the belt
+  class_gambler.png – Der Hochstapler: charming rogue in gold-trimmed coat,
+                      fanning playing cards, slot-lever, gold accents,
+                      sly wink
+  class_witch.png   – Die Hexe: hooded green-robed witch, vial of bubbling
+                      poison in hand, small snake familiar, sickly green glow
+
+====================================================================
+ 4) NEUE AKT-GEGNER   (OPTIONAL, ~140x180, Bosse ~200x220, Magenta-HG)
+====================================================================
+Aktuell teilen sich die Akte den vorhandenen 16er-Roster. Diese exklusiven
+Gegner wuerden jedem Akt eigene Feinde geben (mehr Abwechslung).
+Ziel: assets/enemies/<name>.png  (danach in ENEMY_TYPES + ACT_THEMES eintragen.)
+
+ AKT 2 "Untergrund-Casino":
+  falschspieler.png    – cheating card shark, hidden aces up the sleeve,
+                         sleazy grin, gold rings
+  einarmiger_bandit.png– living slot-machine golem, one big lever-arm,
+                         reel for a face showing 7-7-7
+ AKT 3 "Verfluchtes Reich":
+  geisterbraut.png     – mournful ghost bride, tattered veil, cold blue glow,
+                         floating
+  knochenkoch.png      – skeletal chef, big cleaver + cursed bubbling stew pot
+  boss_sensenmann.png  – BOSS: grim-reaper croupier, scythe blade shaped like
+                         a roulette wheel, dealing cards of fate (~200x220)
+
+====================================================================
+ 5) OPTIONAL – DEDIZIERTE KARTEN-EFFEKT-ICONS (48x48, Magenta-HG)
+====================================================================
+Gift-/Buff-Karten nutzen aktuell ersatzweise vorhandene Icons (z.B.
+death_skull fuer Gift). Eigene Icons waeren sauberer.
+Ziel: assets/cards/<name>.png
+
+  poison_vial.png    – green poison droplet / vial (Gift-Karten)
+  strength_fist.png  – raised fist / flexing bicep (Staerke-Karten)
+  luck_clover.png    – small four-leaf clover + sparkle (Glueck/Spin-Karten)
+  shield_bash.png    – shield with an impact-star (Block-Angriffe)
+
+--------------------------------------------------------------------
+PRIORITAET (Vorschlag): 1) Akt-Hintergruende  2) Relikt-Icons
+3) Klassen-Portraits  4) neue Akt-Gegner  5) Karten-Icons
+--------------------------------------------------------------------

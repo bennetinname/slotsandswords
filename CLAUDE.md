@@ -66,8 +66,9 @@ jedem Boss ein „Akt geschafft"-Screen, dann weiter.
 
 ## Wo nachschauen
 - `CHANGELIST.txt` — vollständige Versionshistorie/Begründungen.
-- `TODO.txt` — Ideen/offene Punkte (inkl. Schwierigkeits-Ideen).
+- `TODO/TODO.txt` — Ideen/offene Punkte (inkl. Schwierigkeits-Ideen).
 - `git log --oneline` — Commit-Verlauf (jede Version = 1 Commit).
-- `asset_prompts.txt` — Stil-Prompts + noch benötigte Assets.
+- `TODO/assets_prompt.txt` — Stil-Prompts + noch benötigte Assets
+  (Akt-Hintergründe, neue Relikt-Icons, Klassen-Portraits …).
 
 Aktueller Stand: siehe `GAME_VERSION` in `constants.py`.
