@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.8.5"
+GAME_VERSION = "1.9.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.9.0", "START-KLASSEN! Ritter, Hochstapler, Hexe - je eigenes Deck & Relikt"),
     ("1.8.5", "Akt-Themen: jeder Akt eigene Gegner-Auswahl, Name & Boss"),
     ("1.8.4", "Slot-Synergien: Symbol-Paare & Misch-Kombos geben Extra-Boni"),
     ("1.8.3", "Effekt-Icons auf Karten + echter Slot-Automat-Rahmen"),
@@ -847,6 +848,67 @@ CARD_DEFINITIONS = [
         "rarity": "rare",
         "effect": "blood_pact"
     },
+    # ═══ NEUE KARTEN v1.9.0: Klassen-Archetypen (Ritter / Hochstapler / Hexe) ═══
+    {
+        "name": "Kriegsschrei",
+        "type": "special",
+        "cost": 1,
+        "damage": 0,
+        "color": ORANGE,
+        "tooltip": "+2 Stärke und +6 Block. Brüll, bis es weh tut.",
+        "rarity": "common",
+        "effect": "warcry"
+    },
+    {
+        "name": "Schildbuckel",
+        "type": "attack",
+        "cost": 1,
+        "damage": 0,
+        "color": BLUE,
+        "tooltip": "Schaden = dein aktueller Block. Block bleibt erhalten.",
+        "rarity": "uncommon",
+        "effect": "shield_bash"
+    },
+    {
+        "name": "Aderlass",
+        "type": "attack",
+        "cost": 1,
+        "damage": 4,
+        "color": RED_DARK,
+        "tooltip": "4 Schaden + 2 Gift, heile 3 HP. Geben und Nehmen.",
+        "rarity": "common",
+        "effect": "bloodletting"
+    },
+    {
+        "name": "Glückssträhne",
+        "type": "special",
+        "cost": 1,
+        "damage": 0,
+        "color": GOLD,
+        "tooltip": "+2 Glücksrunden und ziehe 1 Karte. Es läuft!",
+        "rarity": "common",
+        "effect": "lucky_streak"
+    },
+    {
+        "name": "Giftmischung",
+        "type": "special",
+        "cost": 1,
+        "damage": 0,
+        "color": GREEN_DARK,
+        "tooltip": "+7 Gift auf den Gegner. Gebraut mit Liebe und Hass.",
+        "rarity": "uncommon",
+        "effect": "brew_poison"
+    },
+    {
+        "name": "Kartentrick",
+        "type": "special",
+        "cost": 1,
+        "damage": 0,
+        "color": CYAN,
+        "tooltip": "Ziehe 2 Karten. Nichts in den Ärmeln. Versprochen.",
+        "rarity": "uncommon",
+        "effect": "card_trick"
+    },
 ]
 
 # ═══════════════════════════════════════════════
@@ -926,6 +988,59 @@ RELIC_DEFINITIONS = [
      "desc": "Verwundbar, das du verursachst, hält +1 Runde länger.", "rarity": "common"},
     {"id": "fortune_cookie", "name": "Glückskeks",      "emoji": "🥠",
      "desc": "Kampfbeginn: +1 Glücksrunde für den Slot.", "rarity": "common"},
+    # ─── Neue Relikte (v1.9.0, Klassen-Synergien) ───
+    {"id": "witch_cauldron", "name": "Hexenkessel",     "emoji": "🧪",
+     "desc": "Kampfbeginn: der Gegner startet mit 3 Gift.", "rarity": "uncommon"},
+    {"id": "watchtower",     "name": "Wachturm",        "emoji": "🗼",
+     "desc": "Zu Beginn JEDER Runde: +6 Block.", "rarity": "rare"},
+    {"id": "four_leaf",      "name": "Vierblättriger Klee", "emoji": "🍀",
+     "desc": "Kampfbeginn: +1 Slot-Dreh UND +1 Glücksrunde.", "rarity": "rare"},
+]
+
+# ═══════════════════════════════════════════════
+# START-KLASSEN  (wählbar vor dem Run)
+# deck = Liste von Kartennamen (Startdeck), relic = Start-Relikt-ID
+# ═══════════════════════════════════════════════
+CLASS_DEFINITIONS = [
+    {
+        "id": "knight",
+        "name": "Der Ritter",
+        "emoji": "🛡️",
+        "color": BLUE,
+        "desc": "Block & Stärke. Hält viel aus, schlägt stetig zu.",
+        "perk": "Start mit Relikt 'Eiserner Wille' (+12 Block/Kampf).",
+        "relic": "start_block",
+        "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
+                 "Schwertstreich", "Schwertstreich",
+                 "Schild", "Schild", "Schild",
+                 "Kriegsschrei", "Schildbuckel"],
+    },
+    {
+        "id": "gambler",
+        "name": "Der Hochstapler",
+        "emoji": "🎰",
+        "color": GOLD,
+        "desc": "Slots & Glück. Lebt vom Risiko und den großen Drehern.",
+        "perk": "Start mit Relikt 'Glücksbringer' (+1 Slot-Dreh/Runde).",
+        "relic": "bonus_spin",
+        "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
+                 "Schild", "Schild",
+                 "Coin Flip", "Coin Flip", "Greed",
+                 "Glückssträhne", "Double Spin"],
+    },
+    {
+        "id": "witch",
+        "name": "Die Hexe",
+        "emoji": "🧪",
+        "color": GREEN,
+        "desc": "Gift & Verfall. Lässt Gegner langsam dahinsiechen.",
+        "perk": "Start mit Relikt 'Giftring' (+1 auf alle Gift-Effekte).",
+        "relic": "poison_boost",
+        "deck": ["Schneller Stich", "Schneller Stich",
+                 "Schild", "Schild",
+                 "Giftklinge", "Giftklinge", "Giftklinge",
+                 "Aderlass", "Heilkraut", "Toxische Wolke"],
+    },
 ]
 
 # ═══════════════════════════════════════════════

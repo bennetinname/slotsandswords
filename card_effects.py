@@ -386,6 +386,39 @@ class CardEffectResolver:
             player.energy += 2
             logs.append(f"🩸 {card.name}: −5 HP, +2 Energie. Der Pakt ist besiegelt.")
 
+        # ═══ Klassen-Karten v1.9.0 ═══
+        elif effect == "warcry":
+            player.strength += 2
+            player.block += 6
+            logs.append(f"📢 {card.name}: +2 Stärke, +6 Block!")
+
+        elif effect == "shield_bash":
+            dmg = player.block + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🛡️ {card.name}: {actual} Schaden (= Block)!")
+
+        elif effect == "bloodletting":
+            dmg = card.damage + player.strength
+            actual = enemy.take_damage(dmg)
+            stacks = 2 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            healed = player.heal_hp(3)
+            logs.append(f"🩸 {card.name}: {actual} Schaden, +{stacks} Gift, +{healed} HP!")
+
+        elif effect == "lucky_streak":
+            player.lucky += 2
+            drawn = player.draw_hand(1)
+            logs.append(f"🍀 {card.name}: +2 Glücksrunden, +{drawn} Karte!")
+
+        elif effect == "brew_poison":
+            stacks = 7 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            logs.append(f"🧪 {card.name}: +{stacks} Gift! ({enemy.poison} total)")
+
+        elif effect == "card_trick":
+            drawn = player.draw_hand(2)
+            logs.append(f"🃏 {card.name}: +{drawn} Karten gezogen!")
+
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")
 

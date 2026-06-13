@@ -1629,6 +1629,65 @@ class UIRenderer:
         return self.draw_card_grid(player, "🔥 Welche Karte verbrennen?", ORANGE)
 
     # ═══════════════════════════════════════════════
+    # KLASSENAUSWAHL
+    # ═══════════════════════════════════════════════
+
+    def draw_class_select(self, classes, daily=False):
+        """Klassenauswahl vor dem Run. Gibt ([rects], back_rect) zurück."""
+        self.draw_background()
+        title = "📅 Tages-Challenge – wähle deine Klasse" if daily else "Wähle deine Klasse"
+        self._text(title, self.font_huge, ACCENT, self.w // 2, 40, center=True, shadow=True)
+        self._text("Jede Klasse bringt ein eigenes Startdeck und ein Start-Relikt mit.",
+                   self.font_small, INK_DIM, self.w // 2, 100, center=True)
+
+        mouse = pygame.mouse.get_pos()
+        n = len(classes)
+        cw, ch, gap = 320, 480, 30
+        total = n * cw + (n - 1) * gap
+        sx0 = self.w // 2 - total // 2
+        sy = 150
+        rects = []
+        for i, c in enumerate(classes):
+            x = sx0 + i * (cw + gap)
+            rect = pygame.Rect(x, sy, cw, ch)
+            hov = rect.collidepoint(mouse)
+            accent = c.get("color", ACCENT)
+            self._panel((x, sy, cw, ch), radius=16,
+                        border=accent if hov else _darken(accent, 0.3),
+                        border_w=3 if hov else 2)
+            # Emoji groß
+            self._text(c["emoji"], self.font_huge, accent, x + cw // 2, sy + 22, center=True)
+            self._text(c["name"], self.font_h1, _lighten(accent, 0.2),
+                       x + cw // 2, sy + 92, center=True, shadow=True)
+            pygame.draw.line(self.screen, _darken(accent, 0.3),
+                             (x + 24, sy + 134), (x + cw - 24, sy + 134))
+            # Beschreibung
+            for li, line in enumerate(self._wrap_text(c["desc"], self.font_small, cw - 40)):
+                self._text(line, self.font_small, INK, x + 24, sy + 146 + li * 22)
+            # Perk
+            for li, line in enumerate(self._wrap_text("⭐ " + c["perk"], self.font_tiny, cw - 40)):
+                self._text(line, self.font_tiny, ACCENT_SOFT, x + 24, sy + 210 + li * 18)
+            # Startdeck-Zusammensetzung (kompakt)
+            from collections import Counter
+            self._text("Startdeck:", self.font_tiny, INK_DIM, x + 24, sy + 268)
+            counts = Counter(c["deck"])
+            yy = sy + 288
+            for name, cnt in counts.items():
+                label = f"{cnt}× {name}" if cnt > 1 else name
+                self._text("•  " + label, self.font_tiny, INK, x + 28, yy)
+                yy += 18
+            # Button
+            btn = pygame.Rect(x + 40, sy + ch - 52, cw - 80, 40)
+            self.draw_button("Diese Klasse", btn.x, btn.y, btn.w, btn.h,
+                             color=accent, text_color=BLACK, pulsing=hov)
+            rects.append(rect)
+
+        back = pygame.Rect(self.w // 2 - 100, self.h - 56, 200, 40)
+        self.draw_button("Zurück", back.x, back.y, back.w, back.h,
+                         color=GREY_DARK, text_color=WHITE)
+        return rects, back
+
+    # ═══════════════════════════════════════════════
     # ERFOLGE
     # ═══════════════════════════════════════════════
 

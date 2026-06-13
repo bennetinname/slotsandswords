@@ -85,6 +85,10 @@ class Card:
         "double_spin": "energy_bolt", "triple_spin": "energy_bolt", "adrenaline": "energy_bolt",
         "redraw": "energy_bolt", "shadow_step": "energy_bolt", "train": "energy_bolt",
         "chicken": "chicken", "chicken_swarm": "chicken",
+        # Klassen-Karten v1.9.0
+        "warcry": "energy_bolt", "shield_bash": "defense_shield",
+        "bloodletting": "atk_slash", "lucky_streak": "dice_chaos",
+        "brew_poison": "death_skull", "card_trick": "energy_bolt",
     }
 
     def get_effect_icon(self):
@@ -101,8 +105,10 @@ class Card:
 
 class Player:
     """Der Spieler mit HP, Deck, Hand, Gold und Status"""
-    
-    def __init__(self):
+
+    def __init__(self, class_def=None):
+        self.class_def = class_def
+        self.class_id = class_def["id"] if class_def else None
         self.max_hp = PLAYER_MAX_HP
         self.hp = PLAYER_MAX_HP
         self.gold = PLAYER_START_GOLD
@@ -148,15 +154,18 @@ class Player:
         self._build_starter_deck()
     
     def _build_starter_deck(self):
-        """Startdeck mit 10 Karten"""
-        starter_cards = [
-            "Schneller Stich", "Schneller Stich", "Schneller Stich",
-            "Schwertstreich", "Schwertstreich",
-            "Schild", "Schild",
-            "Heilkraut",
-            "Greed",
-            "Coin Flip",
-        ]
+        """Startdeck mit 10 Karten – klassenspezifisch, sonst Standard."""
+        if self.class_def and self.class_def.get("deck"):
+            starter_cards = list(self.class_def["deck"])
+        else:
+            starter_cards = [
+                "Schneller Stich", "Schneller Stich", "Schneller Stich",
+                "Schwertstreich", "Schwertstreich",
+                "Schild", "Schild",
+                "Heilkraut",
+                "Greed",
+                "Coin Flip",
+            ]
         for name in starter_cards:
             for defn in CARD_DEFINITIONS:
                 if defn["name"] == name:

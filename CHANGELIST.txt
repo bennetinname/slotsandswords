@@ -1,6 +1,33 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.9.0 – 2026-06-13]  START-KLASSEN
+------------------------------------
+(Minor-Bump: Save-Format erweitert um class_id -> alte Saves verfallen.)
+
+NEU: Vor jedem Run (auch Tages-Challenge) wählst du eine von 3 KLASSEN –
+jede mit eigenem Startdeck und Start-Relikt:
+* 🛡️ DER RITTER – Block & Stärke. Deck mit viel Block + Kriegsschrei/
+  Schildbuckel. Start-Relikt: Eiserner Wille (+12 Block/Kampf).
+* 🎰 DER HOCHSTAPLER – Slots & Glück. Coin Flip, Greed, Glückssträhne,
+  Double Spin. Start-Relikt: Glücksbringer (+1 Slot-Dreh/Runde).
+* 🧪 DIE HEXE – Gift & Verfall. Giftklinge x3, Aderlass, Toxische Wolke.
+  Start-Relikt: Giftring (+1 auf alle Gift-Effekte).
+* Neuer Klassenauswahl-Screen mit Deck-Vorschau; ESC/Zurück = Menü.
+
+6 NEUE KARTEN (Klassen-Archetypen):
+* Kriegsschrei (+2 Stärke, +6 Block), Schildbuckel (Schaden = Block),
+  Aderlass (Schaden + Gift + Heilung), Glückssträhne (+2 Glück, +1 Karte),
+  Giftmischung (+7 Gift), Kartentrick (ziehe 2 Karten).
+
+3 NEUE RELIKTE:
+* Hexenkessel (Gegner startet mit 3 Gift), Wachturm (+6 Block zu Beginn
+  JEDER Runde), Vierblättriger Klee (+1 Dreh & +1 Glück pro Kampf).
+
+Karten gesamt: 56 · Relikte: 21 · Klassen: 3.
+
+─────────────────────────────────────────────────────
+
 [v1.8.5 – 2026-06-13]  AKT-THEMEN (akt-spezifische Gegner-Pools)
 ----------------------------------------------------------------
 Jeder Akt hat jetzt eine eigene Identität (zyklisch ab Akt 1):

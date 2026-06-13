@@ -42,6 +42,7 @@ STATE_GAME_OVER   = "game_over"
 STATE_VICTORY     = "victory"
 STATE_SCORES      = "scores"         # Highscore-Anzeige
 STATE_ACHIEVEMENTS = "achievements"  # Erfolge-Anzeige
+STATE_CLASS_SELECT = "class_select"  # Klassenauswahl vor dem Run
 
 
 # ═══════════════════════════════════════════════
@@ -163,6 +164,11 @@ class Game:
         self.daily_mod = None
         self.daily_result = None
         self.lifetime_stats = stats.load()
+
+        # Klassenauswahl-Zustand
+        self.pending_daily = False
+        self.class_select_rects = []
+        self.class_back_rect = None
 
         # Erfolge: laden + Toast-Warteschlange [(def, restzeit), ...]
         achievements.load()
@@ -301,7 +307,8 @@ class Game:
         elif self.state == STATE_PAUSE:
             self.state = self._prev_state           # Weiter spielen
         elif self.state in (STATE_TUTORIAL, STATE_SCORES, STATE_CHANGELOG,
-                            STATE_ACHIEVEMENTS, STATE_GAME_OVER, STATE_VICTORY):
+                            STATE_ACHIEVEMENTS, STATE_CLASS_SELECT,
+                            STATE_GAME_OVER, STATE_VICTORY):
             self.state = STATE_MENU
         else:  # Hauptmenü
             self.running = False
@@ -458,10 +465,12 @@ class Game:
                 audio.play("click"); self._load_run()
                 return
             if lay["play"].collidepoint(pos):
-                audio.play("click"); self._start_game()
+                audio.play("click"); self.pending_daily = False
+                self.state = STATE_CLASS_SELECT
                 return
             if lay["daily"].collidepoint(pos):
-                audio.play("click"); self._start_game(daily_mode=True)
+                audio.play("click"); self.pending_daily = True
+                self.state = STATE_CLASS_SELECT
                 return
             if lay["tutorial"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_TUTORIAL
@@ -568,6 +577,16 @@ class Game:
         elif self.state == STATE_ACHIEVEMENTS:
             if self.achievements_back_rect and self.achievements_back_rect.collidepoint(pos):
                 audio.play("click"); self.state = STATE_MENU
+
+        elif self.state == STATE_CLASS_SELECT:
+            for i, rect in enumerate(self.class_select_rects or []):
+                if rect and rect.collidepoint(pos):
+                    audio.play("click")
+                    self._start_game(daily_mode=self.pending_daily,
+                                     class_def=CLASS_DEFINITIONS[i])
+                    return
+            if self.class_back_rect and self.class_back_rect.collidepoint(pos):
+                audio.play("click"); self.state = STATE_MENU
         
         elif self.state == STATE_GAME_OVER:
             # Klick auf "Bestenliste"
@@ -666,14 +685,19 @@ class Game:
     # SPIELSTART / NEUSTART
     # ═══════════════════════════════════════════════
     
-    def _start_game(self, daily_mode=False):
+    def _start_game(self, daily_mode=False, class_def=None):
         savegame.delete_save()   # Neuer Run verwirft alten Speicherstand
         self.daily_mode = daily_mode
         self.daily_mod = daily.modifier_for_today() if daily_mode else None
         if daily_mode:
             # Fester Tages-Seed: alle Spieler bekommen heute dieselbe Karte
             random.seed(daily.seed_for_today())
-        self.player = Player()
+        self.player = Player(class_def)
+        # Start-Relikt der Klasse vergeben
+        if class_def and class_def.get("relic"):
+            rdef = next((r for r in RELIC_DEFINITIONS if r["id"] == class_def["relic"]), None)
+            if rdef:
+                self.player.add_relic(rdef)
         self.floor_num = 1
         self.turn_num = 1
         self.act = 1
@@ -881,6 +905,9 @@ class Game:
             self.enemy.jam_next = False
             self._log("🎰 Dein Automat ist blockiert! (−1 Dreh diese Runde)")
         self.player.start_turn()
+        # Wachturm: +6 Block zu Beginn jeder Runde
+        if self.player.has_relic("watchtower"):
+            self.player.block += 6
         # Falsches Ass: erste Karte der Runde gratis
         if self.player.has_relic("first_free"):
             self.player.next_free_card = True
@@ -913,6 +940,13 @@ class Game:
         if p.has_relic("fortune_cookie"):
             p.lucky += 1
             self._log("🥠 Glückskeks: +1 Glücksrunde!")
+        if p.has_relic("four_leaf"):
+            p.bonus_spins += 1
+            p.lucky += 1
+            self._log("🍀 Vierblättriger Klee: +1 Dreh, +1 Glücksrunde!")
+        if p.has_relic("witch_cauldron") and self.enemy:
+            self.enemy.poison += 3
+            self._log("🧪 Hexenkessel: Gegner startet mit 3 Gift!")
         if (self.daily_mod or {}).get("start_lucky"):
             p.lucky += self.daily_mod["start_lucky"]
             self._log(f"📅 Glückstag: +{self.daily_mod['start_lucky']} Glücksrunde!")
@@ -1709,6 +1743,7 @@ class Game:
             "energy": p.energy, "max_energy": p.max_energy,
             "burn": p.burn, "strength": p.strength, "lucky": p.lucky,
             "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
+            "class_id": p.class_id,
             "shield_up": p.shield_up, "reflect": p.reflect,
             "coin_rain_active": p.coin_rain_active, "next_free_card": p.next_free_card,
             "total_damage_taken": p._total_damage_taken, "bonus_spins": p.bonus_spins,
@@ -1729,6 +1764,7 @@ class Game:
         p.energy = d["energy"]; p.max_energy = d["max_energy"]
         p.burn = d["burn"]; p.strength = d["strength"]; p.lucky = d["lucky"]
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
+        p.class_id = d.get("class_id")
         p.shield_up = d["shield_up"]; p.reflect = d["reflect"]
         p.coin_rain_active = d["coin_rain_active"]; p.next_free_card = d["next_free_card"]
         p._total_damage_taken = d.get("total_damage_taken", 0)
@@ -2084,6 +2120,10 @@ class Game:
         elif self.state == STATE_ACHIEVEMENTS:
             self.achievements_back_rect = self.ui.draw_achievements(
                 achievements.DEFS, achievements.is_unlocked, achievements.progress())
+
+        elif self.state == STATE_CLASS_SELECT:
+            self.class_select_rects, self.class_back_rect = self.ui.draw_class_select(
+                CLASS_DEFINITIONS, daily=self.pending_daily)
         
         elif self.state == STATE_GAME_OVER:
             self.ui.draw_game_over(self.player, self.floor_num,
