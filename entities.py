@@ -64,6 +64,40 @@ class Card:
             "curse":   "💀",
         }.get(self.type, "?")
 
+    # Karteneffekt -> Sprite in assets/cards/ (Effekt-Icon auf der Karte)
+    EFFECT_ICONS = {
+        "damage": "atk_slash", "double_strike": "atk_slash", "rage": "atk_slash",
+        "iron_storm": "atk_slash", "retribution": "atk_slash", "expose": "atk_slash",
+        "lifesteal": "atk_slash",
+        "block": "defense_shield", "shield_wall": "defense_shield",
+        "spike_skin": "defense_shield", "reflect": "defense_shield",
+        "heal": "heal_herb", "second_wind": "heal_herb", "regen_potion": "heal_herb",
+        "nuke": "death_skull", "execrate": "death_skull", "annihilate": "death_skull",
+        "last_resort": "death_skull", "berserker": "death_skull", "executioner": "death_skull",
+        "poison_blade": "death_skull", "toxic_cloud": "death_skull", "acid_barrel": "death_skull",
+        "plague_breath": "death_skull", "blood_pact": "death_skull",
+        "curse_nausea": "death_skull", "curse_unluck": "death_skull", "curse_burden": "death_skull",
+        "gambling": "dice_chaos", "coinflip": "dice_chaos", "all_in": "dice_chaos",
+        "roulette": "dice_chaos", "loaded_dice": "dice_chaos", "lucky_hit": "dice_chaos",
+        "chaos": "dice_chaos",
+        "greed": "gold_coin", "bribe": "gold_coin", "pillage": "gold_coin",
+        "gold_rush": "gold_coin", "coin_rain": "gold_coin", "tax_evasion": "gold_coin",
+        "double_spin": "energy_bolt", "triple_spin": "energy_bolt", "adrenaline": "energy_bolt",
+        "redraw": "energy_bolt", "shadow_step": "energy_bolt", "train": "energy_bolt",
+        "chicken": "chicken", "chicken_swarm": "chicken",
+    }
+
+    def get_effect_icon(self):
+        """Asset-Name des Effekt-Icons (in assets/cards/). Fallback nach Typ."""
+        n = self.name.lower()
+        if "fire" in n or "feuer" in n or "brand" in n or "flame" in n:
+            return "fire"
+        icon = Card.EFFECT_ICONS.get(self.effect)
+        if icon:
+            return icon
+        return {"attack": "atk_slash", "defense": "defense_shield",
+                "special": "energy_bolt", "curse": "death_skull"}.get(self.type, "atk_slash")
+
 
 class Player:
     """Der Spieler mit HP, Deck, Hand, Gold und Status"""

@@ -710,9 +710,14 @@ class UIRenderer:
         ct = self.font_medium.render(str(card.cost), True, WHITE)
         self.screen.blit(ct, (cbx - ct.get_width() // 2, cby - ct.get_height() // 2))
 
-        # Typ-Icon oben rechts
-        self._text(card.get_type_icon(), self.font_small, _lighten(card.color, 0.3),
-                   x + w - pad, int(y + 22 * scale), right=True, shadow=True)
+        # Effekt-Icon oben rechts (Sprite); Fallback aufs Typ-Emoji
+        isz = max(18, int(28 * scale))
+        icon = assets.scaled("cards", card.get_effect_icon(), isz, isz)
+        if icon:
+            self.screen.blit(icon, (x + w - pad - isz + 4, int(y + 12 * scale)))
+        else:
+            self._text(card.get_type_icon(), self.font_small, _lighten(card.color, 0.3),
+                       x + w - pad, int(y + 22 * scale), right=True, shadow=True)
 
         # Name (mit Schatten für Lesbarkeit)
         name_lines = self._wrap_text(card.name, self.font_small, w - 2 * pad)

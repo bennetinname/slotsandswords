@@ -136,17 +136,30 @@ class SlotMachine:
         self.y = y
         self.width = 340
         self.height = 200
-        
-        reel_w = 90
-        reel_h = 110
-        spacing = 15
-        start_x = x + 20
-        reel_y = y + 45
-        
-        self.reels = [
-            SlotReel(start_x + i * (reel_w + spacing), reel_y, reel_w, reel_h)
-            for i in range(3)
-        ]
+
+        # Cabinet-Sprite (rahmt die Walzen) falls vorhanden – sonst Procedural
+        self.cabinet = assets.has("ui", "slot_cabinet")
+        if self.cabinet:
+            self.cab_w, self.cab_h = 277, 223
+            self.cab_x = x + self.width // 2 - self.cab_w // 2
+            self.cab_y = y - 6
+            # Fenster-Positionen (native Cabinet-Koordinaten) -> Walzen
+            windows = [(35, 83), (99, 83), (163, 83)]
+            reel_w, reel_h = 55, 104
+            self.reels = [
+                SlotReel(self.cab_x + wx, self.cab_y + wy, reel_w, reel_h)
+                for (wx, wy) in windows
+            ]
+        else:
+            reel_w = 90
+            reel_h = 110
+            spacing = 15
+            start_x = x + 20
+            reel_y = y + 45
+            self.reels = [
+                SlotReel(start_x + i * (reel_w + spacing), reel_y, reel_w, reel_h)
+                for i in range(3)
+            ]
         
         self.spinning = False
         self.results = []          # [symbol1, symbol2, symbol3]
@@ -515,32 +528,44 @@ class SlotMachine:
     
     def draw(self, screen, font_title, font_large, font_small, font_tiny):
         """Zeichnet den gesamten Spielautomaten"""
-        # Maschinen-Rahmen
-        frame_rect = (self.x - 5, self.y - 5, self.width + 10, self.height + 10)
-        
-        # Glüh-Effekt nach Spin
+        if self.cabinet:
+            cab = assets.scaled("ui", "slot_cabinet", self.cab_w, self.cab_h)
+            # Glüh-Effekt nach Spin (rund ums Cabinet)
+            if self.glow_timer > 0:
+                ga = int(min(180, self.glow_timer * 100))
+                glow = pygame.Surface((self.cab_w + 24, self.cab_h + 24), pygame.SRCALPHA)
+                pygame.draw.rect(glow, (*GOLD, ga), (0, 0, self.cab_w + 24, self.cab_h + 24),
+                                 border_radius=16)
+                screen.blit(glow, (self.cab_x - 12, self.cab_y - 12))
+            # Walzen zuerst, dann Cabinet als Rahmen darüber
+            for reel in self.reels:
+                reel.draw(screen, font_large, font_small)
+            if cab:
+                screen.blit(cab, (self.cab_x, self.cab_y))
+            if self.spinning:
+                spin_txt = font_small.render("⚡ SPINNING... ⚡", True, CYAN)
+                screen.blit(spin_txt, (self.cab_x + self.cab_w // 2 - spin_txt.get_width() // 2,
+                                       self.cab_y + self.cab_h + 2))
+            return
+
+        # ── Procedural-Fallback (kein Cabinet-Sprite) ──
         if self.glow_timer > 0:
             glow_alpha = int(min(180, self.glow_timer * 100))
             glow_surf = pygame.Surface((self.width + 20, self.height + 20), pygame.SRCALPHA)
             pygame.draw.rect(glow_surf, (*GOLD, glow_alpha),
                              (0, 0, self.width + 20, self.height + 20), border_radius=12)
             screen.blit(glow_surf, (self.x - 10, self.y - 10))
-        
+
         pygame.draw.rect(screen, SLOT_BG, (self.x, self.y, self.width, self.height), border_radius=10)
         pygame.draw.rect(screen, GOLD_DARK, (self.x, self.y, self.width, self.height), 3, border_radius=10)
-        
-        # Titel
+
         title = font_title.render("🎰 SLOT-O-MATIC 3000 🎰", True, GOLD)
         screen.blit(title, (self.x + self.width//2 - title.get_width()//2, self.y + 8))
-        
-        # Walzen zeichnen
+
         for reel in self.reels:
             reel.draw(screen, font_large, font_small)
-        
-        # "SPIN!"-Indikator unten
+
         if self.spinning:
             spin_txt = font_small.render("⚡ SPINNING... ⚡", True, CYAN)
             screen.blit(spin_txt, (self.x + self.width//2 - spin_txt.get_width()//2,
                                    self.y + self.height - 22))
-        elif self.spin_complete and self.effects:
-            pass  # Effekte werden extern angezeigt

@@ -1,6 +1,20 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.3 – 2026-06-13]  KARTEN-EFFEKT-ICONS & SLOT-AUTOMAT-RAHMEN
+----------------------------------------------------------------
+* Jede Karte zeigt oben rechts jetzt ein Effekt-ICON (Sprite) statt nur
+  ein Emoji: Schwert (Angriff), Schild (Block), Kraut (Heilung), Flamme
+  (Feuer), Totenkopf (Gift/Vernichtung), Münze (Gold), Energie (Spins),
+  Würfel (Glück), Huhn. Auf einen Blick lesbar, was die Karte tut.
+  Zuordnung per Effekt-/Typ-Map in Card.get_effect_icon().
+* Die Slot-Phase hat jetzt ein echtes Automaten-Gehäuse (slot_cabinet.png)
+  mit "SLOT-O-MATIC 3000"-Kopf und Hebel, das die drei Walzen rahmt.
+  Magenta-Fenster transparent gekeyt, Walzen exakt eingepasst; ohne Sprite
+  bleibt der bisherige Procedural-Rahmen erhalten.
+
+─────────────────────────────────────────────────────
+
 [v1.8.2 – 2026-06-13]  ECHTE SPRITES FÜR DIE NEUEN INHALTE
 ----------------------------------------------------------
 * Die 6 neuen Gegner aus v1.8.0 haben jetzt echte Pixel-Art statt
