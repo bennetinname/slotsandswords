@@ -44,6 +44,26 @@ STATE_SCORES      = "scores"         # Highscore-Anzeige
 STATE_ACHIEVEMENTS = "achievements"  # Erfolge-Anzeige
 
 
+# ═══════════════════════════════════════════════
+# AKT-THEMEN  (zyklisch ab Akt 1; gibt jedem Akt eine eigene Gegner-Auswahl,
+# einen Namen und eine Tönung). Tuple: (name, accent_rgb, [gegner], boss)
+# ═══════════════════════════════════════════════
+ACT_THEMES = [
+    ("Die Kneipe", (210, 150, 60), [
+        "Schluffiger Goblin", "Betrunkener Ritter", "Pestratte",
+        "Steuerprüfer", "Kneipenschläger", "Sumpfschleim", "Wütender Koch",
+    ], "DER GROSSE HÜHNERKÖNIG"),
+    ("Das Untergrund-Casino", (210, 80, 150), [
+        "Vampir-Croupier", "Slot-Maschinendämon", "Glücksgeist",
+        "Steuerprüfer", "Kneipenschläger",
+    ], "Oberster Glücksprüfer"),
+    ("Das Verfluchte Reich", (150, 90, 220), [
+        "Philosophischer Lich", "Verfluchter Spiegel", "Pilzkönigin",
+        "Wütender Koch", "Pestratte", "Glücksgeist", "Sumpfschleim",
+    ], "MADAME FORTUNA"),
+]
+
+
 class Game:
     """Zentrale Spielklasse: Verwaltet alle Zustände und den Spielfluss"""
     
@@ -685,20 +705,31 @@ class Game:
     def _restart(self):
         self.__init__(self.screen, self.clock)
     
+    def _act_theme(self):
+        """Akt-Thema (name, accent, gegner-namen, boss-name) – zyklisch."""
+        return ACT_THEMES[(self.act - 1) % len(ACT_THEMES)]
+
     def _spawn_enemy(self, node_type="combat"):
-        """Wählt einen Gegner passend zum Knotentyp und zur Tiefe"""
+        """Wählt einen Gegner aus dem Pool des aktuellen Akts, passend zur Tiefe."""
         import copy
         is_elite = (node_type == "elite")
+        _name, _accent, pool_names, boss_name = self._act_theme()
+        by_name = {e["name"]: e for e in ENEMY_TYPES}
+        pool = [by_name[n] for n in pool_names if n in by_name]
+        # erste Etagen im Akt: nur Tier-1-Gegner aus dem Pool (Einstieg fairer)
+        row_in_act = (self.floor_num - 1) % mapgen.ROWS
+
         if node_type == "boss":
-            enemy_def = random.choice([e for e in ENEMY_TYPES if e.get("is_boss")])
-        elif is_elite:
-            cands = [e for e in ENEMY_TYPES if e.get("tier", 1) <= 2 and not e.get("is_boss")]
-            enemy_def = random.choice(cands)
-        elif self.floor_num <= 3:
-            cands = [e for e in ENEMY_TYPES if e.get("tier", 1) == 1]
-            enemy_def = random.choice(cands)
+            enemy_def = by_name.get(boss_name)
+            if enemy_def is None:
+                enemy_def = random.choice([e for e in ENEMY_TYPES if e.get("is_boss")])
         else:
-            cands = [e for e in ENEMY_TYPES if e.get("tier", 1) <= 2 and not e.get("is_boss")]
+            cands = [e for e in pool if not e.get("is_boss")]
+            if not is_elite and row_in_act <= 1:
+                tier1 = [e for e in cands if e.get("tier", 1) == 1]
+                cands = tier1 or cands
+            if not cands:  # Sicherheitsnetz
+                cands = [e for e in ENEMY_TYPES if e.get("tier", 1) <= 2 and not e.get("is_boss")]
             enemy_def = random.choice(cands)
 
         # Gegner skaliert mit der Tiefe (über Akte hinweg) – etwas sanfter
@@ -2020,7 +2051,8 @@ class Game:
 
         elif self.state == STATE_MAP:
             self.ui.draw_map(self.gamemap, self.map_current, self._map_available(),
-                             self.hovered_node, self.player, self.act, self.map_message)
+                             self.hovered_node, self.player, self.act, self.map_message,
+                             act_name=self._act_theme()[0])
             if self.daily_mode and self.daily_mod:
                 self.ui._chip(f"📅 {self.daily_mod['name']}: {self.daily_mod['desc']}",
                               self.ui.font_tiny, SCREEN_W // 2 - 280, 8,
@@ -2030,7 +2062,8 @@ class Game:
             self.ui.draw_rest(self.player, self._compute_rest_layout())
 
         elif self.state == STATE_ACT_CLEAR:
-            self.ui.draw_act_clear(self._cleared_act, self.player)
+            self.ui.draw_act_clear(self._cleared_act, self.player,
+                                   next_act_name=self._act_theme()[0])
 
         elif self.state in (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN):
             self._draw_combat()

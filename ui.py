@@ -1072,7 +1072,7 @@ class UIRenderer:
         self._text("R = nochmal   ·   ESC = Beenden", self.font_small, INK_FAINT,
                    self.w // 2, self.h - 56, center=True)
 
-    def draw_act_clear(self, cleared_act, player):
+    def draw_act_clear(self, cleared_act, player, next_act_name=""):
         """'Akt geschafft'-Bildschirm nach einem Boss (Spiel geht endlos weiter)."""
         self.draw_background()
         t = self._anim_t
@@ -1100,7 +1100,10 @@ class UIRenderer:
         else:
             ny = 250
 
-        self._text(f"Auf in Akt {cleared_act + 1} – es wird härter!", self.font_medium,
+        nxt = f"Auf in Akt {cleared_act + 1}"
+        if next_act_name:
+            nxt += f": {next_act_name}"
+        self._text(nxt + " – es wird härter!", self.font_medium,
                    ACCENT_SOFT, self.w // 2, ny, center=True)
         self._text(f"❤ {player.hp}/{player.max_hp}    💰 {player.gold}    💠 {len(player.relics)} Relikte",
                    self.font_small, INK_DIM, self.w // 2, ny + 34, center=True)
@@ -1210,7 +1213,7 @@ class UIRenderer:
         "boss":     ("👑", (255, 90, 90)),
     }
 
-    def draw_map(self, gamemap, current, available, hovered, player, act, message=""):
+    def draw_map(self, gamemap, current, available, hovered, player, act, message="", act_name=""):
         self.draw_background()
         avail_set = {(n["row"], n["col"]) for n in available}
         cur = tuple(current) if current else None
@@ -1270,6 +1273,8 @@ class UIRenderer:
         head.fill((*DARKER_BG, 230))
         self.screen.blit(head, (0, 0))
         self._text(f"🗺  AKT {act}", self.font_h1, ACCENT, 20, 10, shadow=True)
+        if act_name:
+            self._text(act_name, self.font_small, INK_DIM, 24, 44, shadow=True)
         # HP / Gold / Relikte rechts
         self._chip(f"❤ {player.hp}/{player.max_hp}", self.font_small, self.w - 430, 14,
                    text_col=WHITE, fill=(60, 20, 20, 170))

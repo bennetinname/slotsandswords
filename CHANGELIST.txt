@@ -1,6 +1,26 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.5 – 2026-06-13]  AKT-THEMEN (akt-spezifische Gegner-Pools)
+----------------------------------------------------------------
+Jeder Akt hat jetzt eine eigene Identität (zyklisch ab Akt 1):
+* AKT 1 "Die Kneipe": Goblin, Ritter, Pestratte, Steuerprüfer,
+  Kneipenschläger, Sumpfschleim, Koch -> Boss Hühnerkönig.
+* AKT 2 "Das Untergrund-Casino": Croupier, Slot-Dämon, Glücksgeist,
+  Steuerprüfer, Kneipenschläger -> Boss Oberster Glücksprüfer.
+* AKT 3 "Das Verfluchte Reich": Lich, Spiegel, Pilzkönigin, Koch,
+  Pestratte, Glücksgeist, Sumpfschleim -> Boss Madame Fortuna.
+* Akt 4+ wiederholt die Themen (härter skaliert).
+* Gegner kommen jetzt NUR noch aus dem Pool des aktuellen Akts; die
+  ersten Etagen eines Akts sind auf Tier-1-Gegner beschränkt (fairer
+  Einstieg). Boss ist pro Thema fest.
+* Akt-Name steht im Karten-Header und auf dem "Akt geschafft"-Screen.
+
+Hinweis: nutzt die vorhandenen 16 Gegner-Sprites; echte NEUE Gegner pro
+Akt brauchen einen Art-Pass (Prompts könnten ergänzt werden).
+
+─────────────────────────────────────────────────────
+
 [v1.8.4 – 2026-06-13]  SLOT-SYNERGIEN
 -------------------------------------
 Die Slot-Phase hat jetzt mehr Tiefe und Build-Anreize:
