@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.8.1"
+GAME_VERSION = "1.8.2"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.8.2", "Echte Pixel-Art-Sprites: 6 neue Gegner + Casino-Event"),
     ("1.8.1", "Tages-Challenge mit Streak · Meta-Unlocks · Casino-Event · Run-Stats"),
     ("1.8.0", "GROSSES CONTENT-UPDATE: Gift & neue Status, 8 Karten, 6 Gegner, 6 Relikte"),
     ("1.7.5", "16 Erfolge! Dauerhaft über Runs, mit Einblendung beim Freischalten"),

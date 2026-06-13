@@ -1,6 +1,19 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.2 – 2026-06-13]  ECHTE SPRITES FÜR DIE NEUEN INHALTE
+----------------------------------------------------------
+* Die 6 neuen Gegner aus v1.8.0 haben jetzt echte Pixel-Art statt
+  prozeduralem Fallback: Sumpfschleim, Kneipenschläger, Pilzkönigin,
+  Verfluchter Spiegel, Glücksgeist und Boss MADAME FORTUNA.
+* Das Untergrund-Casino-Event (v1.8.1) hat seine eigene Illustration.
+* Sheet (neue_assets.png, Magenta-Hintergrund) per Connected-Components
+  zerlegt, Magenta transparent gekeyt, eng getrimmt, in assets/enemies/
+  bzw. assets/events/ einsortiert und mit --add-data in die EXE gebündelt.
+* (Save-kompatibel -> Patch-Bump.)
+
+─────────────────────────────────────────────────────
+
 [v1.8.1 – 2026-06-12]  RETENTION-UPDATE: TAGES-CHALLENGE & META-UNLOCKS
 -----------------------------------------------------------------------
 TAGES-CHALLENGE (neuer Menüpunkt 📅):
