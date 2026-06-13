@@ -236,7 +236,10 @@ class SlotMachine:
             for name, count in counts.items():
                 if count == 2:
                     effects.append(self._pair_bonus(name, player, enemy))
-        
+
+            # Cross-Symbol-Synergien (verschiedene Symbole, die zusammenpassen)
+            effects.extend(self._synergies(names, player, enemy))
+
         self.effects = [e for e in effects if e]
         return self.effects
     
@@ -451,10 +454,97 @@ class SlotMachine:
             player.heal_hp(8)
             return "❤️❤️ Paar: +8 Bonus-HP!"
         elif sym == "FIRE":
-            enemy.burn += 1
-            return "🔥🔥 Paar: Gegner brennt! (+1 Burn)"
+            enemy.burn += 2
+            return "🔥🔥 Paar: Gegner brennt! (+2 Burn)"
+        elif sym == "SNAKE":
+            enemy.poison += 4
+            return "🐍🐍 GIFT-EXPLOSION! +4 Gift!"
+        elif sym == "SHIELD":
+            player.block += 12
+            return "🛡️🛡️ Paar: +12 Block!"
+        elif sym == "LIGHTNING":
+            enemy.take_damage(12 + player.strength)
+            player.energy += 1
+            return "⚡⚡ Paar: 12 Schaden, +1 Energie!"
+        elif sym == "TARGET":
+            enemy.vulnerable += 2
+            return "🎯🎯 Paar: Gegner 2 Runden verwundbar!"
+        elif sym == "STAR":
+            player.strength += 1
+            return "⭐⭐ Paar: +1 Stärke!"
+        elif sym == "DIAMOND":
+            player.add_gold(20)
+            return "💎💎 Paar: +20 Gold!"
+        elif sym == "BOMB":
+            enemy.take_damage(18 + player.strength)
+            return "💣💣 Paar: 18 Bonus-Schaden!"
+        elif sym == "CHERRY":
+            player.add_gold(6)
+            player.heal_hp(6)
+            return "🍒🍒 Paar: +6 Gold, +6 HP!"
+        elif sym == "CLOVER":
+            player.lucky += 1
+            return "🍀🍀 Paar: +1 Glücksrunde!"
+        elif sym == "BEER":
+            enemy.weakened += 1
+            return "🍺🍺 Paar: Gegner geschwächt!"
         elif sym == "CHICKEN":
             return self._chicken_effect(player, enemy)
+        return None
+
+    # ── Cross-Symbol-Synergien: bestimmte Symbol-PAARE verschiedener Sorten
+    #    geben einen Extra-Bonus (auch ohne Drilling/Paar). Belohnt clevere Builds.
+    SYNERGIES = [
+        ("SNAKE", "FIRE",     "🐍🔥 BRANDGIFT", "Gift trifft Flamme"),
+        ("TARGET", "BOMB",    "🎯💣 PRÄZISIONSSCHLAG", "markiert & gesprengt"),
+        ("LIGHTNING", "DIAMOND", "⚡💎 ÜBERLADUNG", "Energie aus Kristall"),
+        ("CLOVER", "DICE",    "🍀🎲 SCHICKSALSGLÜCK", "das Glück würfelt mit"),
+        ("HEART", "MOON",     "❤️🌙 LEBENSQUELL", "Mondlicht heilt"),
+        ("SHIELD", "STAR",    "🛡️⭐ HELDENMUT", "Schild & Stärke"),
+        ("MONEY", "CROWN",    "💰👑 REICHTUM", "Gold ruft Gold"),
+        ("SKULL", "TARGET",   "💀🎯 TODESURTEIL", "ins Schwarze"),
+    ]
+
+    def _synergies(self, names, player, enemy):
+        """Bonus-Effekte, wenn zwei bestimmte VERSCHIEDENE Symbole zusammen liegen."""
+        out = []
+        present = set(names)
+        for a, b, title, _flavor in self.SYNERGIES:
+            if a in present and b in present:
+                out.append(self._apply_synergy(a, b, title, player, enemy))
+        return [o for o in out if o]
+
+    def _apply_synergy(self, a, b, title, player, enemy):
+        combo = frozenset((a, b))
+        if combo == frozenset(("SNAKE", "FIRE")):
+            enemy.poison += 3
+            enemy.burn += 2
+            return f"{title}: +3 Gift & +2 Burn!"
+        if combo == frozenset(("TARGET", "BOMB")):
+            dmg = enemy.take_damage((20 + player.strength) * (2 if enemy.vulnerable > 0 else 1))
+            enemy.vulnerable += 1
+            return f"{title}: {dmg} Schaden, +1 Verwundbar!"
+        if combo == frozenset(("LIGHTNING", "DIAMOND")):
+            player.energy += 2
+            player.add_gold(20)
+            return f"{title}: +2 Energie, +20 Gold!"
+        if combo == frozenset(("CLOVER", "DICE")):
+            player.lucky += 2
+            return f"{title}: +2 Glücksrunden!"
+        if combo == frozenset(("HEART", "MOON")):
+            healed = player.heal_hp(max(12, (player.max_hp - player.hp) // 2))
+            return f"{title}: +{healed} HP!"
+        if combo == frozenset(("SHIELD", "STAR")):
+            player.block += 15
+            player.strength += 1
+            return f"{title}: +15 Block, +1 Stärke!"
+        if combo == frozenset(("MONEY", "CROWN")):
+            bonus = 15 + player.gold // 20
+            player.add_gold(bonus)
+            return f"{title}: +{bonus} Gold!"
+        if combo == frozenset(("SKULL", "TARGET")):
+            dmg = enemy.take_damage(28 + player.strength)
+            return f"{title}: {dmg} KRITSCHADEN!"
         return None
     
     def _chicken_effect(self, player, enemy):

@@ -1,6 +1,22 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.8.4 – 2026-06-13]  SLOT-SYNERGIEN
+-------------------------------------
+Die Slot-Phase hat jetzt mehr Tiefe und Build-Anreize:
+* PAARE (2 gleiche) geben jetzt für ALLE Symbole einen Bonus – neu u.a.
+  🐍🐍 Gift-Explosion (+4 Gift), 🎯🎯 Verwundbar, ⚡⚡ Schaden+Energie,
+  🛡️🛡️ Block, ⭐⭐ Stärke, 💎💎 Gold, 💣💣 Schaden, 🍒🍒, 🍀🍀, 🍺🍺.
+* CROSS-SYNERGIEN: zwei VERSCHIEDENE passende Symbole zusammen geben einen
+  Extra-Bonus (auch ohne Paar/Drilling):
+    🐍+🔥 Brandgift (Gift & Burn) · 🎯+💣 Präzisionsschlag (Schaden, evtl. x2
+    bei Verwundbar) · ⚡+💎 Überladung (Energie+Gold) · 🍀+🎲 Schicksalsglück
+    (+2 Glück) · ❤️+🌙 Lebensquell (große Heilung) · 🛡️+⭐ Heldenmut
+    (Block+Stärke) · 💰+👑 Reichtum (Gold skaliert) · 💀+🎯 Todesurteil (Krit).
+* Tutorial nennt die Synergien als Hinweis.
+
+─────────────────────────────────────────────────────
+
 [v1.8.3 – 2026-06-13]  KARTEN-EFFEKT-ICONS & SLOT-AUTOMAT-RAHMEN
 ----------------------------------------------------------------
 * Jede Karte zeigt oben rechts jetzt ein Effekt-ICON (Sprite) statt nur

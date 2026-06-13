@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.8.3"
+GAME_VERSION = "1.8.4"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.8.4", "Slot-Synergien: Symbol-Paare & Misch-Kombos geben Extra-Boni"),
     ("1.8.3", "Effekt-Icons auf Karten + echter Slot-Automat-Rahmen"),
     ("1.8.2", "Echte Pixel-Art-Sprites: 6 neue Gegner + Casino-Event"),
     ("1.8.1", "Tages-Challenge mit Streak · Meta-Unlocks · Casino-Event · Run-Stats"),

@@ -1425,9 +1425,9 @@ class UIRenderer:
                 "Karte hovern zeigt den Schaden vorab. Dann 'Slot drehen'.",
             ]),
             ("🎰  SLOTS & GEGNER", ACCENT, [
-                "Slot drehen: gleiche Symbole = starke Kombos, 🍀 hilft.",
-                "Danach greift der Gegner an (seine Absicht steht oben rechts).",
-                "Gegner haben Tricks: Gold klauen, Gift, Slot blockieren …",
+                "3 gleiche = JACKPOT · Paare & Mix-Synergien geben Extra-Boni.",
+                "Synergien: 🐍+🔥 Brandgift · 🎯+💣 Präzision · 💰+👑 Reichtum …",
+                "Danach greift der Gegner an: Gold klauen, Gift, Slot blocken …",
                 "Slot-Schaden kann den Gegner direkt erledigen.",
             ]),
             ("💠  RELIKTE · RAST · PAUSE", GREEN, [
