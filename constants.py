@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.9.0"
+GAME_VERSION = "1.9.1"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.9.1", "Akt-Hintergruende, Klassen-Portraits, 5 neue Gegner & viele Icons"),
     ("1.9.0", "START-KLASSEN! Ritter, Hochstapler, Hexe - je eigenes Deck & Relikt"),
     ("1.8.5", "Akt-Themen: jeder Akt eigene Gegner-Auswahl, Name & Boss"),
     ("1.8.4", "Slot-Synergien: Symbol-Paare & Misch-Kombos geben Extra-Boni"),
@@ -320,6 +321,63 @@ ENEMY_TYPES = [
         "tier": 3,
         "is_boss": True,
         "mechanic": "fortuna"
+    },
+    # ─── Neue Akt-Gegner (v1.9.1) ───
+    {
+        "name": "Falschspieler",
+        "asset": "falschspieler",
+        "hp": 50, "max_hp": 50,
+        "damage": 9, "armor": 1,
+        "gold_reward": (18, 28),
+        "color": RED_DARK,
+        "tooltip": "Hat immer ein Ass im Ärmel – und klaut dir beim Angriff Gold.",
+        "tier": 2,
+        "mechanic": "gold_thief"
+    },
+    {
+        "name": "Einarmiger Bandit",
+        "asset": "einarmiger_bandit",
+        "hp": 62, "max_hp": 62,
+        "damage": 11, "armor": 3,
+        "gold_reward": (20, 30),
+        "color": GOLD_DARK,
+        "tooltip": "Lebender Spielautomat. Blockiert gern deine Drehung.",
+        "tier": 2,
+        "mechanic": "slot_jammer"
+    },
+    {
+        "name": "Geisterbraut",
+        "asset": "geisterbraut",
+        "hp": 54, "max_hp": 54,
+        "damage": 10, "armor": 1,
+        "gold_reward": (18, 28),
+        "color": CYAN,
+        "tooltip": "Weint um eine verlorene Liebe und saugt dir das Leben aus.",
+        "tier": 2,
+        "mechanic": "siphon"
+    },
+    {
+        "name": "Knochenkoch",
+        "asset": "knochenkoch",
+        "hp": 58, "max_hp": 58,
+        "damage": 10, "armor": 2,
+        "gold_reward": (18, 27),
+        "color": GREEN_DARK,
+        "tooltip": "Sein verfluchter Eintopf vergiftet dich bei jedem Treffer.",
+        "tier": 2,
+        "mechanic": "venom"
+    },
+    {
+        "name": "DER SENSENMANN",
+        "asset": "boss_sensenmann",
+        "hp": 135, "max_hp": 135,
+        "damage": 14, "armor": 3,
+        "gold_reward": (55, 90),
+        "color": PURPLE,
+        "tooltip": "BOSS: Croupier des Todes. Teilt das Schicksal aus – und betrügt den Tod selbst.",
+        "tier": 3,
+        "is_boss": True,
+        "mechanic": "reaper"
     },
 ]
 

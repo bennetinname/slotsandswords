@@ -1,6 +1,38 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.9.1 – 2026-06-13]  GROSSES ASSET-UPDATE
+-------------------------------------------
+24 neue Sprites aus dem Sheet geschnitten und eingebaut (Magenta-Keying):
+
+AKT-HINTERGRUENDE (jeder Akt sieht jetzt anders aus):
+* bg_casino (Akt 2: Neon-Spielhalle, Roulette, Jackpot),
+  bg_cursed (Akt 3: verfluchte Halle, Nebel, Kerzen, Knochen),
+  bg_void (Akt 4+: surrealer Endlos-Strudel aus Karten & Gold).
+* Hintergrund wird jetzt je Akt-Thema umgeschaltet (gecacht).
+
+9 RELIKT-ICONS: poison_boost, gamble_discount, trophy, vamp_tooth,
+  anatomy, fortune_cookie, witch_cauldron, watchtower, four_leaf –
+  ersetzen das Emoji in der Reliktleiste.
+
+3 KLASSEN-PORTRAITS im Auswahl-Screen (Ritter/Hochstapler/Hexe)
+  statt Emoji.
+
+5 NEUE GEGNER (mit Sprites) + in die Akt-Pools einsortiert:
+* Akt 2: Falschspieler (klaut Gold), Einarmiger Bandit (blockt Slot).
+* Akt 3: Geisterbraut (saugt Leben), Knochenkoch (vergiftet),
+  und neuer 2. Boss DER SENSENMANN – Croupier des Todes mit eigener
+  "reaper"-Mechanik (Schicksalskarten) + Todes-Trotz (überlebt 1x).
+  Akt 3 wuerfelt den Boss jetzt zwischen Fortuna und Sensenmann.
+
+4 DEDIZIERTE KARTEN-ICONS: Gift-Karten zeigen ein Giftfläschchen,
+  Staerke-Karten eine Faust, Glücks-/Spin-Karten ein Kleeblatt,
+  Schildbuckel ein Schlag-Schild.
+
+(Save-Format unveraendert -> Patch, Spielstaende bleiben gueltig.)
+
+─────────────────────────────────────────────────────
+
 [v1.9.0 – 2026-06-13]  START-KLASSEN
 ------------------------------------
 (Minor-Bump: Save-Format erweitert um class_id -> alte Saves verfallen.)

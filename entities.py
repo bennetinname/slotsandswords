@@ -74,21 +74,24 @@ class Card:
         "heal": "heal_herb", "second_wind": "heal_herb", "regen_potion": "heal_herb",
         "nuke": "death_skull", "execrate": "death_skull", "annihilate": "death_skull",
         "last_resort": "death_skull", "berserker": "death_skull", "executioner": "death_skull",
-        "poison_blade": "death_skull", "toxic_cloud": "death_skull", "acid_barrel": "death_skull",
-        "plague_breath": "death_skull", "blood_pact": "death_skull",
+        "blood_pact": "death_skull",
         "curse_nausea": "death_skull", "curse_unluck": "death_skull", "curse_burden": "death_skull",
+        # Gift-Karten -> eigenes Gift-Icon (v1.9.1)
+        "poison_blade": "poison_vial", "toxic_cloud": "poison_vial", "acid_barrel": "poison_vial",
+        "plague_breath": "poison_vial", "brew_poison": "poison_vial", "bloodletting": "poison_vial",
         "gambling": "dice_chaos", "coinflip": "dice_chaos", "all_in": "dice_chaos",
-        "roulette": "dice_chaos", "loaded_dice": "dice_chaos", "lucky_hit": "dice_chaos",
-        "chaos": "dice_chaos",
+        "roulette": "dice_chaos", "chaos": "dice_chaos",
         "greed": "gold_coin", "bribe": "gold_coin", "pillage": "gold_coin",
         "gold_rush": "gold_coin", "coin_rain": "gold_coin", "tax_evasion": "gold_coin",
-        "double_spin": "energy_bolt", "triple_spin": "energy_bolt", "adrenaline": "energy_bolt",
-        "redraw": "energy_bolt", "shadow_step": "energy_bolt", "train": "energy_bolt",
+        "adrenaline": "energy_bolt", "redraw": "energy_bolt", "shadow_step": "energy_bolt",
+        "card_trick": "energy_bolt",
+        # Glücks-/Spin-Karten -> Klee-Icon (v1.9.1)
+        "lucky_streak": "luck_clover", "double_spin": "luck_clover", "triple_spin": "luck_clover",
+        "loaded_dice": "luck_clover", "lucky_hit": "luck_clover",
+        # Stärke-Karten -> Faust-Icon (v1.9.1)
+        "warcry": "strength_fist", "train": "strength_fist",
+        "shield_bash": "shield_bash",
         "chicken": "chicken", "chicken_swarm": "chicken",
-        # Klassen-Karten v1.9.0
-        "warcry": "energy_bolt", "shield_bash": "defense_shield",
-        "bloodletting": "atk_slash", "lucky_streak": "dice_chaos",
-        "brew_poison": "death_skull", "card_trick": "energy_bolt",
     }
 
     def get_effect_icon(self):
@@ -374,10 +377,12 @@ class Enemy:
             self.intent_value = int(self.intent_value * 1.5)
 
     def try_undying(self):
-        """Lich-Mechanik: einmal pro Kampf den Tod überleben. Gibt Log oder None."""
-        if self.hp <= 0 and self.mechanic == "undying" and not self._undying_used:
+        """Lich/Sensenmann: einmal pro Kampf den Tod überleben. Gibt Log oder None."""
+        if self.hp <= 0 and self.mechanic in ("undying", "reaper") and not self._undying_used:
             self._undying_used = True
             self.hp = max(1, self.max_hp // 6)
+            if self.mechanic == "reaper":
+                return f"💀 {self.name}: 'Der Tod betrügt nicht – ER betrügt.' – überlebt mit {self.hp} HP!"
             return f"🕯️ {self.name}: 'Was ist überhaupt Tod?' – überlebt mit {self.hp} HP!"
         return None
 
@@ -533,6 +538,22 @@ class Enemy:
                 player.lucky -= 1
                 healed = self.heal(6)
                 out.append(f"👻 {self.name} frisst eine Glücksrunde! (+{healed} HP für ihn)")
+
+        elif m == "reaper":
+            # Croupier des Todes: teilt eine Schicksalskarte aus (haerter als Fortuna)
+            fate = random.choice(["scythe", "poison", "drain", "double"])
+            if fate == "scythe":
+                cut = player.take_damage(max(1, int(self.damage * 0.6)))
+                out.append(f"☠️ {self.name} schwingt die Sense! ({cut} Extra-Schaden)")
+            elif fate == "poison":
+                player.poison += 4
+                out.append(f"☠️ Todeshauch: +4 Gift auf dich!")
+            elif fate == "drain":
+                healed = self.heal(14)
+                out.append(f"🩸 {self.name} erntet Leben (+{healed} HP für ihn)!")
+            else:
+                extra = player.take_damage(max(1, self.damage // 2))
+                out.append(f"🃏 Schicksalskarte: DOPPELSCHLAG! ({extra} Extra-Schaden)")
 
         elif m == "fortuna":
             wheel = random.choice(["poison", "steal", "heal", "double"])

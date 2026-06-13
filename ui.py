@@ -69,10 +69,35 @@ class UIRenderer:
     # LOW-LEVEL HELFER (modernes Aussehen)
     # ═══════════════════════════════════════════════
 
+    def set_scene(self, scene_name):
+        """Wechselt den Hintergrund (z.B. je Akt). Gecacht -> günstig."""
+        if getattr(self, "_scene_name", None) == scene_name:
+            return
+        self._scene_name = scene_name
+        cache = getattr(self, "_scene_cache", None)
+        if cache is None:
+            cache = self._scene_cache = {}
+        if scene_name not in cache:
+            cache[scene_name] = self._build_scene(scene_name)
+        self._bg = cache[scene_name]
+
     def _build_background(self):
-        """Erzeugt einmalig den Hintergrund (gemaltes Bild ODER Gradient) mit Vignette"""
+        """Initialer Hintergrund + einmalige Deko-Glyphen."""
+        self._scene_cache = {}
+        self._scene_name = "bg_kneipe"
+        self._scene_cache["bg_kneipe"] = self._build_scene("bg_kneipe")
+        self._bg = self._scene_cache["bg_kneipe"]
+        # Schwebende Deko-Glyphen EINMAL vorrendern (scene-unabhängig)
+        self._bg_glyphs = []
+        for g in ["♠", "♥", "♦", "♣", "🎰", "💰", "🍀", "⭐"]:
+            surf = self.font_large.render(g, True, _lighten(BG_TOP, 0.12))
+            surf.set_alpha(26)
+            self._bg_glyphs.append(surf)
+
+    def _build_scene(self, scene_name):
+        """Baut eine Hintergrund-Szene (gemaltes Bild ODER Gradient) mit Vignette."""
         bg = pygame.Surface((self.w, self.h)).convert()
-        scene = assets.load("ui", "bg_kneipe")
+        scene = assets.load("ui", scene_name)
         if scene:
             # Gemalte Kneipen-Szene, abgedunkelt für Text-Kontrast
             bg.blit(pygame.transform.smoothscale(scene, (self.w, self.h)), (0, 0))
@@ -113,16 +138,7 @@ class UIRenderer:
         # Akzentlinien oben/unten
         pygame.draw.line(bg, _darken(ACCENT, 0.4), (0, 0), (self.w, 0), 2)
         pygame.draw.line(bg, _darken(ACCENT, 0.55), (0, self.h - 1), (self.w, self.h - 1), 2)
-
-        self._bg = bg
-
-        # Schwebende Deko-Glyphen EINMAL vorrendern (statt 8×/Frame neu) -> weniger
-        # CPU/GC-Druck. Position wird pro Frame animiert, das Surface bleibt gleich.
-        self._bg_glyphs = []
-        for g in ["♠", "♥", "♦", "♣", "🎰", "💰", "🍀", "⭐"]:
-            surf = self.font_large.render(g, True, _lighten(BG_TOP, 0.12))
-            surf.set_alpha(26)
-            self._bg_glyphs.append(surf)
+        return bg
 
     def draw_background(self):
         """Zeichnet den vorberechneten Hintergrund + dezente Animation"""
@@ -1655,23 +1671,27 @@ class UIRenderer:
             self._panel((x, sy, cw, ch), radius=16,
                         border=accent if hov else _darken(accent, 0.3),
                         border_w=3 if hov else 2)
-            # Emoji groß
-            self._text(c["emoji"], self.font_huge, accent, x + cw // 2, sy + 22, center=True)
+            # Portrait-Sprite (Fallback: Emoji)
+            portrait = assets.by_height("ui", f"class_{c['id']}", 96)
+            if portrait:
+                self.screen.blit(portrait, (x + cw // 2 - portrait.get_width() // 2, sy + 6))
+            else:
+                self._text(c["emoji"], self.font_huge, accent, x + cw // 2, sy + 22, center=True)
             self._text(c["name"], self.font_h1, _lighten(accent, 0.2),
-                       x + cw // 2, sy + 92, center=True, shadow=True)
+                       x + cw // 2, sy + 104, center=True, shadow=True)
             pygame.draw.line(self.screen, _darken(accent, 0.3),
-                             (x + 24, sy + 134), (x + cw - 24, sy + 134))
+                             (x + 24, sy + 142), (x + cw - 24, sy + 142))
             # Beschreibung
             for li, line in enumerate(self._wrap_text(c["desc"], self.font_small, cw - 40)):
-                self._text(line, self.font_small, INK, x + 24, sy + 146 + li * 22)
+                self._text(line, self.font_small, INK, x + 24, sy + 150 + li * 22)
             # Perk
             for li, line in enumerate(self._wrap_text("⭐ " + c["perk"], self.font_tiny, cw - 40)):
-                self._text(line, self.font_tiny, ACCENT_SOFT, x + 24, sy + 210 + li * 18)
+                self._text(line, self.font_tiny, ACCENT_SOFT, x + 24, sy + 206 + li * 18)
             # Startdeck-Zusammensetzung (kompakt)
             from collections import Counter
-            self._text("Startdeck:", self.font_tiny, INK_DIM, x + 24, sy + 268)
+            self._text("Startdeck:", self.font_tiny, INK_DIM, x + 24, sy + 266)
             counts = Counter(c["deck"])
-            yy = sy + 288
+            yy = sy + 286
             for name, cnt in counts.items():
                 label = f"{cnt}× {name}" if cnt > 1 else name
                 self._text("•  " + label, self.font_tiny, INK, x + 28, yy)

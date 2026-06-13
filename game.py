@@ -56,12 +56,13 @@ ACT_THEMES = [
     ], "DER GROSSE HÜHNERKÖNIG"),
     ("Das Untergrund-Casino", (210, 80, 150), [
         "Vampir-Croupier", "Slot-Maschinendämon", "Glücksgeist",
-        "Steuerprüfer", "Kneipenschläger",
+        "Steuerprüfer", "Kneipenschläger", "Falschspieler", "Einarmiger Bandit",
     ], "Oberster Glücksprüfer"),
     ("Das Verfluchte Reich", (150, 90, 220), [
         "Philosophischer Lich", "Verfluchter Spiegel", "Pilzkönigin",
         "Wütender Koch", "Pestratte", "Glücksgeist", "Sumpfschleim",
-    ], "MADAME FORTUNA"),
+        "Geisterbraut", "Knochenkoch",
+    ], ["MADAME FORTUNA", "DER SENSENMANN"]),
 ]
 
 
@@ -744,7 +745,9 @@ class Game:
         row_in_act = (self.floor_num - 1) % mapgen.ROWS
 
         if node_type == "boss":
-            enemy_def = by_name.get(boss_name)
+            choices = boss_name if isinstance(boss_name, list) else [boss_name]
+            pick = random.choice(choices)
+            enemy_def = by_name.get(pick)
             if enemy_def is None:
                 enemy_def = random.choice([e for e in ENEMY_TYPES if e.get("is_boss")])
         else:
@@ -2069,7 +2072,19 @@ class Game:
     # DRAW
     # ═══════════════════════════════════════════════
     
+    def _scene_for_state(self):
+        """Hintergrund-Szene je Zustand: im Run akt-abhängig, sonst Kneipe."""
+        in_run = getattr(self, "player", None) and self.state in (
+            STATE_MAP, STATE_REST, STATE_ACT_CLEAR, STATE_PLAYER_TURN,
+            STATE_SLOT_SPIN, STATE_ENEMY_TURN, STATE_REWARD, STATE_EVENT, STATE_SHOP)
+        if not in_run:
+            return "bg_kneipe"
+        if self.act >= 4:
+            return "bg_void"   # surrealer Endlos-Abstieg
+        return ["bg_kneipe", "bg_casino", "bg_cursed"][(self.act - 1) % 3]
+
     def _draw(self):
+        self.ui.set_scene(self._scene_for_state())
         if self.state == STATE_MENU:
             self.ui.draw_main_menu(self._compute_menu_layout())
 
