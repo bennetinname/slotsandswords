@@ -11,9 +11,9 @@ ZWEITER SPIELMODUS (quasi ein eigenes Spiel; Auswahl im Hauptmenü)
     Zwischen den Wellen 1 Belohnung wählen. Wie lange hältst du durch?
     Score-/Highscore-getrieben, kurze Sessions. (Wiederverwendet Kampf +
     Karten, braucht nur Wellen-Generator + Reward-Schleife.)
-  - REINER SLOT-MODUS (Balatro-Style): KEIN Kartenkampf – du baust nur
-    den Automaten auf (Symbole kaufen/aufwerten, Synergien, Joker-Relikte),
-    musst pro Runde eine Ziel-Punktzahl knacken. Sehr suchtig, sehr anders.
+  - [ERLEDIGT v1.14.0] REINER SLOT-MODUS (Balatro-Style): umgesetzt in
+    slotmode.py (Beutel + 10 Joker + Shop, Chips x Mult, endlos, Bestwert).
+    Ausbaubar: mehr Joker, Symbol-Editionen (Folie/Holo), Boss-Blinds.
   - CASINO-DUELL (Blackjack/Poker gg. „das Haus"): thematisch perfekt,
     eigene Regeln, eigene Progression. Komplett anderes Spielgefühl.
   - BOSS-RUSH: alle Bosse hintereinander mit festem Start-Deck. Kurz, hart.
@@ -88,6 +88,8 @@ TECHNIK
 
 ERLEDIGT (Referenz; Details in CHANGELIST.txt)
 --------------------------------------------------------------------
+- v1.14.0: NEUER SPIELMODUS – Slot-Modus (Balatro-Style): Beutel aufbauen,
+  10 Joker, Shop, Chips x Mult, endlos, Bestwert-Persistenz (slotmode.py)
 - v1.13.0: Musik pro Akt + Akt-Jingle, Schwierigkeitsgrade, Schnell-Option,
   Autosave zwischen Knoten, 8 neue Erfolge + Freischalt-Anzeige im Screen
 - v1.12.0: Riesen-Update 2 (22 Karten, 12 Relikte, 9 Gegner, 3 Akte,

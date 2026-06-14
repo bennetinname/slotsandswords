@@ -12,6 +12,8 @@ dist/
 savegame.json
 highscores.json
 options.json
+achievements.json
+slotmode.json
 
 # Test-Screenshots
 _shot_*.png

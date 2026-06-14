@@ -7,6 +7,7 @@ import mapgen
 import assets
 import daily
 import achievements
+import slotmode
 
 
 def _lerp(a, b, t):
@@ -1234,6 +1235,15 @@ class UIRenderer:
             if d.collidepoint(pygame.mouse.get_pos()):
                 info = f"{mod['name']}: {mod['desc']}"
             self._text(info, self.font_tiny, INK_DIM, d.right + 12, d.y + d.h // 2 - 7)
+        sm = layout.get("slotmode")
+        if sm:
+            self.draw_button("🎰 Slot-Modus", sm.x, sm.y, sm.w, sm.h,
+                             color=GOLD, text_color=BLACK)
+            import slotmode as _sm
+            best = _sm.load_best()
+            if best > 0:
+                self._text(f"Best: Runde {best}", self.font_tiny, INK_DIM,
+                           sm.right + 12, sm.y + sm.h // 2 - 7)
         tu = layout["tutorial"]
         self.draw_button("📖 Tutorial", tu.x, tu.y, tu.w, tu.h, color=CYAN, text_color=BLACK)
         op = layout["options"]
@@ -1849,6 +1859,181 @@ class UIRenderer:
         self.draw_button("Zurück", back.x, back.y, back.w, back.h,
                          color=ACCENT, text_color=BLACK)
         return back
+
+    # ═══════════════════════════════════════════════
+    # SLOT-MODUS (eigenständiges Spiel)
+    # ═══════════════════════════════════════════════
+
+    def draw_slotmode(self, run, machine, spinning, spin_btn, shop_lay, back_rect):
+        self.draw_background()
+        self._dim(120)
+        if run is None:
+            return
+        self._text("🎰  SLOT-MODUS", self.font_huge, GOLD, self.w // 2, 14,
+                   center=True, shadow=True)
+        self.draw_button("← Menü", back_rect.x, back_rect.y, back_rect.w, back_rect.h,
+                         color=GREY_DARK, text_color=WHITE)
+
+        # Kopf-Statusleiste
+        chips = [
+            (f"Runde {run.round}", PURPLE),
+            (f"🎯 Ziel: {run.target}", ACCENT),
+            (f"Punkte: {run.round_score}", GREEN if run.round_score >= run.target else INK),
+            (f"🎲 Drehs: {run.spins_left}", CYAN),
+            (f"🪙 {run.gold}", GOLD),
+        ]
+        cx = 150
+        for label, col in chips:
+            w = self.font_medium.size(label)[0] + 28
+            self._chip(label, self.font_medium, cx, 64, text_col=col,
+                       fill=(20, 18, 34, 210))
+            cx += w + 12
+
+        # Fortschrittsbalken zum Ziel
+        bar = pygame.Rect(self.w // 2 - 320, 104, 640, 16)
+        pygame.draw.rect(self.screen, GREY_DARK, bar, border_radius=8)
+        frac = min(1.0, run.round_score / max(1, run.target))
+        if frac > 0:
+            fw = int(bar.w * frac)
+            col = GREEN if frac >= 1.0 else GOLD
+            pygame.draw.rect(self.screen, col, (bar.x, bar.y, fw, bar.h), border_radius=8)
+        pygame.draw.rect(self.screen, PANEL_LINE, bar, 2, border_radius=8)
+
+        # Automat in der Mitte
+        if machine:
+            machine.draw(self.screen, self.font_title, self.font_large,
+                         self.font_small, self.font_tiny)
+
+        # Joker links
+        self._slotmode_jokers(run, 24, 150)
+        # Beutel rechts
+        self._slotmode_bag(run, self.w - 232, 150)
+        # Letzte Wertung mittig unten
+        self._slotmode_breakdown(run)
+
+        # Spin-Phase: Dreh-Button
+        if not run.in_shop and not run.game_over:
+            label = "🎰  DREHEN" if not spinning else "…dreht…"
+            self.draw_button(label, spin_btn.x, spin_btn.y, spin_btn.w, spin_btn.h,
+                             color=GOLD if not spinning else GREY_DARK,
+                             text_color=BLACK, pulsing=not spinning)
+            self._text("Leertaste = drehen", self.font_tiny, INK_FAINT,
+                       self.w // 2, spin_btn.bottom + 6, center=True)
+
+        if run.in_shop:
+            self._slotmode_shop(run, shop_lay)
+        elif run.game_over:
+            self._slotmode_gameover(run, spin_btn)
+
+    def _slotmode_jokers(self, run, x, y):
+        self._panel((x, y, 192, 300), radius=12, border=PURPLE, border_w=2)
+        self._text("🃏 Joker", self.font_medium, _lighten(PURPLE, 0.3), x + 12, y + 8)
+        if not run.jokers:
+            self._text("— noch keine —", self.font_tiny, INK_FAINT, x + 12, y + 40)
+        for i, jid in enumerate(run.jokers):
+            j = slotmode.JOKER_BY_ID.get(jid, {})
+            jy = y + 38 + i * 50
+            self._text(f"{j.get('emoji','?')} {j.get('name','')}", self.font_small,
+                       ACCENT, x + 12, jy)
+            self._wrap_text(j.get("desc", ""), self.font_tiny, INK_DIM,
+                            x + 12, jy + 18, 168, 14, 2)
+
+    def _slotmode_bag(self, run, x, y):
+        self._panel((x, y, 208, 300), radius=12, border=BLUE, border_w=2)
+        self._text("🎒 Beutel", self.font_medium, _lighten(BLUE, 0.3), x + 12, y + 8)
+        total = sum(run.bag.values())
+        self._text(f"{total} Symbole", self.font_tiny, INK_DIM, x + 12, y + 34)
+        items = sorted(run.bag.items(), key=lambda kv: -run.values.get(kv[0], 0))
+        for i, (name, cnt) in enumerate(items[:11]):
+            iy = y + 54 + i * 21
+            val = run.values.get(name, 5)
+            self._text(f"{slotmode.EMOJI.get(name,'?')} x{cnt}", self.font_tiny,
+                       INK, x + 12, iy)
+            self._text(f"{val} Chips", self.font_tiny, GOLD, x + 196, iy, right=True)
+
+    def _slotmode_breakdown(self, run):
+        if not run.last_lines:
+            return
+        lines = run.last_lines
+        bx, by = self.w // 2 - 200, 524
+        bh = 26 + len(lines) * 20
+        self._panel((bx, by, 400, bh), radius=10, border=PANEL_LINE)
+        self._text("Letzter Dreh", self.font_small, INK_DIM, bx + 12, by + 6)
+        for i, (left, right) in enumerate(lines):
+            ly = by + 28 + i * 20
+            last = (i == len(lines) - 1)
+            self._text(left, self.font_tiny, ACCENT if last else INK, bx + 12, ly)
+            self._text(right, self.font_tiny, GOLD if last else INK_DIM,
+                       bx + 388, ly, right=True)
+
+    def _slotmode_shop(self, run, lay):
+        self._dim(150)
+        self._text(f"🛒  Runde {run.round} geknackt!  Bau deinen Automaten aus.",
+                   self.font_title, GOLD, self.w // 2, 250, center=True, shadow=True)
+        self._chip(f"🪙 {run.gold}", self.font_title, self.w // 2 - 40, 300,
+                   text_col=GOLD, fill=(50, 40, 10, 220))
+        for i, rect in enumerate(lay["offers"]):
+            if i >= len(run.shop):
+                continue
+            o = run.shop[i]
+            bought = o.get("bought")
+            afford = run.can_afford(o) and not bought
+            border = GREEN if bought else (ACCENT if afford else GREY_DARK)
+            self._panel((rect.x, rect.y, rect.w, rect.h), radius=12, border=border, border_w=2)
+            kind_lbl = {"symbol": "Symbol", "upgrade": "Upgrade", "joker": "Joker"}.get(o["kind"], "")
+            self._text(kind_lbl, self.font_small, _lighten(border, 0.2), rect.x + 12, rect.y + 10)
+            self._wrap_text(o["label"], self.font_medium, INK,
+                            rect.x + 12, rect.y + 38, rect.w - 24, 22, 3)
+            if o["kind"] == "joker":
+                jid = o["joker"]
+                self._wrap_text(slotmode.JOKER_BY_ID[jid]["desc"], self.font_tiny,
+                                INK_DIM, rect.x + 12, rect.y + 92, rect.w - 24, 14, 3)
+            if bought:
+                self._text("✓ gekauft", self.font_small, GREEN, rect.centerx,
+                           rect.bottom - 30, center=True)
+            else:
+                self._text(f"🪙 {o['cost']}", self.font_medium,
+                           GOLD if afford else RED, rect.centerx, rect.bottom - 32, center=True)
+        rr = lay["reroll"]
+        self.draw_button(f"🔄 Neu ({run.reroll_cost})", rr.x, rr.y, rr.w, rr.h,
+                         color=BLUE if run.gold >= run.reroll_cost else GREY_DARK,
+                         text_color=WHITE)
+        co = lay["continue"]
+        self.draw_button("Weiter ▶", co.x, co.y, co.w, co.h, color=GREEN, text_color=BLACK,
+                         pulsing=True)
+
+    def _slotmode_gameover(self, run, btn):
+        self._dim(180)
+        pw, ph = 480, 240
+        px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2
+        self._panel((px, py, pw, ph), radius=16, border=RED, border_w=3)
+        self._text("💥  GAME OVER", self.font_huge, RED, self.w // 2, py + 20,
+                   center=True, shadow=True)
+        self._text(f"Du hast Runde {run.round} erreicht.", self.font_title, INK,
+                   self.w // 2, py + 86, center=True)
+        self._text(f"Endpunkte: {run.round_score} / {run.target}", self.font_medium,
+                   INK_DIM, self.w // 2, py + 122, center=True)
+        self._text(f"🏆 Beste Runde: {run.best_round}", self.font_medium, GOLD,
+                   self.w // 2, py + 150, center=True)
+        bx = pygame.Rect(self.w // 2 - 110, py + ph - 56, 220, 44)
+        self.draw_button("Zurück zum Menü", bx.x, bx.y, bx.w, bx.h,
+                         color=ACCENT, text_color=BLACK, pulsing=True)
+
+    def _wrap_text(self, text, font, color, x, y, max_w, line_h, max_lines):
+        """Einfacher Wort-Umbruch (für Tooltips/Shop-Karten)."""
+        words = text.split()
+        line, count = "", 0
+        for w in words:
+            test = (line + " " + w).strip()
+            if font.size(test)[0] > max_w and line:
+                self._text(line, font, color, x, y + count * line_h)
+                count += 1; line = w
+                if count >= max_lines - 1:
+                    break
+            else:
+                line = test
+        if line and count < max_lines:
+            self._text(line, font, color, x, y + count * line_h)
 
     # ═══════════════════════════════════════════════
     # HIGHSCORES

@@ -14,6 +14,7 @@ import savegame
 import audio
 import mapgen
 import options
+import slotmode
 import assets
 import achievements
 import daily
@@ -44,6 +45,7 @@ STATE_VICTORY     = "victory"
 STATE_SCORES      = "scores"         # Highscore-Anzeige
 STATE_ACHIEVEMENTS = "achievements"  # Erfolge-Anzeige
 STATE_CLASS_SELECT = "class_select"  # Klassenauswahl vor dem Run
+STATE_SLOTMODE     = "slotmode"      # Reiner Slot-Modus (eigenes Spiel)
 
 
 # ═══════════════════════════════════════════════
@@ -110,6 +112,11 @@ class Game:
         
         # Slot-Maschine (position rechts oben im Kampf)
         self.slot_machine = None
+        # Slot-Modus (eigenes Spiel)
+        self.slotrun = None
+        self._sm_spinning = False
+        self._sm_pending = []
+        self._sm_by_name = {s["name"]: s for s in SLOT_SYMBOLS}
         
         # UI-Zustände
         self.selected_card = None
@@ -331,7 +338,7 @@ class Game:
             self.state = self._prev_state           # Weiter spielen
         elif self.state in (STATE_TUTORIAL, STATE_SCORES, STATE_CHANGELOG,
                             STATE_ACHIEVEMENTS, STATE_CLASS_SELECT,
-                            STATE_GAME_OVER, STATE_VICTORY):
+                            STATE_GAME_OVER, STATE_VICTORY, STATE_SLOTMODE):
             self.state = STATE_MENU
         else:  # Hauptmenü
             self.running = False
@@ -365,6 +372,12 @@ class Game:
                 self._skip_reward()                      # = "Überspringen"
             elif self.state == STATE_ACT_CLEAR:
                 audio.play("click"); self.state = STATE_MAP
+            elif self.state == STATE_SLOTMODE and self.slotrun:
+                r = self.slotrun
+                if r.in_shop:
+                    audio.click(); r.next_round()
+                elif not r.game_over and not self._sm_spinning:
+                    self._sm_spin()
 
     def _compute_menu_layout(self):
         """Layout der Hauptmenü-Buttons. Quelle für Zeichnen UND Klick."""
@@ -372,23 +385,25 @@ class Game:
         changelog = pygame.Rect(16, SCREEN_H - 50, 200, 34)
         if savegame.has_valid_save():
             return {
-                "resume":   pygame.Rect(cx - 130, 414, 260, 50),
-                "play":     pygame.Rect(cx - 130, 470, 260, 42),
-                "daily":    pygame.Rect(cx - 130, 516, 260, 42),
-                "tutorial": pygame.Rect(cx - 110, 562, 220, 38),
-                "options":  pygame.Rect(cx - 110, 606, 220, 38),
-                "scores":   pygame.Rect(cx - 110, 650, 220, 38),
-                "achievements": pygame.Rect(cx - 110, 694, 220, 38),
+                "resume":   pygame.Rect(cx - 130, 406, 260, 46),
+                "play":     pygame.Rect(cx - 130, 458, 260, 40),
+                "daily":    pygame.Rect(cx - 130, 502, 260, 38),
+                "slotmode": pygame.Rect(cx - 130, 544, 260, 38),
+                "tutorial": pygame.Rect(cx - 110, 586, 220, 34),
+                "options":  pygame.Rect(cx - 110, 624, 220, 34),
+                "scores":   pygame.Rect(cx - 110, 662, 220, 34),
+                "achievements": pygame.Rect(cx - 110, 700, 220, 34),
                 "changelog": changelog,
             }
         return {
             "resume":   None,
-            "play":     pygame.Rect(cx - 110, 440, 220, 50),
-            "daily":    pygame.Rect(cx - 110, 496, 220, 42),
-            "tutorial": pygame.Rect(cx - 110, 544, 220, 40),
-            "options":  pygame.Rect(cx - 110, 590, 220, 40),
-            "scores":   pygame.Rect(cx - 110, 636, 220, 40),
-            "achievements": pygame.Rect(cx - 110, 682, 220, 40),
+            "play":     pygame.Rect(cx - 110, 430, 220, 48),
+            "daily":    pygame.Rect(cx - 110, 482, 220, 40),
+            "slotmode": pygame.Rect(cx - 110, 526, 220, 40),
+            "tutorial": pygame.Rect(cx - 110, 570, 220, 38),
+            "options":  pygame.Rect(cx - 110, 612, 220, 38),
+            "scores":   pygame.Rect(cx - 110, 654, 220, 38),
+            "achievements": pygame.Rect(cx - 110, 696, 220, 38),
             "changelog": changelog,
         }
 
@@ -521,6 +536,10 @@ class Game:
             self._handle_rest_click(pos)
             return
 
+        if self.state == STATE_SLOTMODE:
+            self._handle_slotmode_click(pos)
+            return
+
         if self.state == STATE_MENU:
             # Update-Button (nur wenn neuere Version verfügbar)
             if self.update_btn_rect and self.update_btn_rect.collidepoint(pos):
@@ -537,6 +556,9 @@ class Game:
             if lay["daily"].collidepoint(pos):
                 audio.play("click"); self.pending_daily = True
                 self.state = STATE_CLASS_SELECT
+                return
+            if lay.get("slotmode") and lay["slotmode"].collidepoint(pos):
+                audio.play("click"); self._start_slotmode()
                 return
             if lay["tutorial"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_TUTORIAL
@@ -1286,6 +1308,93 @@ class Game:
         self.enemy_turn_log = []
         self._log("⚔️ Gegner ist am Zug...")
     
+    # ═══════════════════════════════════════════════
+    # SLOT-MODUS (reines Slot-Aufbau-Spiel)
+    # ═══════════════════════════════════════════════
+
+    def _start_slotmode(self):
+        self.slotrun = slotmode.SlotRun()
+        self.slot_machine = SlotMachine(SCREEN_W // 2 - 170, 196)
+        self._sm_spinning = False
+        self._sm_pending = []
+        self.state = STATE_SLOTMODE
+
+    def _sm_spin_button(self):
+        return pygame.Rect(SCREEN_W // 2 - 120, 452, 240, 56)
+
+    def _sm_back_rect(self):
+        return pygame.Rect(16, 16, 150, 38)
+
+    def _sm_shop_layout(self):
+        n = len(self.slotrun.shop) if self.slotrun else 0
+        ow, gap = 210, 22
+        total = n * ow + (n - 1) * gap
+        sx = SCREEN_W // 2 - total // 2
+        offers = [pygame.Rect(sx + i * (ow + gap), 360, ow, 168) for i in range(n)]
+        return {
+            "offers": offers,
+            "reroll": pygame.Rect(SCREEN_W // 2 - 220, 556, 200, 46),
+            "continue": pygame.Rect(SCREEN_W // 2 + 20, 556, 200, 46),
+        }
+
+    def _sm_spin(self):
+        r = self.slotrun
+        if not r or r.game_over or r.in_shop or self._sm_spinning or r.spins_left <= 0:
+            return
+        names = r.draw_symbols()
+        self._sm_pending = names
+        targets = [self._sm_by_name.get(n) for n in names]
+        self.slot_machine.spin(time_scale=self._anim_mul(), targets=targets)
+        self._sm_spinning = True
+        audio.start_spin()
+
+    def _sm_resolve(self):
+        audio.stop_spin()
+        r = self.slotrun
+        total, _lines = r.resolve_spin(self._sm_pending)
+        if r.in_shop:                       # Runde geknackt
+            audio.play("jackpot"); audio.play("fanfare")
+            self._do_shake(12)
+            self._spawn_particles(SCREEN_W // 2, 250, (255, 210, 80), count=26,
+                                  speed=220, size=5)
+            if r.round >= 8:
+                self._award("slot_master")
+        elif r.game_over:
+            audio.play("lose")
+        else:
+            audio.play("jackpot" if total >= 120 else "reel", 0.8)
+            self._do_shake(min(12, 2 + total // 30))
+
+    def _handle_slotmode_click(self, pos):
+        r = self.slotrun
+        if not r:
+            self.state = STATE_MENU
+            return
+        if r.game_over:
+            if self._sm_back_rect().collidepoint(pos) or \
+               self._sm_spin_button().collidepoint(pos):
+                audio.click(); self.state = STATE_MENU
+            return
+        if r.in_shop:
+            lay = self._sm_shop_layout()
+            for i, rect in enumerate(lay["offers"]):
+                if i < len(r.shop) and rect.collidepoint(pos):
+                    audio.play("gold" if r.buy(r.shop[i]) else "error")
+                    return
+            if lay["reroll"].collidepoint(pos):
+                audio.play("gold" if r.reroll() else "error")
+                return
+            if lay["continue"].collidepoint(pos):
+                audio.click(); r.next_round()
+                return
+            return
+        # Spin-Phase
+        if not self._sm_spinning and self._sm_spin_button().collidepoint(pos):
+            self._sm_spin()
+            return
+        if self._sm_back_rect().collidepoint(pos):
+            audio.click(); self.state = STATE_MENU
+
     def _music_for_state(self):
         """Passender Musik-Track je Spielzustand."""
         s = self.state
@@ -1367,6 +1476,16 @@ class Game:
                 self.shop_message_timer -= dt
                 if self.shop_message_timer <= 0:
                     self.shop_message = ""
+
+        elif self.state == STATE_SLOTMODE:
+            if self._sm_spinning and self.slot_machine:
+                prev = sum(self.slot_machine._reel_done)
+                self.slot_machine.update()
+                if sum(self.slot_machine._reel_done) > prev:
+                    audio.play("reel", 0.7)
+                if not self.slot_machine.spinning:
+                    self._sm_spinning = False
+                    self._sm_resolve()
     
     def _execute_enemy_turn(self):
         """Führt Gegner-Angriff aus"""
@@ -2385,6 +2504,11 @@ class Game:
 
         elif self.state == STATE_VICTORY:
             self.ui.draw_victory(self.player, self.last_score, self.last_rank)
+
+        elif self.state == STATE_SLOTMODE:
+            self.ui.draw_slotmode(self.slotrun, self.slot_machine, self._sm_spinning,
+                                  self._sm_spin_button(), self._sm_shop_layout(),
+                                  self._sm_back_rect())
 
         # Globale Overlays (Schmiede/Verbrennen) über dem aktuellen Screen
         if self.shop_remove_mode:

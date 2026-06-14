@@ -1,6 +1,22 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.14.0 – 2026-06-14]  NEUER SPIELMODUS: SLOT-MODUS (BALATRO-STYLE)
+-------------------------------------------------------------------
+Ein komplett eigenes Spiel im Hauptmenü unter "🎰 Slot-Modus":
+* KEIN Kartenkampf – du baust nur den Automaten auf. Pro Runde musst du mit
+  5 Drehs eine wachsende Zielpunktzahl knacken.
+* Wertung wie bei Balatro: Score = Chips x Multiplikator. Jedes Symbol bringt
+  Chips; Paare (+Mult), Drillinge (++) und "alle verschieden" geben Boni.
+* 10 JOKER, die die Wertung verändern (z.B. Goldader +6 Chips pro 💰, Vielfalt
+  Mult x2 bei drei verschiedenen, Hühnerfarm +1 Mult pro 🐔, Diamanthand …).
+* SHOP zwischen den Runden: Symbole in den Beutel legen (bessere Chancen),
+  Symbol-Chipwerte dauerhaft aufwerten oder Joker kaufen; Reroll möglich.
+* Endlos & score-getrieben: die erreichte Runde wird als Bestwert gespeichert
+  (slotmode.json) und im Menü angezeigt. Erfolg "Slot-Meister" ab Runde 8.
+* Steuerung: Leertaste = drehen / weiter, Maus für Shop, ESC = zurück ins Menü.
+* Eigene Datei slotmode.py (reine Logik, headless getestet); UI in ui.py.
+
 [v1.13.0 – 2026-06-14]  AUDIO, SCHWIERIGKEIT & KOMFORT
 -----------------------------------------------------
 MUSIK PRO AKT:

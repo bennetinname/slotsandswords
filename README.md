@@ -27,6 +27,15 @@ Jede Runde besteht aus zwei Phasen:
 Danach schlägt der Gegner zurück. Überlebe, wähle deine Belohnung und zieh weiter.
 Nach jedem **Boss** beginnt ein neuer, härterer **Akt**.
 
+## 🎲 Zweiter Modus: Slot-Modus (Balatro-Style)
+
+Im Hauptmenü gibt es unter **🎰 Slot-Modus** ein komplett eigenes Spiel **ohne
+Kartenkampf**: Du baust nur den Automaten auf. Pro Runde musst du mit 5 Drehs
+eine **wachsende Zielpunktzahl** knacken – Punkte = **Chips × Multiplikator**.
+Zwischen den Runden ein **Shop**: Symbole in den Beutel legen, Chipwerte
+aufwerten oder einen von **10 Jokern** kaufen, die die Wertung verdrehen. Endlos
+und score-getrieben – deine beste Runde wird gespeichert.
+
 ## ✨ Features
 
 - **3 Start-Klassen** (Ritter / Hochstapler / Hexe) – je eigenes Deck & Start-Relikt
