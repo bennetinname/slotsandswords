@@ -1,7 +1,7 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
-[v1.10.2 – 2026-06-14]  SPIELSTÄNDE BLEIBEN IMMER GÜLTIG
+[v1.10.1 – 2026-06-14]  SPIELSTÄNDE BLEIBEN IMMER GÜLTIG
 --------------------------------------------------------
 Grundsatz ab jetzt: ein Update darf NIEMALS einen Spielstand verwerfen.
 * Der Versions-Check in savegame.load_save wurde ENTFERNT – Saves laden
@@ -15,21 +15,9 @@ Grundsatz ab jetzt: ein Update darf NIEMALS einen Spielstand verwerfen.
 
 ─────────────────────────────────────────────────────
 
-[v1.10.1 – 2026-06-14]  SPRITES FÜR DEN NEUEN CONTENT
------------------------------------------------------
-16 neue Sprites aus dem Sheet geschnitten (Magenta-Keying) und eingebaut:
-* 7 Gegner ersetzen den prozeduralen Fallback: Würfelgnom, Bierbauch-Ork,
-  Roulette-Geist, Münzgolem, Schattenkrähe, Gruftwächter, Boss Bankhalter.
-* 9 Relikt-Icons ersetzen das Emoji in der Reliktleiste: Gegengift,
-  Dukatenbeutel, Aderlass-Amulett, Spiegelschild, Phönixfeder, Trinkglas,
-  Doppeldecker, Falschgeld, Kettenhemd.
-(Reine Assets -> Patch, Spielstände bleiben gültig.)
-
-─────────────────────────────────────────────────────
-
 [v1.10.0 – 2026-06-14]  RIESEN-CONTENT-UPDATE
 ---------------------------------------------
-(Minor-Bump: Save-Format um phoenix_used erweitert -> alte Saves verfallen.)
+(Assets sind Teil dieser Version – kein separater Bump für die Sprites.)
 
 BALANCE-NERF:
 * Kriegsbanner (gab +2 Stärke JEDEN Kampf -> schneeballte ins Unendliche)
@@ -52,7 +40,7 @@ BALANCE-NERF:
   Trinkglas (+2 Gold pro Slot-Dreh), Doppeldecker (+1 Karte/Runde),
   Falschgeld (Shop & Glücksrad −25%), Kettenhemd (−2 Schaden pro Treffer).
 
-7 NEUE GEGNER (Sprites folgen – Prompts in TODO/assets_prompt.txt):
+7 NEUE GEGNER (mit eigenen Pixel-Art-Sprites):
 * Akt 1: Würfelgnom (chaotisch), Bierbauch-Ork (wuchtig/verfehlt).
 * Akt 2: Roulette-Geist (Doppelschlag ODER Niete), Münzgolem (sehr gepanzert)
   + neuer BOSS DER BANKHALTER ("house_edge": je reicher du, desto härter).
@@ -60,6 +48,10 @@ BALANCE-NERF:
 
 NEUE MECHANIKEN: Ausweichen (Spieler), Block-Durchschlag (pierce),
 Schadensreduktion (Kettenhemd), Phönix-Wiederbelebung.
+
+ASSETS (Teil dieser Version): 7 Gegner-Sprites + 9 Relikt-Icons
+(Gegengift, Dukatenbeutel, Aderlass-Amulett, Spiegelschild, Phönixfeder,
+Trinkglas, Doppeldecker, Falschgeld, Kettenhemd) eingebaut.
 
 Gesamt jetzt: 70 Karten · 30 Relikte · 28 Gegner.
 
