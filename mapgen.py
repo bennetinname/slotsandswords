@@ -67,6 +67,12 @@ def generate(act, seed=None):
                 nc = boss_col          # alle Pfade laufen im Boss zusammen
             else:
                 nc = min(COLS - 1, max(0, c + rng.choice([-1, 0, 1])))
+                # Keine sich kreuzenden Pfade: ein "X" zwischen Nachbarspalten
+                # (c->c+1 kreuzt c+1->c) wird zur Geraden begradigt.
+                if nc == c + 1 and ((r, c + 1), (r + 1, c)) in edges:
+                    nc = c
+                elif nc == c - 1 and ((r, c - 1), (r + 1, c)) in edges:
+                    nc = c
             ensure(r, c)
             ensure(r + 1, nc)
             edges.add(((r, c), (r + 1, nc)))

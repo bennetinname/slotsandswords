@@ -1,6 +1,17 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.10.3 – 2026-06-14]  KEINE SICH KREUZENDEN PFADE
+---------------------------------------------------
+* Auf der Akt-Karte konnten sich Pfade optisch kreuzen, obwohl man nur
+  einen Weg gehen kann – verwirrend. Die Generierung verhindert jetzt das
+  "X"-Muster zwischen Nachbarspalten (kreuzende Diagonale wird begradigt).
+* Über 2000 Testkarten: 0 Kreuzungen, weiterhin alle zusammenhängend
+  (Boss immer erreichbar). Bestehende, schon gespeicherte Karten behalten
+  ihr Layout bis zum nächsten Akt; neue Akte sind sauber.
+
+─────────────────────────────────────────────────────
+
 [v1.10.2 – 2026-06-14]  KLASSEN-AVATAR IM KAMPF
 -----------------------------------------------
 * Im Kampf wird jetzt das Portrait deiner gewählten Klasse als Spieler-
