@@ -53,15 +53,17 @@ ACT_THEMES = [
     ("Die Kneipe", (210, 150, 60), [
         "Schluffiger Goblin", "Betrunkener Ritter", "Pestratte",
         "Steuerprüfer", "Kneipenschläger", "Sumpfschleim", "Wütender Koch",
+        "Würfelgnom", "Bierbauch-Ork",
     ], "DER GROSSE HÜHNERKÖNIG"),
     ("Das Untergrund-Casino", (210, 80, 150), [
         "Vampir-Croupier", "Slot-Maschinendämon", "Glücksgeist",
         "Steuerprüfer", "Kneipenschläger", "Falschspieler", "Einarmiger Bandit",
-    ], "Oberster Glücksprüfer"),
+        "Roulette-Geist", "Münzgolem",
+    ], ["Oberster Glücksprüfer", "DER BANKHALTER"]),
     ("Das Verfluchte Reich", (150, 90, 220), [
         "Philosophischer Lich", "Verfluchter Spiegel", "Pilzkönigin",
         "Wütender Koch", "Pestratte", "Glücksgeist", "Sumpfschleim",
-        "Geisterbraut", "Knochenkoch",
+        "Geisterbraut", "Knochenkoch", "Schattenkrähe", "Gruftwächter",
     ], ["MADAME FORTUNA", "DER SENSENMANN"]),
 ]
 
@@ -882,6 +884,7 @@ class Game:
         self.player.poison = 0
         self.player.regen = 0
         self.player.thorns = 0
+        self.player.dodge = False
         self.player.next_free_card = self.player.has_relic("first_free")
         self.player.draw_initial_hand()
         self.damage_numbers = []
@@ -911,6 +914,9 @@ class Game:
         # Wachturm: +6 Block zu Beginn jeder Runde
         if self.player.has_relic("watchtower"):
             self.player.block += 6
+        # Doppeldecker: +1 Karte pro Runde
+        if self.player.has_relic("extra_draw"):
+            self.player.draw_hand(1)
         # Falsches Ass: erste Karte der Runde gratis
         if self.player.has_relic("first_free"):
             self.player.next_free_card = True
@@ -926,12 +932,18 @@ class Game:
     def _apply_combat_start_relics(self):
         """Wendet Relik-Effekte an, die zu Kampfbeginn auslösen"""
         p = self.player
+        # Kettenhemd / Phönixfeder pro Kampf scharf schalten
+        p.flat_reduction = 2 if p.has_relic("chainmail") else 0
+        p.has_phoenix = p.has_relic("phoenix")
         if p.has_relic("start_block"):
             p.block += 12
             self._log("🛡️ Eiserner Wille: +12 Block!")
-        if p.has_relic("combat_strength"):
-            p.strength += 2
-            self._log("🪖 Kriegsbanner: +2 Stärke!")
+        if p.has_relic("purse"):
+            p.add_gold(8)
+            self._log("💰 Dukatenbeutel: +8 Gold!")
+        if p.has_relic("mirror_shield"):
+            p.reflect = True
+            self._log("🪞 Spiegelschild: Reflektor aktiv!")
         if p.has_relic("interest"):
             bonus = min(10, p.gold // 25)
             if bonus > 0:
@@ -1024,6 +1036,12 @@ class Game:
         for log in logs:
             self._log(log)
 
+        # Aderlass-Amulett: Heilung beim Spielen von Angriffskarten
+        if card.type == "attack" and self.player.has_relic("leech_charm"):
+            healed = self.player.heal_hp(2)
+            if healed > 0:
+                self._log(f"🧛 Aderlass-Amulett: +{healed} HP")
+
         if card.exhaust:
             self._log("   ♻️ Karte verbraucht und entfernt.")
 
@@ -1094,6 +1112,9 @@ class Game:
 
         self.spins_remaining -= 1
         self.player.slots_spun += 1
+        # Trinkgeld-Relikt: Gold pro Dreh
+        if self.player.has_relic("tip_jar"):
+            self.player.add_gold(2)
         # Gezinkte Würfel: immer Glück. Sonst Glücksrunden verbrauchen.
         lucky = self.player.has_relic("always_lucky") or self.player.lucky > 0
         if self.player.lucky > 0:
@@ -1204,12 +1225,25 @@ class Game:
     def _execute_enemy_turn(self):
         """Führt Gegner-Angriff aus"""
         hp_before = self.player.hp
+        dodged = self.player.dodge and self.enemy.intent in ("attack", "heavy_attack")
         logs = self.enemy.execute_turn(self.player)
         for log in logs:
             self._log(log)
 
+        # Ausweichen: Angriffsschaden komplett negieren
+        if dodged:
+            self.player.hp = hp_before
+            self.player.dodge = False
+            self._log("💨 Ausgewichen! Kein Schaden.")
+
         dmg_taken = hp_before - self.player.hp
         self._fx_player_hit(dmg_taken)
+
+        # Phönixfeder ausgelöst?
+        if self.player._phoenix_triggered:
+            self.player._phoenix_triggered = False
+            self._log("🔥🪶 PHÖNIXFEDER! Du wärst gestorben – überlebst mit 1 HP!")
+            self._do_shake(14)
 
         # Dornenpanzer-Relik: reflektiert pauschal 5 Schaden bei Gegnerangriff
         if self.player.has_relic("thorns") and dmg_taken > 0 and self.enemy.is_alive():
@@ -1541,6 +1575,8 @@ class Game:
         """Kauft ein Shop-Item (jedes nur 1x pro Shop-Besuch)"""
         item_id = item["id"]
         cost = item["cost"]
+        if self.player.has_relic("counterfeit"):   # Falschgeld: 25% Rabatt
+            cost = int(round(cost * 0.75))
 
         if item_id in self.shop_purchased:
             self._shop_message("❌ Schon gekauft!")
@@ -1645,8 +1681,12 @@ class Game:
         """Aktueller Glücksrad-Einsatz – steigt mit jeder Drehung pro Shop-Besuch.
         Würfelbecher-Relikt friert den Einsatz bei 25 ein."""
         if self.player and self.player.has_relic("gamble_discount"):
-            return 25
-        return 25 + self.shop_gamble_count * 15
+            bet = 25
+        else:
+            bet = 25 + self.shop_gamble_count * 15
+        if self.player and self.player.has_relic("counterfeit"):
+            bet = int(round(bet * 0.75))
+        return bet
 
     def _gamble(self):
         """Glücksrad im Shop: steigender Einsatz, House-Edge (~−14% Erwartungswert),
@@ -1746,7 +1786,7 @@ class Game:
             "energy": p.energy, "max_energy": p.max_energy,
             "burn": p.burn, "strength": p.strength, "lucky": p.lucky,
             "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
-            "class_id": p.class_id,
+            "class_id": p.class_id, "phoenix_used": p.phoenix_used,
             "shield_up": p.shield_up, "reflect": p.reflect,
             "coin_rain_active": p.coin_rain_active, "next_free_card": p.next_free_card,
             "total_damage_taken": p._total_damage_taken, "bonus_spins": p.bonus_spins,
@@ -1768,6 +1808,7 @@ class Game:
         p.burn = d["burn"]; p.strength = d["strength"]; p.lucky = d["lucky"]
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
         p.class_id = d.get("class_id")
+        p.phoenix_used = d.get("phoenix_used", False)
         p.shield_up = d["shield_up"]; p.reflect = d["reflect"]
         p.coin_rain_active = d["coin_rain_active"]; p.next_free_card = d["next_free_card"]
         p._total_damage_taken = d.get("total_damage_taken", 0)

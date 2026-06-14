@@ -1,6 +1,44 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.10.0 – 2026-06-14]  RIESEN-CONTENT-UPDATE
+---------------------------------------------
+(Minor-Bump: Save-Format um phoenix_used erweitert -> alte Saves verfallen.)
+
+BALANCE-NERF:
+* Kriegsbanner (gab +2 Stärke JEDEN Kampf -> schneeballte ins Unendliche)
+  ist jetzt ein EINMALIGER +3-Stärke-Bonus beim Aufheben. Kein Snowball mehr.
+
+14 NEUE KARTEN:
+* Angriff: Klingensturm (3×6), Hinrichtung (x2 unter 40% HP), Giftdartwurf
+  (Gift, verbraucht sich), Giftausbruch (Schaden = Gift, halbiert es),
+  Rückhand (Schaden + Karte ziehen), Goldader (+Gold, Schaden aus Gold),
+  Rüstungsbruch (Schaden + −3 Rüstung).
+* Verteidigung: Bollwerk (+18 Block), Konterstoß (Block + Reflektor),
+  Ausweichrolle (nächsten Angriff komplett ausweichen).
+* Special: Energieschub (+2 Energie), Tiefes Ziehen (+3 Karten),
+  Berserkerwut (+3 Stärke, −4 HP), Meditation (+2 Stärke, +3 Regen).
+
+9 NEUE RELIKTE:
+* Gegengift (immun gegen Gift), Dukatenbeutel (+8 Gold/Kampf),
+  Aderlass-Amulett (+2 HP pro Angriffskarte), Spiegelschild (Reflektor zu
+  Kampfbeginn), Phönixfeder (überlebe 1× pro Run den Tod mit 1 HP),
+  Trinkglas (+2 Gold pro Slot-Dreh), Doppeldecker (+1 Karte/Runde),
+  Falschgeld (Shop & Glücksrad −25%), Kettenhemd (−2 Schaden pro Treffer).
+
+7 NEUE GEGNER (Sprites folgen – Prompts in TODO/assets_prompt.txt):
+* Akt 1: Würfelgnom (chaotisch), Bierbauch-Ork (wuchtig/verfehlt).
+* Akt 2: Roulette-Geist (Doppelschlag ODER Niete), Münzgolem (sehr gepanzert)
+  + neuer BOSS DER BANKHALTER ("house_edge": je reicher du, desto härter).
+* Akt 3: Schattenkrähe (durchdringt Block), Gruftwächter (Tank).
+
+NEUE MECHANIKEN: Ausweichen (Spieler), Block-Durchschlag (pierce),
+Schadensreduktion (Kettenhemd), Phönix-Wiederbelebung.
+
+Gesamt jetzt: 70 Karten · 30 Relikte · 28 Gegner.
+
+─────────────────────────────────────────────────────
+
 [v1.9.1 – 2026-06-13]  GROSSES ASSET-UPDATE
 -------------------------------------------
 24 neue Sprites aus dem Sheet geschnitten und eingebaut (Magenta-Keying):

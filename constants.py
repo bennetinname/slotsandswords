@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (Save-Stände werden gegen diese Version geprüft)
-GAME_VERSION = "1.9.1"
+GAME_VERSION = "1.10.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.10.0", "RIESEN-UPDATE: 14 Karten, 9 Relikte, 7 Gegner + Stärke-Relikt-Nerf"),
     ("1.9.1", "Akt-Hintergruende, Klassen-Portraits, 5 neue Gegner & viele Icons"),
     ("1.9.0", "START-KLASSEN! Ritter, Hochstapler, Hexe - je eigenes Deck & Relikt"),
     ("1.8.5", "Akt-Themen: jeder Akt eigene Gegner-Auswahl, Name & Boss"),
@@ -378,6 +379,56 @@ ENEMY_TYPES = [
         "tier": 3,
         "is_boss": True,
         "mechanic": "reaper"
+    },
+    # ─── Neue Gegner (v1.10.0) ───
+    {
+        "name": "Würfelgnom", "asset": "wuerfelgnom",
+        "hp": 26, "max_hp": 26, "damage": 5, "armor": 0,
+        "gold_reward": (9, 16), "color": ORANGE,
+        "tooltip": "Wirft ständig Würfel. Mal trifft's dich, mal heilt es ihn.",
+        "tier": 1, "mechanic": "gambler_foe"
+    },
+    {
+        "name": "Bierbauch-Ork", "asset": "bierork",
+        "hp": 44, "max_hp": 44, "damage": 9, "armor": 2,
+        "gold_reward": (12, 20), "color": GREEN_DARK,
+        "tooltip": "Schlägt wuchtig zu – oder rülpst und verfehlt komplett.",
+        "tier": 1, "mechanic": "reckless"
+    },
+    {
+        "name": "Roulette-Geist", "asset": "roulettegeist",
+        "hp": 50, "max_hp": 50, "damage": 12, "armor": 1,
+        "gold_reward": (18, 28), "color": RED,
+        "tooltip": "Setzt alles auf eine Zahl: doppelter Schaden – oder gar keiner.",
+        "tier": 2, "mechanic": "roulette_foe"
+    },
+    {
+        "name": "Münzgolem", "asset": "muenzgolem",
+        "hp": 70, "max_hp": 70, "damage": 9, "armor": 5,
+        "gold_reward": (28, 40), "color": GOLD_DARK,
+        "tooltip": "Aus purem Gold. Schwer zu knacken, aber lohnend.",
+        "tier": 2
+    },
+    {
+        "name": "Schattenkrähe", "asset": "schattenkraehe",
+        "hp": 46, "max_hp": 46, "damage": 8, "armor": 0,
+        "gold_reward": (16, 24), "color": PURPLE_DARK,
+        "tooltip": "Ihre Krallen durchdringen Block (3 Schaden ignorieren Block).",
+        "tier": 2, "mechanic": "pierce"
+    },
+    {
+        "name": "Gruftwächter", "asset": "gruftwaechter",
+        "hp": 66, "max_hp": 66, "damage": 11, "armor": 4,
+        "gold_reward": (20, 30), "color": GREY,
+        "tooltip": "Uralter Steinwächter. Dick gepanzert und unerbittlich.",
+        "tier": 2
+    },
+    {
+        "name": "DER BANKHALTER", "asset": "boss_bankhalter",
+        "hp": 140, "max_hp": 140, "damage": 13, "armor": 3,
+        "gold_reward": (60, 95), "color": GOLD,
+        "tooltip": "BOSS: Das Haus persönlich. Je reicher du bist, desto härter schlägt er zu.",
+        "tier": 3, "is_boss": True, "mechanic": "house_edge"
     },
 ]
 
@@ -967,6 +1018,77 @@ CARD_DEFINITIONS = [
         "rarity": "uncommon",
         "effect": "card_trick"
     },
+    # ═══ NEUE KARTEN v1.10.0: Grosses Content-Update ═══
+    {
+        "name": "Klingensturm", "type": "attack", "cost": 2, "damage": 6, "color": RED,
+        "tooltip": "Triff 3× für je 6 (+Stärke). Wirbelwind aus Stahl.",
+        "rarity": "uncommon", "effect": "blade_flurry"
+    },
+    {
+        "name": "Hinrichtung", "type": "attack", "cost": 2, "damage": 14, "color": RED_DARK,
+        "tooltip": "14 Schaden. DOPPELT, wenn der Gegner unter 40% HP ist.",
+        "rarity": "rare", "effect": "execute_low"
+    },
+    {
+        "name": "Giftdartwurf", "type": "attack", "cost": 0, "damage": 3, "color": GREEN_DARK,
+        "tooltip": "3 Schaden + 2 Gift. Verbraucht sich. Schnell und fies.",
+        "rarity": "common", "effect": "poison_dart", "exhaust": True
+    },
+    {
+        "name": "Giftausbruch", "type": "attack", "cost": 1, "damage": 0, "color": GREEN,
+        "tooltip": "Schaden = Gift des Gegners. Danach halbiert sich sein Gift.",
+        "rarity": "uncommon", "effect": "venom_burst"
+    },
+    {
+        "name": "Rückhand", "type": "attack", "cost": 1, "damage": 9, "color": ORANGE,
+        "tooltip": "9 Schaden und ziehe 1 Karte. Lässig nebenbei.",
+        "rarity": "common", "effect": "backhand"
+    },
+    {
+        "name": "Bollwerk", "type": "defense", "cost": 2, "block": 18, "color": BLUE,
+        "tooltip": "+18 Block. Eine Wand aus Eisen.",
+        "rarity": "uncommon", "effect": "block"
+    },
+    {
+        "name": "Konterstoß", "type": "defense", "cost": 1, "block": 6, "color": CYAN,
+        "tooltip": "+6 Block und reflektiere den nächsten Angriff.",
+        "rarity": "uncommon", "effect": "counter"
+    },
+    {
+        "name": "Ausweichrolle", "type": "defense", "cost": 1, "damage": 0, "color": CYAN,
+        "tooltip": "Weiche dem nächsten Gegnerangriff komplett aus.",
+        "rarity": "uncommon", "effect": "evade"
+    },
+    {
+        "name": "Energieschub", "type": "special", "cost": 0, "damage": 0, "color": GOLD,
+        "tooltip": "+2 Energie sofort. Verbraucht sich.",
+        "rarity": "uncommon", "effect": "energize", "exhaust": True
+    },
+    {
+        "name": "Tiefes Ziehen", "type": "special", "cost": 1, "damage": 0, "color": CYAN,
+        "tooltip": "Ziehe 3 Karten. Verbraucht sich. Hol dir Optionen.",
+        "rarity": "uncommon", "effect": "deep_draw", "exhaust": True
+    },
+    {
+        "name": "Berserkerwut", "type": "special", "cost": 0, "damage": 0, "color": RED_DARK,
+        "tooltip": "+3 Stärke, aber −4 HP. Schmerz ist nur Schwäche, die geht.",
+        "rarity": "uncommon", "effect": "berserk_rage"
+    },
+    {
+        "name": "Meditation", "type": "special", "cost": 1, "damage": 0, "color": GREEN,
+        "tooltip": "+2 Stärke und +3 Regeneration. Innere Ruhe, äußere Gewalt.",
+        "rarity": "rare", "effect": "meditate"
+    },
+    {
+        "name": "Goldader", "type": "attack", "cost": 1, "damage": 0, "color": GOLD,
+        "tooltip": "+20 Gold, dann Schaden = Gold / 12. Reichtum tut weh.",
+        "rarity": "uncommon", "effect": "midas"
+    },
+    {
+        "name": "Rüstungsbruch", "type": "attack", "cost": 1, "damage": 7, "color": GREY,
+        "tooltip": "7 Schaden und −3 Rüstung des Gegners (für den Kampf).",
+        "rarity": "uncommon", "effect": "sunder"
+    },
 ]
 
 # ═══════════════════════════════════════════════
@@ -1016,7 +1138,7 @@ RELIC_DEFINITIONS = [
     {"id": "bonus_spin",     "name": "Glücksbringer",   "emoji": "🎰",
      "desc": "+1 Slot-Dreh pro Runde.", "rarity": "rare"},
     {"id": "combat_strength","name": "Kriegsbanner",    "emoji": "🪖",
-     "desc": "+2 Stärke zu jedem Kampfbeginn.", "rarity": "uncommon"},
+     "desc": "+3 Stärke – einmalig beim Aufheben.", "rarity": "uncommon"},
     {"id": "heal_on_kill",   "name": "Herzstein",       "emoji": "❤️",
      "desc": "Heile 8 HP wenn ein Gegner stirbt.", "rarity": "common"},
     {"id": "bonus_energy",   "name": "Energiekern",     "emoji": "⚡",
@@ -1053,6 +1175,25 @@ RELIC_DEFINITIONS = [
      "desc": "Zu Beginn JEDER Runde: +6 Block.", "rarity": "rare"},
     {"id": "four_leaf",      "name": "Vierblättriger Klee", "emoji": "🍀",
      "desc": "Kampfbeginn: +1 Slot-Dreh UND +1 Glücksrunde.", "rarity": "rare"},
+    # ─── Neue Relikte (v1.10.0) ───
+    {"id": "antidote",       "name": "Gegengift",       "emoji": "🧪",
+     "desc": "Du bist immun gegen Gift (kein Gift-Schaden an dir).", "rarity": "uncommon"},
+    {"id": "purse",          "name": "Dukatenbeutel",   "emoji": "👛",
+     "desc": "Kampfbeginn: +8 Gold.", "rarity": "common"},
+    {"id": "leech_charm",    "name": "Aderlass-Amulett", "emoji": "🩸",
+     "desc": "Heile 2 HP, wenn du eine Angriffskarte spielst.", "rarity": "uncommon"},
+    {"id": "mirror_shield",  "name": "Spiegelschild",   "emoji": "🪞",
+     "desc": "Kampfbeginn: Reflektor aktiv (wirft 1. Angriff zurück).", "rarity": "uncommon"},
+    {"id": "phoenix",        "name": "Phönixfeder",     "emoji": "🪶",
+     "desc": "Einmal pro Run überlebst du den Tod mit 1 HP.", "rarity": "rare"},
+    {"id": "tip_jar",        "name": "Trinkglas",       "emoji": "🫙",
+     "desc": "+2 Gold bei jedem Slot-Dreh.", "rarity": "common"},
+    {"id": "extra_draw",     "name": "Doppeldecker",    "emoji": "🃏",
+     "desc": "Ziehe +1 Karte zu Beginn jeder Runde.", "rarity": "rare"},
+    {"id": "counterfeit",    "name": "Falschgeld",      "emoji": "💸",
+     "desc": "Shop & Glücksrad kosten 25% weniger.", "rarity": "uncommon"},
+    {"id": "chainmail",      "name": "Kettenhemd",      "emoji": "⛓️",
+     "desc": "Jeder erlittene Treffer macht 2 weniger Schaden.", "rarity": "uncommon"},
 ]
 
 # ═══════════════════════════════════════════════

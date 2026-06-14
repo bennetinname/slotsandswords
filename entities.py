@@ -92,6 +92,13 @@ class Card:
         "warcry": "strength_fist", "train": "strength_fist",
         "shield_bash": "shield_bash",
         "chicken": "chicken", "chicken_swarm": "chicken",
+        # Karten v1.10.0
+        "blade_flurry": "atk_slash", "execute_low": "death_skull", "backhand": "atk_slash",
+        "sunder": "atk_slash", "midas": "gold_coin",
+        "poison_dart": "poison_vial", "venom_burst": "poison_vial",
+        "counter": "defense_shield", "evade": "defense_shield",
+        "energize": "energy_bolt", "deep_draw": "energy_bolt",
+        "berserk_rage": "strength_fist", "meditate": "strength_fist",
     }
 
     def get_effect_icon(self):
@@ -128,6 +135,11 @@ class Player:
         self.lucky = 0         # Slot-Bonus-Runden
         self.shield_up = False # Doppel-Block diese Runde
         self.reflect = False   # Reflektiert nächsten Schaden
+        self.dodge = False     # Weicht dem nächsten Gegnerangriff aus
+        self.flat_reduction = 0     # Pauschale Schadensreduktion pro Treffer (Kettenhemd)
+        self.has_phoenix = False    # Phönixfeder aktiv?
+        self.phoenix_used = False   # einmal pro RUN
+        self._phoenix_triggered = False  # für Log im Spiel
         self.coin_rain_active = False  # +Gold je gespielter Karte
         self.next_free_card = False    # Nächste Karte kostet 0 (Schattenschritt)
         self._total_damage_taken = 0   # Gesamtschaden über den Run (für Vergeltung)
@@ -223,6 +235,9 @@ class Player:
         self.next_free_card = False
         if self.shield_up:
             self.shield_up = False
+        # Gegengift-Relikt: kein Gift auf dir
+        if any(r.get("id") == "antidote" for r in self.relics):
+            self.poison = 0
         # Regeneration zuerst (heilen vor dem DoT fühlt sich fairer an)
         if self.regen > 0:
             self.heal_hp(self.regen)
@@ -244,9 +259,17 @@ class Player:
             absorbed = min(self.block, amount)
             self.block -= absorbed
             amount -= absorbed
+            # Kettenhemd: pauschale Reduktion nur auf echte Treffer
+            if amount > 0 and self.flat_reduction > 0:
+                amount = max(0, amount - self.flat_reduction)
         self.hp = max(0, self.hp - amount)
         if amount > 0:
             self._total_damage_taken += amount
+        # Phönixfeder: einmal pro Run den Tod überleben
+        if self.hp <= 0 and self.has_phoenix and not self.phoenix_used:
+            self.phoenix_used = True
+            self.hp = 1
+            self._phoenix_triggered = True
         return amount  # tatsächlicher Schaden
     
     def heal_hp(self, amount):
@@ -285,6 +308,9 @@ class Player:
         elif relic_def["id"] == "max_hp_relic":
             self.max_hp += 20
             self.hp += 20
+        elif relic_def["id"] == "combat_strength":
+            # NERF: einmaliger Bonus beim Aufheben statt +2 pro Kampf (kein Schneeball)
+            self.strength += 3
         return True
 
     def is_alive(self):
@@ -354,6 +380,28 @@ class Enemy:
             elif roll < 0.75:
                 self.intent = "attack"
                 self.intent_value = self.damage
+            else:
+                self.intent = "taunt"
+                self.intent_value = 0
+        elif self.mechanic == "roulette_foe":
+            # Roulette-Geist: setzt alles auf eine Zahl – Doppelschlag oder Niete
+            if roll < 0.5:
+                self.intent = "heavy_attack"
+                self.intent_value = self.damage * 2
+            else:
+                self.intent = "taunt"   # "Niete" – verfehlt komplett
+                self.intent_value = 0
+        elif self.mechanic == "gambler_foe":
+            # Würfelgnom: völlig unberechenbar
+            if roll < 0.4:
+                self.intent = "attack"
+                self.intent_value = random.randint(2, max(3, self.damage + 2))
+            elif roll < 0.6:
+                self.intent = "heavy_attack"
+                self.intent_value = int(self.damage * 1.6)
+            elif roll < 0.8:
+                self.intent = "defend"
+                self.intent_value = 6
             else:
                 self.intent = "taunt"
                 self.intent_value = 0
@@ -522,6 +570,27 @@ class Enemy:
         elif m == "venom" and attacked:
             player.poison += 2
             out.append(f"☠️ {self.name} vergiftet dich! (+2 Gift)")
+
+        elif m == "pierce" and attacked:
+            # Schattenkrähe: 3 Schaden ignorieren Block
+            extra = player.take_damage(3, ignore_block=True)
+            out.append(f"🪶 {self.name} durchdringt deinen Block! ({extra} ungeblockt)")
+
+        elif m == "gambler_foe" and random.random() < 0.3:
+            healed = self.heal(random.randint(3, 8))
+            if healed > 0:
+                out.append(f"🎲 {self.name} würfelt sich gesund! (+{healed} HP)")
+
+        elif m == "house_edge" and attacked:
+            # Bankhalter: Bonus-Schaden je nach Gold + klaut Gold
+            bonus = player.gold // 40
+            if bonus > 0:
+                extra = player.take_damage(bonus)
+                out.append(f"🏦 Das Haus kassiert: +{extra} Schaden (dein Reichtum)!")
+            stolen = min(player.gold, 8)
+            if stolen > 0:
+                player.gold -= stolen
+                out.append(f"💸 {self.name} zieht {stolen} Gold ein!")
 
         elif m == "spores":
             player.poison += 2

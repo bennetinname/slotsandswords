@@ -419,6 +419,82 @@ class CardEffectResolver:
             drawn = player.draw_hand(2)
             logs.append(f"🃏 {card.name}: +{drawn} Karten gezogen!")
 
+        # ═══ Karten v1.10.0 ═══
+        elif effect == "blade_flurry":
+            total = 0
+            for _ in range(3):
+                total += enemy.take_damage(card.damage + player.strength)
+            logs.append(f"🌪️ {card.name}: 3 Treffer, {total} Schaden!")
+
+        elif effect == "execute_low":
+            dmg = card.damage + player.strength
+            if enemy.hp <= enemy.max_hp * 0.4:
+                dmg *= 2
+                actual = enemy.take_damage(dmg)
+                logs.append(f"⚔️ {card.name}: HINRICHTUNG! {actual} Schaden!")
+            else:
+                actual = enemy.take_damage(dmg)
+                logs.append(f"⚔️ {card.name}: {actual} Schaden.")
+
+        elif effect == "poison_dart":
+            actual = enemy.take_damage(card.damage + player.strength)
+            stacks = 2 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            logs.append(f"🎯 {card.name}: {actual} Schaden + {stacks} Gift!")
+
+        elif effect == "venom_burst":
+            dmg = enemy.poison
+            if dmg > 0:
+                actual = enemy.take_damage(dmg)
+                enemy.poison = enemy.poison // 2
+                logs.append(f"☠️ {card.name}: {actual} Schaden aus Gift! (Rest {enemy.poison})")
+            else:
+                logs.append(f"☠️ {card.name}: Kein Gift auf dem Gegner. Nichts passiert.")
+
+        elif effect == "backhand":
+            actual = enemy.take_damage(card.damage + player.strength)
+            drawn = player.draw_hand(1)
+            logs.append(f"🤚 {card.name}: {actual} Schaden, +{drawn} Karte!")
+
+        elif effect == "counter":
+            block_amount = card.block * (2 if player.shield_up else 1)
+            player.block += block_amount
+            player.reflect = True
+            logs.append(f"🪞 {card.name}: +{block_amount} Block, reflektiert den nächsten Angriff!")
+
+        elif effect == "evade":
+            player.dodge = True
+            logs.append(f"💨 {card.name}: Du weichst dem nächsten Angriff aus!")
+
+        elif effect == "energize":
+            player.energy += 2
+            logs.append(f"⚡ {card.name}: +2 Energie!")
+
+        elif effect == "deep_draw":
+            drawn = player.draw_hand(3)
+            logs.append(f"🃏 {card.name}: +{drawn} Karten!")
+
+        elif effect == "berserk_rage":
+            player.strength += 3
+            player.take_damage(4, ignore_block=True)
+            logs.append(f"😤 {card.name}: +3 Stärke, −4 HP!")
+
+        elif effect == "meditate":
+            player.strength += 2
+            player.regen += 3
+            logs.append(f"🧘 {card.name}: +2 Stärke, +3 Regeneration!")
+
+        elif effect == "midas":
+            player.add_gold(20)
+            dmg = player.gold // 12 + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🪙 {card.name}: +20 Gold, {actual} Schaden (aus Reichtum)!")
+
+        elif effect == "sunder":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.armor = max(0, enemy.armor - 3)
+            logs.append(f"🔨 {card.name}: {actual} Schaden, Rüstung −3 (jetzt {enemy.armor})!")
+
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")
 
