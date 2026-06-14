@@ -1,6 +1,15 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.10.2 – 2026-06-14]  KLASSEN-AVATAR IM KAMPF
+-----------------------------------------------
+* Im Kampf wird jetzt das Portrait deiner gewählten Klasse als Spieler-
+  Avatar gezeigt (Ritter / Hochstapler / Hexe) statt des generischen Helden.
+* Fallback auf den Standard-Avatar, wenn keine Klasse gesetzt ist
+  (z.B. ältere Saves ohne class_id). Nutzt vorhandene Portrait-Assets.
+
+─────────────────────────────────────────────────────
+
 [v1.10.1 – 2026-06-14]  SPIELSTÄNDE BLEIBEN IMMER GÜLTIG
 --------------------------------------------------------
 Grundsatz ab jetzt: ein Update darf NIEMALS einen Spielstand verwerfen.

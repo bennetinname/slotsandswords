@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.10.1"
+GAME_VERSION = "1.10.2"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.10.2", "Im Kampf wird jetzt dein Klassen-Portrait als Avatar gezeigt"),
     ("1.10.1", "Spielstände bleiben jetzt IMMER gültig – kein Save-Verlust durch Updates"),
     ("1.10.0", "RIESEN-UPDATE: 14 Karten, 9 Relikte, 7 Gegner (mit Sprites) + Nerf"),
     ("1.9.1", "Akt-Hintergruende, Klassen-Portraits, 5 neue Gegner & viele Icons"),

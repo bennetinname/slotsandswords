@@ -628,7 +628,12 @@ class UIRenderer:
                                 (i * 4, 30 + i * 2, 200 - i * 8, 28 - i * 3))
         self.screen.blit(plat, (body_x - 100, y + height - 36))
 
-        spr = assets.by_height("ui", "player_avatar", min(height - 24, 210))
+        # Avatar = Klassen-Portrait (falls Klasse gewählt), sonst generischer Held
+        cid = getattr(player, "class_id", None)
+        h = min(height - 24, 210)
+        spr = assets.by_height("ui", f"class_{cid}", h) if cid else None
+        if spr is None:
+            spr = assets.by_height("ui", "player_avatar", h)
         if spr:
             sx = body_x - spr.get_width() // 2
             sy = (y + height - 24) - spr.get_height() + wobble
