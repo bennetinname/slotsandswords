@@ -1265,27 +1265,57 @@ class UIRenderer:
         self._text(f"v{GAME_VERSION}", self.font_tiny, INK_FAINT, self.w - 14, self.h - 22, right=True)
 
     def draw_changelog(self, entries):
-        """Kompakte 'Was ist neu' – eine Zeile pro Version."""
+        """Kompakte 'Was ist neu' – eine Version pro Block, lange Zeilen umbrechen."""
         self.draw_background()
         self._dim(150)
-        pw, ph = 640, 440
+        pw, ph = 760, 470
         px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2 - 10
         self._panel((px, py, pw, ph), radius=18, border=ACCENT, border_w=3)
-        self._text("🆕  WAS IST NEU", self.font_huge, ACCENT, self.w // 2, py + 18, center=True, shadow=True)
+        self._text("🆕  WAS IST NEU", self.font_huge, ACCENT, self.w // 2,
+                   py + 18, center=True, shadow=True)
 
+        text_x = px + 132              # Start der Beschreibung (rechts neben der Pille)
+        text_w = px + pw - 24 - text_x  # verfügbare Breite bis zum Panel-Rand
+        line_h = 19
         y = py + 84
         for i, (ver, line) in enumerate(entries[:7]):
             newest = (i == 0)
-            # Versions-Pille
-            vcol = ACCENT if newest else INK_DIM
-            self._chip(f"v{ver}", self.font_small, px + 28, y,
-                       text_col=BLACK if newest else INK, fill=(255, 198, 64, 255) if newest else (*GREY_DARK, 220))
-            self._text(line, self.font_small, INK if newest else INK_DIM, px + 130, y + 4)
-            y += 46
+            self._chip(f"v{ver}", self.font_small, px + 24, y + 2,
+                       text_col=BLACK if newest else INK,
+                       fill=(255, 198, 64, 255) if newest else (*GREY_DARK, 220))
+            wrapped = self._wrap_lines(line, self.font_small, text_w, 2)
+            for li, seg in enumerate(wrapped):
+                self._text(seg, self.font_small, INK if newest else INK_DIM,
+                           text_x, y + 2 + li * line_h)
+            y += max(40, len(wrapped) * line_h + 16)
 
         back = pygame.Rect(self.w // 2 - 100, self.h - 62, 200, 44)
         self.draw_button("Zurück", back.x, back.y, back.w, back.h, color=ACCENT, text_color=BLACK)
         return back
+
+    def _wrap_lines(self, text, font, max_w, max_lines):
+        """Bricht Text in <= max_lines Zeilen um; letzte Zeile ggf. mit '…'."""
+        words = text.split()
+        lines, cur = [], ""
+        for w in words:
+            test = (cur + " " + w).strip()
+            if font.size(test)[0] > max_w and cur:
+                lines.append(cur)
+                cur = w
+                if len(lines) == max_lines - 1:
+                    break
+            else:
+                cur = test
+        rest = " ".join(words[sum(len(l.split()) for l in lines):]) if lines else text
+        # verbleibenden Rest in die letzte Zeile, bei Bedarf kürzen
+        if len(lines) < max_lines:
+            tail = rest
+            while tail and font.size(tail)[0] > max_w:
+                tail = tail[:-2]
+            if tail != rest and tail:
+                tail = tail.rstrip() + "…"
+            lines.append(tail if tail else rest)
+        return lines
 
     # ═══════════════════════════════════════════════
     # PFAD-/MAP-SCREEN
@@ -1935,7 +1965,7 @@ class UIRenderer:
             jy = y + 38 + i * 50
             self._text(f"{j.get('emoji','?')} {j.get('name','')}", self.font_small,
                        ACCENT, x + 12, jy)
-            self._wrap_text(j.get("desc", ""), self.font_tiny, INK_DIM,
+            self._draw_wrapped(j.get("desc", ""), self.font_tiny, INK_DIM,
                             x + 12, jy + 18, 168, 14, 2)
 
     def _slotmode_bag(self, run, x, y):
@@ -1982,11 +2012,11 @@ class UIRenderer:
             self._panel((rect.x, rect.y, rect.w, rect.h), radius=12, border=border, border_w=2)
             kind_lbl = {"symbol": "Symbol", "upgrade": "Upgrade", "joker": "Joker"}.get(o["kind"], "")
             self._text(kind_lbl, self.font_small, _lighten(border, 0.2), rect.x + 12, rect.y + 10)
-            self._wrap_text(o["label"], self.font_medium, INK,
+            self._draw_wrapped(o["label"], self.font_medium, INK,
                             rect.x + 12, rect.y + 38, rect.w - 24, 22, 3)
             if o["kind"] == "joker":
                 jid = o["joker"]
-                self._wrap_text(slotmode.JOKER_BY_ID[jid]["desc"], self.font_tiny,
+                self._draw_wrapped(slotmode.JOKER_BY_ID[jid]["desc"], self.font_tiny,
                                 INK_DIM, rect.x + 12, rect.y + 92, rect.w - 24, 14, 3)
             if bought:
                 self._text("✓ gekauft", self.font_small, GREEN, rect.centerx,
@@ -2019,8 +2049,8 @@ class UIRenderer:
         self.draw_button("Zurück zum Menü", bx.x, bx.y, bx.w, bx.h,
                          color=ACCENT, text_color=BLACK, pulsing=True)
 
-    def _wrap_text(self, text, font, color, x, y, max_w, line_h, max_lines):
-        """Einfacher Wort-Umbruch (für Tooltips/Shop-Karten)."""
+    def _draw_wrapped(self, text, font, color, x, y, max_w, line_h, max_lines):
+        """Zeichnet umgebrochenen Text (für Slot-Modus-Tooltips/Shop-Karten)."""
         words = text.split()
         line, count = "", 0
         for w in words:

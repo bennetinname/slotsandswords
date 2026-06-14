@@ -16,6 +16,9 @@ Ein komplett eigenes Spiel im Hauptmenü unter "🎰 Slot-Modus":
   (slotmode.json) und im Menü angezeigt. Erfolg "Slot-Meister" ab Runde 8.
 * Steuerung: Leertaste = drehen / weiter, Maus für Shop, ESC = zurück ins Menü.
 * Eigene Datei slotmode.py (reine Logik, headless getestet); UI in ui.py.
+* FIX: "Was ist neu"-Screen brach lange Changelog-Zeilen nicht um -> Text lief
+  über den Panel-Rand. Zeilen werden jetzt sauber umgebrochen (max. 2 Zeilen,
+  sonst gekürzt mit "…"); Panel etwas breiter. Keine Text-Überlappung mehr.
 
 [v1.13.0 – 2026-06-14]  AUDIO, SCHWIERIGKEIT & KOMFORT
 -----------------------------------------------------
