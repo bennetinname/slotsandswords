@@ -1,42 +1,103 @@
 TODO / IDEEN – Slots & Swords
 =============================
-(kurz gehalten, nicht priorisiert; Stand v1.9.0)
+(Ideen-Sammlung, grob nach Größe sortiert; Stand v1.12.0)
 
-GAMEPLAY
-- Multiplikator-/Scaling-System (Balatro-Stil)
-- Balancing/Economy-Pass (Gold-Inflation spät; Klassen gegeneinander wägen)
-- Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart
-- Mehr Klassen (z.B. Hühner-Beschwörer, Gold-Magnat)
-- Klassen-spezifische Karten/Relikte im Belohnungspool gewichten
 
-ASSETS / OPTIK
-- Echte NEUE Gegner-Sprites pro Akt (aktuell wird der 16er-Roster geteilt)
-- Status-Effekt-Icons (Gift/Verwundbar/Regen/Dornen) auch im Kampf als Sprites
-- Klassen-Avatare/Portraits im Auswahl-Screen statt Emoji
+★ GROSSE BROCKEN (eigene, dicke Features) ★
+--------------------------------------------------------------------
+ZWEITER SPIELMODUS (quasi ein eigenes Spiel; Auswahl im Hauptmenü)
+  Kandidaten – einer davon als „Modus 2":
+  - ENDLOS-ARENA / SURVIVAL: keine Karte, nur Gegner-Wellen am Stück.
+    Zwischen den Wellen 1 Belohnung wählen. Wie lange hältst du durch?
+    Score-/Highscore-getrieben, kurze Sessions. (Wiederverwendet Kampf +
+    Karten, braucht nur Wellen-Generator + Reward-Schleife.)
+  - REINER SLOT-MODUS (Balatro-Style): KEIN Kartenkampf – du baust nur
+    den Automaten auf (Symbole kaufen/aufwerten, Synergien, Joker-Relikte),
+    musst pro Runde eine Ziel-Punktzahl knacken. Sehr suchtig, sehr anders.
+  - CASINO-DUELL (Blackjack/Poker gg. „das Haus"): thematisch perfekt,
+    eigene Regeln, eigene Progression. Komplett anderes Spielgefühl.
+  - BOSS-RUSH: alle Bosse hintereinander mit festem Start-Deck. Kurz, hart.
+  -> Empfehlung: Endlos-Arena ist am günstigsten (nutzt vorhandenes
+     Kampfsystem), Reiner Slot-Modus ist das „eigenständigste" Spiel.
 
-UX / KOMFORT
-- Tastatur-Steuerung (1–7 Karten spielen, Space = drehen/Zug beenden)
-- Autosave zwischen Knoten (zusätzlich zum Pause-Save)
-- Erfolge-Screen: anzeigen WAS ein Erfolg freischaltet (Karte/Relikt)
+MUSIK-AUSBAU
+  - Eigene Musik PRO AKT (Kneipe/Casino/Verfluchtes Reich/Kanalisation/
+    Frostpalast/Unterwelt) statt nur menu/explore/combat/boss. Die
+    Komponier-Engine (audio._compose) kann das – nur Rezepte je Akt-Thema
+    + Track-Auswahl nach self.act erweitern.
+  - Eigene Boss-Themen je Boss (oder je Akt-Boss).
+  - Drop-in für echte, lizenzfreie Tracks ist schon eingebaut: einfach
+    assets/music/<name>.ogg ablegen -> schlägt den Synth. Ggf. kuratierte
+    CC0/Royalty-Free-Tracks beilegen (Quelle/Lizenz dokumentieren!).
+  - Sieg-/Niederlage-Stinger, kurzer Jingle beim Akt-Abschluss.
+  - Dynamik: Musik leiser/gedämpft während Slot-Dreh, lauter bei Boss < 25% HP.
+
+KLASSEN-AUSBAU
+  - Mehr Start-Klassen (z.B. Hühner-Beschwörer, Gold-Magnat, Frost-Magier,
+    Berserker) – je eigenes Deck, Start-Relikt, evtl. eigene Mechanik.
+  - Klassen-spezifische Karten/Relikte im Belohnungspool höher gewichten.
+  - Klassen-Freischaltung über Erfolge (Meta-Progression).
+
+
+GAMEPLAY (mittel)
+--------------------------------------------------------------------
+- Multiplikator-/Scaling-System (Balatro-Stil): Schaden x Multiplikator
+  statt nur additiv – mehr „Build explodiert"-Momente.
+- Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart (skaliert Gegner-HP/-DMG).
+- Aufstiegs-/Ascension-System: nach 1. Sieg höhere Stufen mit Modifikatoren.
+- Elite-Belohnungen aufwerten (garantiertes Relikt o. Karten-Wahl mit Seltenheit).
+- Mehr Slot-Symbole + tiefere Slot-Synergien (eigener kleiner „Build").
+- Karten-Seltenheit beim Schmieden/Entfernen feiner steuern.
+- Balancing-Pass: Gold-Inflation spät, Klassen gegeneinander, neue Status-Karten.
+
 
 META / REPLAY
-- Daily: Tages-Bestenliste mit mehreren Einträgen (aktuell nur Bestwert)
-- Daily-Status mitspeichern (fortgesetzter Tages-Run zählt aktuell normal)
-- Mehr Erfolge (Gift-Build, Casino, Daily-Streak, Klassen-Siege)
+--------------------------------------------------------------------
+- Daily: echte Tages-Bestenliste mit mehreren Einträgen (aktuell nur Bestwert).
+- Daily-Status mitspeichern (fortgesetzter Tages-Run zählt aktuell als normal).
+- Mehr Erfolge (Gift-Build, Frost-Build, Casino-Modus, Daily-Streak, Klassen-Siege).
+- Erfolge-Screen: anzeigen, WAS ein Erfolg freischaltet (Karte/Relikt).
+- Statistik-Screen ausbauen (meiste Karten gespielt, Lieblingsrelikt …).
+
+
+UX / KOMFORT
+--------------------------------------------------------------------
+- Autosave zwischen Knoten (zusätzlich zum Pause-Save).
+- Karten-Tooltips überall einheitlich; Status-Effekte mit Hover-Erklärung
+  auch beim Gegner.
+- „Schnell"-Option: Animationen/Übergänge beschleunigen.
+- Maus-Hover-Highlight der wählbaren Map-Knoten deutlicher.
+- Controller-Support (optional).
+
+
+ASSETS / OPTIK
+--------------------------------------------------------------------
+- Optionale eigene Mini-Icons für Status (frost/stun/doom/marked/rage/focus)
+  sind eingebaut – evtl. auch als Chips beim Spieler statt Emoji.
+- Eigene Relikt-Icons für die v1.12-Relikte (aktuell Emoji-Fallback).
+- Karten-Effekt-Icons für die ganz neuen Effekte (nutzen aktuell Sammel-Icons).
+- Akt-spezifische Partikel/Farbstimmung im Kampf.
+
 
 TECHNIK
-- Seeded RNG zentral kapseln (aktuell nur global geseedet beim Daily)
-- Emoji-Font bündeln (Fallback auf fremden PCs)
-- EN-Lokalisierung
+--------------------------------------------------------------------
+- Seeded RNG zentral kapseln (aktuell nur global geseedet beim Daily).
+- Emoji-Font bündeln (sicherer Fallback auf fremden PCs).
+- EN-Lokalisierung (Strings zentralisieren).
+- Update-Funktion: Delta-Updates statt ganze EXE (später, optional).
+- Code-Signatur für die EXE, damit SmartScreen nicht warnt (kostet Geld).
 
-ERLEDIGT (zur Referenz, Details in CHANGELIST.txt)
-- v1.9.0: Start-Klassen (Ritter/Hochstapler/Hexe), 6 Karten, 3 Relikte
-- v1.8.5: Akt-Themen (akt-spezifische Gegner-Pools + Namen)
-- v1.8.4: Slot-Synergien (Paare & Cross-Symbol-Kombos)
-- v1.8.3: Karten-Effekt-Icons + echter Slot-Automat-Rahmen
-- v1.8.2: echte Sprites für 6 neue Gegner + Casino-Event
-- v1.8.1: Tages-Challenge+Streak, Meta-Unlocks, Casino-Event, Run-Stats
-- v1.8.0: Statuseffekte (Gift/Verwundbar/Regen/Dornen), 8 Karten,
-  6 Gegner, 6 Relikte
+
+ERLEDIGT (Referenz; Details in CHANGELIST.txt)
+--------------------------------------------------------------------
+- v1.12.0: Riesen-Update 2 (22 Karten, 12 Relikte, 9 Gegner, 3 Akte,
+  6 Statuseffekte) + alle Sprites/Akt-Hintergründe + IN-GAME-AUTO-UPDATE
+- v1.11.0: situationsabhängige Musik (Menü/Karte/Kampf/Boss) + Tastatursteuerung
+- v1.10.x: Riesen-Update 1 (14 Karten/9 Relikte/7 Gegner) + Sprites,
+  Stärke-Relikt-Nerf, Saves immer gültig, Klassen-Avatar im Kampf,
+  keine kreuzenden Map-Pfade
+- v1.9.x: Start-Klassen, Akt-Hintergründe, Klassen-Portraits, mehr Gegner
+- v1.8.x: Akt-Themen, Slot-Synergien, Karten-Effekt-Icons, Slot-Cabinet,
+  Tages-Challenge, Meta-Unlocks, Statuseffekte (Gift/Verwundbar/…)
 - v1.7.x: Erfolge, RAM-Optimierung, Glücksrad-Fix, Highscore-Persistenz,
   Optionen, Kampf-UI, Karten-Lesbarkeit
