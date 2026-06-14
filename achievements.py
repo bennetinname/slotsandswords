@@ -44,6 +44,22 @@ DEFS = [
      "desc": "Besiege einen Boss mit höchstens 8 Karten im Deck."},
     {"id": "first_death",    "emoji": "🪦", "name": "Lehrgeld",
      "desc": "Stirb. Passiert den Besten."},
+    {"id": "poison_master",  "emoji": "🐍", "name": "Giftmischer",
+     "desc": "Stapel 15 Gift auf einem Gegner."},
+    {"id": "frost_master",   "emoji": "❄️", "name": "Eiskalt",
+     "desc": "Stapel 10 Frost auf einem Gegner."},
+    {"id": "doom_master",    "emoji": "💀", "name": "Schicksalsbote",
+     "desc": "Belege einen Gegner mit Verhängnis."},
+    {"id": "daily_streak",   "emoji": "📅", "name": "Tagesform",
+     "desc": "Erreiche eine Daily-Streak von 3."},
+    {"id": "win_knight",     "emoji": "🛡️", "name": "Ritter-Schlag",
+     "desc": "Schließe Akt 3 mit dem Ritter ab."},
+    {"id": "win_gambler",    "emoji": "🎲", "name": "Alles auf Rot",
+     "desc": "Schließe Akt 3 mit dem Hochstapler ab."},
+    {"id": "win_witch",      "emoji": "🧪", "name": "Hexenmeisterin",
+     "desc": "Schließe Akt 3 mit der Hexe ab."},
+    {"id": "slot_master",    "emoji": "🎯", "name": "Slot-Meister",
+     "desc": "Knacke im Slot-Modus eine Zielpunktzahl ab Runde 8."},
 ]
 
 _DEF_BY_ID = {d["id"]: d for d in DEFS}

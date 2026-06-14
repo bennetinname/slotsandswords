@@ -1,6 +1,33 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.13.0 – 2026-06-14]  AUDIO, SCHWIERIGKEIT & KOMFORT
+-----------------------------------------------------
+MUSIK PRO AKT:
+* Jeder der 6 Akte hat jetzt eigene Musik (Kneipe/Casino/Verfluchtes Reich/
+  Kanalisation/Frostpalast/Unterwelt) – eigener Charakter in Tonart, Tempo,
+  Akkordfolge und Wärme, je für Erkundung/Kampf/Boss.
+* Tracks werden bei Bedarf im Hintergrund synthetisiert (kein Freeze); bis der
+  Akt-Track fertig ist, läuft der Basis-Track weiter. Drop-in echter Dateien
+  (assets/music/<name>.ogg) schlägt weiterhin den Synth.
+* Neuer Akt-Abschluss-Jingle (kurze Triumph-Fanfare statt 'win'-Sound).
+
+SCHWIERIGKEITSGRADE (Optionen):
+* Einfach / Normal / Hart – skaliert Gegner-HP & -Schaden (0.8x / 1.0x / 1.25x
+  HP, 0.8x / 1.0x / 1.2x DMG). Auswahl im Optionsmenü, sofort wirksam.
+
+KOMFORT:
+* "Schnell"-Option: halbiert Animations-/Wartezeiten (Slot-Dreh, Gegnerzug,
+  Tod-Delay) – für zügigere Runs.
+* Autosave zwischen den Knoten (zusätzlich zum Pause-Save): nach jedem Knoten
+  wird still gespeichert, damit nie ein Fortschritt verloren geht.
+
+ERFOLGE:
+* 8 neue Erfolge: Giftmischer, Eiskalt, Schicksalsbote, Tagesform (Daily-
+  Streak 3), Ritter/Hochstapler/Hexe schließen Akt 3 ab, Slot-Meister.
+* Erfolge-Screen zeigt jetzt an, WAS ein Erfolg freischaltet (Karte/Relikt),
+  und passt kompakt mit allen 24 Einträgen auf einen Screen.
+
 [v1.12.0 – 2026-06-14]  RIESEN-CONTENT-UPDATE 2
 -----------------------------------------------
 6 NEUE STATUSEFFEKTE:

@@ -203,6 +203,14 @@ def _build_sounds():
         _env(_osc(349, 0.16, "triangle"), 0.005, 0.1, 0.4),
         _env(_osc(262, 0.35, "triangle"), 0.005, 0.28, 0.4),
     ))
+    # Akt-Abschluss-Jingle (kurze Triumph-Fanfare, heller als 'win')
+    s["fanfare"] = _to_sound(_cat(
+        _env(_osc(523, 0.09, "square"), 0.004, 0.05, 0.32),
+        _env(_osc(659, 0.09, "square"), 0.004, 0.05, 0.32),
+        _env(_osc(784, 0.09, "square"), 0.004, 0.05, 0.32),
+        _env(_mix(_osc(1047, 0.30, "triangle"), _osc(1568, 0.30, "triangle")),
+             0.004, 0.24, 0.30),
+    ))
     # Fehler (tiefer Buzz)
     s["error"] = _to_sound(_env(_osc(120, 0.16, "square"), 0.005, 0.1, 0.3))
     # Relikt (heller Glöckchen-Shimmer)
@@ -390,6 +398,55 @@ _TRACK_RECIPES = {
                     gain=0.90, lead_density=0.7),
 }
 
+# ── Musik PRO AKT ───────────────────────────────────────────────────
+# Je Akt-Thema ein eigener Charakter (Tonart/Tempo/Akkordfolge/Wärme).
+# Für jede Rolle (explore/combat/boss) wird daraus ein Rezept gebaut.
+# Track-Namen: f"{rolle}_a{index}" (index 0..5). Fällt auf das Basis-
+# Rezept zurück, falls ein Akt-Track (noch) fehlt.
+_ACT_FLAVORS = [
+    # 0 Die Kneipe – warm, gemütlich, leicht schwingend
+    dict(key=220.0, dur=0.34, lp=0.20,
+         prog=[(0, "min"), (8, "maj"), (3, "maj"), (10, "maj")]),
+    # 1 Untergrund-Casino – heller, jazzig-frech, treibend
+    dict(key=247.0, dur=0.30, lp=0.30,
+         prog=[(0, "min"), (5, "min"), (10, "maj"), (7, "maj")]),
+    # 2 Verfluchtes Reich – unheimlich, schwebend, dunkel
+    dict(key=185.0, dur=0.36, lp=0.16,
+         prog=[(0, "min"), (1, "maj"), (8, "maj"), (7, "maj")]),
+    # 3 Kanalisation – grimmig, tief, stampfend
+    dict(key=174.0, dur=0.30, lp=0.34,
+         prog=[(0, "min"), (3, "maj"), (5, "min"), (10, "maj")]),
+    # 4 Frostpalast – kalt, klar, hoch & sparsam
+    dict(key=262.0, dur=0.38, lp=0.12,
+         prog=[(0, "min"), (10, "maj"), (8, "maj"), (3, "maj")]),
+    # 5 Unterwelt – infernalisch, schnell, ganz tief
+    dict(key=147.0, dur=0.24, lp=0.42,
+         prog=[(0, "min"), (8, "maj"), (5, "min"), (6, "maj")]),
+]
+
+_ROLE_PARAMS = {
+    "explore": dict(repeats=2, drums=1, gain=0.80, lead_density=0.55, dur_mul=1.0),
+    "combat":  dict(repeats=2, drums=2, gain=0.85, lead_density=0.7, dur_mul=0.82),
+    "boss":    dict(repeats=2, drums=2, gain=0.90, lead_density=0.75, dur_mul=0.68),
+}
+
+
+def _act_recipe(role, idx):
+    fl = _ACT_FLAVORS[idx % len(_ACT_FLAVORS)]
+    rp = _ROLE_PARAMS[role]
+    key = fl["key"]
+    if role == "boss":
+        key *= 0.75          # Boss tiefer/bedrohlicher
+    return dict(prog=fl["prog"], key=key, note_dur=fl["dur"] * rp["dur_mul"],
+                repeats=rp["repeats"], drums=rp["drums"], lp=fl["lp"],
+                gain=rp["gain"], lead_density=rp["lead_density"])
+
+
+# Akt-Rezepte vorab registrieren (werden nur bei Bedarf synthetisiert).
+for _i in range(len(_ACT_FLAVORS)):
+    for _role in ("explore", "combat", "boss"):
+        _TRACK_RECIPES[f"{_role}_a{_i}"] = _act_recipe(_role, _i)
+
 
 def _music_file(name):
     """Pfad zu einer echten Musikdatei (Drop-in), falls vorhanden, sonst None."""
@@ -417,9 +474,33 @@ def _build_track(name):
         return None
 
 
+_building = set()   # Tracks, die gerade im Hintergrund gebaut werden
+
+
 def _get_track(name):
-    """Gibt den fertigen Track zurück (oder None, solange noch nicht gebaut)."""
-    return _music_cache.get(name)
+    """Gibt den fertigen Track zurück. Fehlt er, wird er im Hintergrund
+    gebaut (kein Freeze); bis dahin Fallback auf die Basis-Rolle, sonst None."""
+    snd = _music_cache.get(name)
+    if snd is not None:
+        return snd
+    if name in _music_cache:
+        return None                      # bewusst None gecacht (Build fehlgeschlagen)
+    # Build anstoßen (einmalig)
+    if name not in _building and name in _TRACK_RECIPES:
+        _building.add(name)
+        threading.Thread(target=_bg_build, args=(name,), daemon=True).start()
+    # Solange noch nichts da ist: auf Basis-Rolle ausweichen (z.B. 'combat')
+    base = name.split("_a")[0]
+    if base != name:
+        return _music_cache.get(base)
+    return None
+
+
+def _bg_build(name):
+    snd = _build_track(name)
+    with _music_lock:
+        _music_cache[name] = snd
+    _building.discard(name)
 
 
 def _prebuild_music():

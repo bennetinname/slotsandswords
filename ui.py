@@ -6,6 +6,7 @@ from constants import *
 import mapgen
 import assets
 import daily
+import achievements
 
 
 def _lerp(a, b, t):
@@ -1466,7 +1467,8 @@ class UIRenderer:
             self._text(f"{int(opts[key] * 100)}%", self.font_small, ACCENT_SOFT,
                        tr.right + 18, tr.y - 7)
 
-        tlabels = {"fullscreen": "🖥 Vollbild", "shake": "📳 Screen-Shake", "particles": "✨ Partikel"}
+        tlabels = {"fullscreen": "🖥 Vollbild", "shake": "📳 Screen-Shake",
+                   "particles": "✨ Partikel", "fast": "⏩ Schnell (Animationen)"}
         for key, pill in layout["toggles"].items():
             self._text(tlabels[key], self.font_medium, INK, panel.x + 30, pill.y + 4)
             on = bool(opts[key])
@@ -1477,6 +1479,22 @@ class UIRenderer:
             pygame.draw.circle(self.screen, WHITE, (knob_x, pill.centery), pill.h // 2 - 4)
             self._text("AN" if on else "AUS", self.font_tiny, INK_DIM,
                        pill.x - 8, pill.centery - 7, right=True)
+
+        # Schwierigkeitsgrad
+        diff = layout.get("difficulty")
+        if diff:
+            import options as _opt
+            self._text("🎚 Schwierigkeit", self.font_medium, INK, panel.x + 30, diff[0].y + 6)
+            cur = int(opts.get("difficulty", 1))
+            names = [d[0] for d in _opt.DIFFICULTY]
+            for i, dr in enumerate(diff):
+                on = (i == cur)
+                col = ACCENT if on else GREY_DARK
+                pygame.draw.rect(self.screen, col, dr, border_radius=8)
+                pygame.draw.rect(self.screen, _lighten(col, 0.2) if on else GREY, dr, 2,
+                                 border_radius=8)
+                self._text(names[i], self.font_small, BLACK if on else INK_DIM,
+                           dr.centerx, dr.centery - 8, center=True)
 
         b = layout["back"]
         self.draw_button("Zurück", b.x, b.y, b.w, b.h, color=ACCENT, text_color=BLACK)
@@ -1800,25 +1818,32 @@ class UIRenderer:
                    self.w // 2, 86, center=True)
 
         cols = 2
-        cell_w, cell_h, gap = 560, 64, 12
+        cell_w, cell_h, gap = 560, 46, 8
         start_x = self.w // 2 - (cols * cell_w + (cols - 1) * gap) // 2
-        start_y = 120
+        start_y = 104
         for i, d in enumerate(defs):
             row, col = i // cols, i % cols
             x = start_x + col * (cell_w + gap)
             y = start_y + row * (cell_h + gap)
             unlocked = is_unlocked(d["id"])
-            self._panel((x, y, cell_w, cell_h), radius=12,
+            self._panel((x, y, cell_w, cell_h), radius=10,
                         border=ACCENT if unlocked else PANEL_LINE,
                         border_w=2, shadow=False)
+            # Schaltet dieser Erfolg Inhalte frei?
+            rewards = achievements.rewards_for(d["id"])
             if unlocked:
-                self._text(d["emoji"], self.font_title, WHITE, x + 14, y + 16)
-                self._text(d["name"], self.font_medium, ACCENT, x + 58, y + 10)
-                self._text(d["desc"], self.font_tiny, INK, x + 58, y + 36)
+                self._text(d["emoji"], self.font_medium, WHITE, x + 12, y + 8)
+                self._text(d["name"], self.font_small, ACCENT, x + 46, y + 4)
+                self._text(d["desc"], self.font_tiny, INK, x + 46, y + 25)
             else:
-                self._text("🔒", self.font_title, GREY, x + 14, y + 16)
-                self._text("???", self.font_medium, GREY, x + 58, y + 10)
-                self._text(d["desc"], self.font_tiny, INK_FAINT, x + 58, y + 36)
+                self._text("🔒", self.font_medium, GREY, x + 12, y + 8)
+                self._text("???", self.font_small, GREY, x + 46, y + 4)
+                self._text(d["desc"], self.font_tiny, INK_FAINT, x + 46, y + 25)
+            if rewards:
+                names = ", ".join(n for _k, n in rewards)
+                tag = ("🔓 " + names) if unlocked else "🎁 schaltet Inhalt frei"
+                self._text(tag, self.font_tiny, GREEN if unlocked else ACCENT_SOFT,
+                           x + cell_w - 14, y + 14, right=True)
 
         back = pygame.Rect(self.w // 2 - 100, self.h - 58, 200, 44)
         self.draw_button("Zurück", back.x, back.y, back.w, back.h,

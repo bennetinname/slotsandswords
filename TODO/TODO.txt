@@ -21,15 +21,12 @@ ZWEITER SPIELMODUS (quasi ein eigenes Spiel; Auswahl im Hauptmenü)
      Kampfsystem), Reiner Slot-Modus ist das „eigenständigste" Spiel.
 
 MUSIK-AUSBAU
-  - Eigene Musik PRO AKT (Kneipe/Casino/Verfluchtes Reich/Kanalisation/
-    Frostpalast/Unterwelt) statt nur menu/explore/combat/boss. Die
-    Komponier-Engine (audio._compose) kann das – nur Rezepte je Akt-Thema
-    + Track-Auswahl nach self.act erweitern.
-  - Eigene Boss-Themen je Boss (oder je Akt-Boss).
+  - [ERLEDIGT v1.13.0] Eigene Musik PRO AKT (6 Akte, je explore/combat/boss).
+  - [ERLEDIGT v1.13.0] Akt-Abschluss-Jingle (Fanfare).
+  - Eigene Boss-Themen je Boss (nicht nur je Akt-Boss).
   - Drop-in für echte, lizenzfreie Tracks ist schon eingebaut: einfach
     assets/music/<name>.ogg ablegen -> schlägt den Synth. Ggf. kuratierte
     CC0/Royalty-Free-Tracks beilegen (Quelle/Lizenz dokumentieren!).
-  - Sieg-/Niederlage-Stinger, kurzer Jingle beim Akt-Abschluss.
   - Dynamik: Musik leiser/gedämpft während Slot-Dreh, lauter bei Boss < 25% HP.
 
 KLASSEN-AUSBAU
@@ -43,7 +40,7 @@ GAMEPLAY (mittel)
 --------------------------------------------------------------------
 - Multiplikator-/Scaling-System (Balatro-Stil): Schaden x Multiplikator
   statt nur additiv – mehr „Build explodiert"-Momente.
-- Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart (skaliert Gegner-HP/-DMG).
+- [ERLEDIGT v1.13.0] Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart.
 - Aufstiegs-/Ascension-System: nach 1. Sieg höhere Stufen mit Modifikatoren.
 - Elite-Belohnungen aufwerten (garantiertes Relikt o. Karten-Wahl mit Seltenheit).
 - Mehr Slot-Symbole + tiefere Slot-Synergien (eigener kleiner „Build").
@@ -55,17 +52,18 @@ META / REPLAY
 --------------------------------------------------------------------
 - Daily: echte Tages-Bestenliste mit mehreren Einträgen (aktuell nur Bestwert).
 - Daily-Status mitspeichern (fortgesetzter Tages-Run zählt aktuell als normal).
-- Mehr Erfolge (Gift-Build, Frost-Build, Casino-Modus, Daily-Streak, Klassen-Siege).
-- Erfolge-Screen: anzeigen, WAS ein Erfolg freischaltet (Karte/Relikt).
+- [ERLEDIGT v1.13.0] Mehr Erfolge (Gift, Frost, Verhängnis, Daily-Streak,
+  Klassen-Akt-3, Slot-Meister). Casino-Modus-Erfolg wartet auf den Slot-Modus.
+- [ERLEDIGT v1.13.0] Erfolge-Screen zeigt, WAS ein Erfolg freischaltet.
 - Statistik-Screen ausbauen (meiste Karten gespielt, Lieblingsrelikt …).
 
 
 UX / KOMFORT
 --------------------------------------------------------------------
-- Autosave zwischen Knoten (zusätzlich zum Pause-Save).
+- [ERLEDIGT v1.13.0] Autosave zwischen Knoten (zusätzlich zum Pause-Save).
 - Karten-Tooltips überall einheitlich; Status-Effekte mit Hover-Erklärung
   auch beim Gegner.
-- „Schnell"-Option: Animationen/Übergänge beschleunigen.
+- [ERLEDIGT v1.13.0] „Schnell"-Option: Animationen/Übergänge beschleunigen.
 - Maus-Hover-Highlight der wählbaren Map-Knoten deutlicher.
 - Controller-Support (optional).
 
@@ -90,6 +88,8 @@ TECHNIK
 
 ERLEDIGT (Referenz; Details in CHANGELIST.txt)
 --------------------------------------------------------------------
+- v1.13.0: Musik pro Akt + Akt-Jingle, Schwierigkeitsgrade, Schnell-Option,
+  Autosave zwischen Knoten, 8 neue Erfolge + Freischalt-Anzeige im Screen
 - v1.12.0: Riesen-Update 2 (22 Karten, 12 Relikte, 9 Gegner, 3 Akte,
   6 Statuseffekte) + alle Sprites/Akt-Hintergründe + IN-GAME-AUTO-UPDATE
 - v1.11.0: situationsabhängige Musik (Menü/Karte/Kampf/Boss) + Tastatursteuerung

@@ -412,16 +412,20 @@ class Game:
             "sfx":    pygame.Rect(px + 250, 348, 250, 10),
         }
         toggles = {
-            "fullscreen": pygame.Rect(px + 488, 406, 72, 32),
-            "shake":      pygame.Rect(px + 488, 454, 72, 32),
-            "particles":  pygame.Rect(px + 488, 502, 72, 32),
+            "fullscreen": pygame.Rect(px + 488, 400, 72, 32),
+            "shake":      pygame.Rect(px + 488, 444, 72, 32),
+            "particles":  pygame.Rect(px + 488, 488, 72, 32),
+            "fast":       pygame.Rect(px + 488, 532, 72, 32),
         }
+        # Schwierigkeits-Auswahl: drei Segment-Buttons
+        diff = [pygame.Rect(px + 250 + i * 110, 578, 100, 34) for i in range(3)]
         return {
-            "panel": pygame.Rect(px, 150, 600, 470),
+            "panel": pygame.Rect(px, 150, 600, 540),
             "sliders": sliders,
             "toggles": toggles,
-            "back":     pygame.Rect(cx - 200, 558, 180, 44),
-            "defaults": pygame.Rect(cx + 20, 558, 180, 44),
+            "difficulty": diff,
+            "back":     pygame.Rect(cx - 200, 632, 180, 44),
+            "defaults": pygame.Rect(cx + 20, 632, 180, 44),
         }
 
     def _set_slider(self, key, mx, track):
@@ -443,6 +447,11 @@ class Game:
                 if key == "fullscreen":
                     self._apply_fullscreen()
                 options.save(self.options)
+                return
+        for i, dr in enumerate(lay.get("difficulty", [])):
+            if dr.collidepoint(pos):
+                self.options["difficulty"] = i
+                audio.click(); options.save(self.options)
                 return
         if lay["back"].collidepoint(pos):
             audio.click(); options.save(self.options); self.state = self._options_return
@@ -824,6 +833,15 @@ class Game:
         enemy_def["max_hp"] = enemy_def["hp"]
         enemy_def["damage"] = int(enemy_def["damage"] * scale)
 
+        # Schwierigkeitsgrad (Optionen): skaliert Gegner-HP/-Schaden
+        try:
+            _dname, hp_mul, dmg_mul = options.DIFFICULTY[self.options.get("difficulty", 1)]
+            enemy_def["hp"] = max(1, int(enemy_def["hp"] * hp_mul))
+            enemy_def["max_hp"] = enemy_def["hp"]
+            enemy_def["damage"] = max(1, int(enemy_def["damage"] * dmg_mul))
+        except (IndexError, KeyError, TypeError):
+            pass
+
         # Tages-Modifikatoren (Gegner-Seite)
         m = self.daily_mod or {}
         if m.get("enemy_hp_mult"):
@@ -897,8 +915,10 @@ class Game:
             self.current_node = None
             if was_boss:
                 self._begin_act_clear()
+                self._autosave()
                 return
         self.state = STATE_MAP
+        self._autosave()   # Autosave zwischen den Knoten
 
     def _begin_act_clear(self):
         """Boss besiegt -> 'Akt geschafft'-Bildschirm, nächster Akt schon vorbereitet."""
@@ -907,6 +927,9 @@ class Game:
             self._award("act1")
         if self._cleared_act >= 3:
             self._award("act3")
+            cid = getattr(self.player, "class_id", None)
+            self._award({"knight": "win_knight", "gambler": "win_gambler",
+                         "witch": "win_witch"}.get(cid, ""))
         # Nächsten (härteren) Akt schon generieren, damit Speichern/Weiter sauber ist
         self.act += 1
         self.gamemap = mapgen.generate(self.act)
@@ -915,7 +938,7 @@ class Game:
         self.map_message = f"🏔️ AKT {self.act} – es wird härter!"
         self.map_message_timer = 3.0
         audio.stop_spin()
-        audio.play("win")
+        audio.play("fanfare")
         self.state = STATE_ACT_CLEAR
     
     def _start_combat(self):
@@ -1212,7 +1235,7 @@ class Game:
         if self.player.lucky > 0:
             self.player.lucky -= 1
 
-        self.slot_machine.spin(lucky_bonus=lucky)
+        self.slot_machine.spin(lucky_bonus=lucky, time_scale=self._anim_mul())
         self.slot_done = False
         self.slot_effects_shown = []
         audio.start_spin()
@@ -1244,7 +1267,7 @@ class Game:
         if self._enemy_is_down():
             # Kurzer Delay, damit man das Slot-Ergebnis noch sehen kann (TODO #6)
             self.slot_death_pending = True
-            self.slot_death_timer = 1.8
+            self.slot_death_timer = 1.8 * self._anim_mul()
             self.slot_done = True
         else:
             self.slot_done = True
@@ -1253,21 +1276,26 @@ class Game:
     # GEGNER-RUNDE
     # ═══════════════════════════════════════════════
     
+    def _anim_mul(self):
+        """Animations-Tempo: 'Schnell'-Option halbiert Wartezeiten."""
+        return 0.5 if self.options.get("fast") else 1.0
+
     def _start_enemy_turn(self):
         self.state = STATE_ENEMY_TURN
-        self.enemy_turn_timer = 1.5  # Sekunden bis Angriff
+        self.enemy_turn_timer = 1.5 * self._anim_mul()  # Sekunden bis Angriff
         self.enemy_turn_log = []
         self._log("⚔️ Gegner ist am Zug...")
     
     def _music_for_state(self):
         """Passender Musik-Track je Spielzustand."""
         s = self.state
+        ai = (self.act - 1) % len(ACT_THEMES)   # Akt-Index für akt-eigene Tracks
         if s in (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN, STATE_REWARD):
             if self.enemy and getattr(self.enemy, "is_boss", False):
-                return "boss"
-            return "combat"
+                return f"boss_a{ai}"
+            return f"combat_a{ai}"
         if s in (STATE_MAP, STATE_REST, STATE_EVENT, STATE_ACT_CLEAR, STATE_SHOP):
-            return "explore"
+            return f"explore_a{ai}"
         return "menu"
 
     def _update(self, dt):
@@ -1291,6 +1319,13 @@ class Game:
                 self._award("rich")
             if self.player.strength >= 10:
                 self._award("muscles")
+        if self.enemy:
+            if getattr(self.enemy, "poison", 0) >= 15:
+                self._award("poison_master")
+            if getattr(self.enemy, "frost", 0) >= 10:
+                self._award("frost_master")
+            if getattr(self.enemy, "doom", 0) > 0:
+                self._award("doom_master")
         if self.shake > 0:
             self.shake = max(0.0, self.shake - dt * 60)
         if self.combo_flash > 0:
@@ -1878,6 +1913,11 @@ class Game:
             self.floor_num, self.player.enemies_defeated, self.player.gold_earned)
         if self.daily_mode:
             self.daily_result = daily.report_run(self.last_score)
+            try:
+                if daily.get_streak() >= 3:
+                    self._award("daily_streak")
+            except Exception:
+                pass
 
     # ═══════════════════════════════════════════════
     # SPEICHERN / LADEN
@@ -2011,6 +2051,15 @@ class Game:
         if self.player:
             savegame.write_save(self._serialize_run())
         self.running = False
+
+    def _autosave(self):
+        """Stiller Autosave (zwischen Knoten). Niemals crashen."""
+        if not self.player:
+            return
+        try:
+            savegame.write_save(self._serialize_run())
+        except Exception as exc:
+            print(f"[autosave] {exc}")
 
     def _load_run(self):
         """Lädt einen gespeicherten Run. Saves sind versionsunabhängig gültig;
@@ -2515,7 +2564,7 @@ class Game:
         
         # Countdown-Bar
         bar_w = 300
-        prog = max(0, self.enemy_turn_timer / 1.5)
+        prog = max(0, self.enemy_turn_timer / (1.5 * self._anim_mul()))
         pygame.draw.rect(self.screen, GREY_DARK,
                          (SCREEN_W//2 - bar_w//2, 525, bar_w, 12), border_radius=4)
         pygame.draw.rect(self.screen, RED,

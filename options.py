@@ -17,11 +17,21 @@ DEFAULTS = {
     "fullscreen": False,
     "shake": True,      # Screen-Shake an/aus
     "particles": True,  # Partikeleffekte an/aus
+    "fast": False,      # Animationen/Übergänge beschleunigen
+    "difficulty": 1,    # 0=Einfach, 1=Normal, 2=Hart (skaliert Gegner)
     "last_seen": "",    # zuletzt gesehene Version (für Changelog-Auto-Popup)
 }
 
+# Gegner-Skalierung je Schwierigkeit: (hp_mult, dmg_mult)
+DIFFICULTY = [
+    ("Einfach", 0.80, 0.80),
+    ("Normal",  1.00, 1.00),
+    ("Hart",    1.25, 1.20),
+]
+
 _FLOATS = ("master", "music", "sfx")
-_BOOLS = ("fullscreen", "shake", "particles")
+_BOOLS = ("fullscreen", "shake", "particles", "fast")
+_INTS = ("difficulty",)
 
 
 def load():
@@ -43,6 +53,12 @@ def load():
             o[k] = DEFAULTS[k]
     for k in _BOOLS:
         o[k] = bool(o[k])
+    for k in _INTS:
+        try:
+            o[k] = int(o[k])
+        except (TypeError, ValueError):
+            o[k] = DEFAULTS[k]
+    o["difficulty"] = min(2, max(0, o["difficulty"]))
     return o
 
 

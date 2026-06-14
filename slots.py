@@ -168,16 +168,16 @@ class SlotMachine:
         self._reel_done = [False, False, False]
         self.glow_timer = 0.0
     
-    def spin(self, lucky_bonus=False):
+    def spin(self, lucky_bonus=False, time_scale=1.0):
         """Startet den Spin aller drei Walzen"""
         self.spinning = True
         self.spin_complete = False
         self._reel_done = [False, False, False]
         self.results = []
         self.effects = []
-        
+
         # Walzen starten mit leicht unterschiedlichen Dauern (Spannung!)
-        durations = [0.9, 1.2, 1.6]
+        durations = [d * time_scale for d in (0.9, 1.2, 1.6)]
         targets = [weighted_choice(SLOT_SYMBOLS) for _ in range(3)]
         
         # Lucky: leicht bessere Chancen
