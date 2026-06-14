@@ -1116,6 +1116,39 @@ class UIRenderer:
         self._text("R = nochmal   ·   ESC = Beenden", self.font_small, INK_FAINT,
                    self.w // 2, self.h - 56, center=True)
 
+    def draw_update_button(self, version):
+        """Update-Hinweis-Button oben rechts im Menü. Gibt das Rect zurück."""
+        label = f"🆕 Update {version} laden" if version else "🆕 Update laden"
+        w = self.font_small.size(label)[0] + 36
+        rect = pygame.Rect(self.w - w - 16, 14, w, 38)
+        hot = rect.collidepoint(pygame.mouse.get_pos())
+        self.draw_button(label, rect.x, rect.y, rect.w, rect.h,
+                         color=GREEN, text_color=BLACK, pulsing=True)
+        return rect
+
+    def draw_update_overlay(self, progress):
+        """Vollbild-Overlay während des Update-Downloads."""
+        self._dim(200)
+        pw, ph = 460, 150
+        px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2
+        self._panel((px, py, pw, ph), radius=16, border=GREEN, border_w=3)
+        if progress.get("error"):
+            self._text("Update fehlgeschlagen", self.font_h1, HP_RED,
+                       self.w // 2, py + 28, center=True, shadow=True)
+            self._text(str(progress["error"])[:48], self.font_small, INK_DIM,
+                       self.w // 2, py + 80, center=True)
+            return
+        self._text("Update wird geladen …", self.font_h1, ACCENT,
+                   self.w // 2, py + 26, center=True, shadow=True)
+        # Fortschrittsbalken
+        bx, by, bw, bh = px + 40, py + 84, pw - 80, 22
+        frac = max(0.0, min(1.0, progress.get("frac", 0.0)))
+        self._bar(bx, by, bw, bh, frac, GREEN, radius=10)
+        self._text(f"{int(frac * 100)} %", self.font_small, WHITE,
+                   self.w // 2, by + 2, center=True, shadow=True)
+        self._text("Das Spiel startet danach automatisch neu.", self.font_tiny,
+                   INK_DIM, self.w // 2, py + ph - 22, center=True)
+
     def draw_act_clear(self, cleared_act, player, next_act_name=""):
         """'Akt geschafft'-Bildschirm nach einem Boss (Spiel geht endlos weiter)."""
         self.draw_background()

@@ -8,7 +8,7 @@ SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
-    ("1.12.0", "RIESEN-UPDATE 2: 22 Karten, 12 Relikte, 9 Gegner, 3 Akte, 6 Statuseffekte"),
+    ("1.12.0", "RIESEN-UPDATE 2: 22 Karten, 12 Relikte, 9 Gegner, 3 Akte, 6 Status + Auto-Update"),
     ("1.11.0", "Neue Musik je Situation (Menü/Karte/Kampf/Boss) + Tastatursteuerung"),
     ("1.10.3", "Pfade auf der Karte kreuzen sich nicht mehr"),
     ("1.10.2", "Im Kampf wird jetzt dein Klassen-Portrait als Avatar gezeigt"),

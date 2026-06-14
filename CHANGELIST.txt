@@ -35,6 +35,19 @@ TODO/assets_prompt.txt; bis dahin Procedural-Fallback bzw. bg_void).
 Gesamt jetzt: 92 Karten · 42 Relikte · 37 Gegner · 6 Akt-Themen.
 (Spielstände bleiben gültig – neue Felder additiv mit Default.)
 
+NACHGEREICHT (gleiche Version): alle 9 neuen Gegner-Sprites + die 3 neuen
+Akt-Hintergründe (Kanalisation/Frostpalast/Unterwelt) + Status-Effekt-Icons
+sind jetzt eingebaut (ersetzen Procedural-Fallback bzw. bg_void).
+
+NEU: IN-GAME-AUTO-UPDATE (updater.py)
+* Beim Start prüft das Spiel (im Hintergrund) das GitHub-Release-Repo auf
+  eine neuere Version. Ist eine da, erscheint im Menü oben rechts ein
+  grüner "🆕 Update laden"-Button.
+* Klick lädt die neue EXE und tauscht die laufende automatisch aus
+  (Fortschrittsbalken, danach Neustart). Nur in der EXE-Version aktiv;
+  Fehler/kein Netz sind still (dann kein Button).
+* Repo: github.com/bennetinname/slotsandswords (öffentlich, kein Token).
+
 ─────────────────────────────────────────────────────
 
 [v1.11.0 – 2026-06-14]  NEUE MUSIK & TASTATURSTEUERUNG

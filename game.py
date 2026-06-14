@@ -18,6 +18,7 @@ import assets
 import achievements
 import daily
 import stats
+import updater
 
 
 # ═══════════════════════════════════════════════
@@ -184,6 +185,11 @@ class Game:
         self.pending_daily = False
         self.class_select_rects = []
         self.class_back_rect = None
+
+        # In-Game-Updater: alte EXE aufräumen + Versions-Check im Hintergrund
+        updater.cleanup_old()
+        updater.check_async(GAME_VERSION)
+        self.update_btn_rect = None
 
         # Erfolge: laden + Toast-Warteschlange [(def, restzeit), ...]
         achievements.load()
@@ -507,6 +513,10 @@ class Game:
             return
 
         if self.state == STATE_MENU:
+            # Update-Button (nur wenn neuere Version verfügbar)
+            if self.update_btn_rect and self.update_btn_rect.collidepoint(pos):
+                audio.play("click"); updater.apply_update()
+                return
             lay = self._compute_menu_layout()
             if lay["resume"] and lay["resume"].collidepoint(pos):
                 audio.play("click"); self._load_run()
@@ -1261,6 +1271,10 @@ class Game:
         return "menu"
 
     def _update(self, dt):
+        # Update fertig heruntergeladen & getauscht -> alte Version beenden
+        if updater.progress.get("done"):
+            self.running = False
+            return
         # Musik passend zum Zustand umschalten (play_music ist günstig, wenn gleich)
         if not audio.is_muted():
             audio.play_music(self._music_for_state())
@@ -2256,6 +2270,11 @@ class Game:
         self.ui.set_scene(self._scene_for_state())
         if self.state == STATE_MENU:
             self.ui.draw_main_menu(self._compute_menu_layout())
+            # Update-Button, wenn eine neuere Version verfügbar ist
+            if updater.status.get("available"):
+                self.update_btn_rect = self.ui.draw_update_button(updater.status.get("version"))
+            else:
+                self.update_btn_rect = None
 
         elif self.state == STATE_TUTORIAL:
             self.ui.draw_tutorial()
@@ -2336,7 +2355,10 @@ class Game:
         # Mute-Indikator
         if audio.is_muted():
             self.ui._text("🔇", self.ui.font_small, GREY, SCREEN_W - 30, 6)
-    
+        # Update-Fortschritt über allem
+        if updater.progress.get("active") or updater.progress.get("error"):
+            self.ui.draw_update_overlay(updater.progress)
+
     def _draw_combat_bg(self):
         """Zeichnet den Kampf-Hintergrund ohne UI-Elemente"""
         self.ui.draw_background()
