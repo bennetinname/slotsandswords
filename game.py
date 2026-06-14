@@ -47,24 +47,36 @@ STATE_CLASS_SELECT = "class_select"  # Klassenauswahl vor dem Run
 
 # ═══════════════════════════════════════════════
 # AKT-THEMEN  (zyklisch ab Akt 1; gibt jedem Akt eine eigene Gegner-Auswahl,
-# einen Namen und eine Tönung). Tuple: (name, accent_rgb, [gegner], boss)
+# Namen, Tönung und Hintergrund). Tuple: (name, accent_rgb, bg, [gegner], boss)
 # ═══════════════════════════════════════════════
 ACT_THEMES = [
-    ("Die Kneipe", (210, 150, 60), [
+    ("Die Kneipe", (210, 150, 60), "bg_kneipe", [
         "Schluffiger Goblin", "Betrunkener Ritter", "Pestratte",
         "Steuerprüfer", "Kneipenschläger", "Sumpfschleim", "Wütender Koch",
         "Würfelgnom", "Bierbauch-Ork",
     ], "DER GROSSE HÜHNERKÖNIG"),
-    ("Das Untergrund-Casino", (210, 80, 150), [
+    ("Das Untergrund-Casino", (210, 80, 150), "bg_casino", [
         "Vampir-Croupier", "Slot-Maschinendämon", "Glücksgeist",
         "Steuerprüfer", "Kneipenschläger", "Falschspieler", "Einarmiger Bandit",
         "Roulette-Geist", "Münzgolem",
     ], ["Oberster Glücksprüfer", "DER BANKHALTER"]),
-    ("Das Verfluchte Reich", (150, 90, 220), [
+    ("Das Verfluchte Reich", (150, 90, 220), "bg_cursed", [
         "Philosophischer Lich", "Verfluchter Spiegel", "Pilzkönigin",
         "Wütender Koch", "Pestratte", "Glücksgeist", "Sumpfschleim",
         "Geisterbraut", "Knochenkoch", "Schattenkrähe", "Gruftwächter",
     ], ["MADAME FORTUNA", "DER SENSENMANN"]),
+    ("Die Kanalisation", (90, 150, 70), "bg_sewer", [
+        "Riesenkanalratte", "Seuchendoktor", "Sumpfschleim", "Pestratte",
+        "Knochenkoch", "Gruftwächter",
+    ], "DIE BRUTMUTTER"),
+    ("Der Frostpalast", (120, 200, 230), "bg_frost", [
+        "Frostgolem", "Eishexe", "Gruftwächter", "Slot-Maschinendämon",
+        "Münzgolem", "Schattenkrähe",
+    ], "DER FROSTKÖNIG"),
+    ("Die Unterwelt", (220, 70, 50), "bg_hell", [
+        "Höllenhund", "Qualdämon", "Wütender Koch", "Vampir-Croupier",
+        "Schattenkrähe", "Gruftwächter",
+    ], ["LUZIFER", "DER SENSENMANN"]),
 ]
 
 
@@ -772,7 +784,7 @@ class Game:
         """Wählt einen Gegner aus dem Pool des aktuellen Akts, passend zur Tiefe."""
         import copy
         is_elite = (node_type == "elite")
-        _name, _accent, pool_names, boss_name = self._act_theme()
+        _name, _accent, _bg, pool_names, boss_name = self._act_theme()
         by_name = {e["name"]: e for e in ENEMY_TYPES}
         pool = [by_name[n] for n in pool_names if n in by_name]
         # erste Etagen im Akt: nur Tier-1-Gegner aus dem Pool (Einstieg fairer)
@@ -949,6 +961,9 @@ class Game:
         # Doppeldecker: +1 Karte pro Runde
         if self.player.has_relic("extra_draw"):
             self.player.draw_hand(1)
+        # Fokuslinse: +2 Fokus pro Runde
+        if self.player.has_relic("focus_lens"):
+            self.player.focus += 2
         # Falsches Ass: erste Karte der Runde gratis
         if self.player.has_relic("first_free"):
             self.player.next_free_card = True
@@ -994,6 +1009,28 @@ class Game:
         if p.has_relic("witch_cauldron") and self.enemy:
             self.enemy.poison += 3
             self._log("🧪 Hexenkessel: Gegner startet mit 3 Gift!")
+        # ─── Neue Relikte (v1.12.0) ───
+        e = self.enemy
+        if p.has_relic("frostbite") and e:
+            e.frost += 2; self._log("❄️ Eiszapfen-Amulett: Gegner +2 Frost!")
+        if p.has_relic("branding") and e:
+            e.marked += 3; self._log("🔥 Brandeisen: Gegner +3 markiert!")
+        if p.has_relic("thorn_crown"):
+            p.thorns += 4; self._log("👑 Dornenkrone: +4 Dornen!")
+        if p.has_relic("rage_totem"):
+            p.rage += 1; self._log("😤 Wuttotem: +1 Wut!")
+        if p.has_relic("berserker_blood") and p.hp < p.max_hp // 2:
+            p.strength += 3; self._log("🩸 Berserkerblut: +3 Stärke (unter 50% HP)!")
+        if p.has_relic("ice_heart"):
+            p.dodge = True; self._log("🧊 Eisherz: du weichst dem ersten Treffer aus!")
+        if p.has_relic("doom_bell") and e and random.random() < 0.35:
+            e.doom = 4; self._log("🔔 Schicksalsglocke: VERHÄNGNIS über den Gegner!")
+        if p.has_relic("time_glass"):
+            p.energy += 1; self._log("⏳ Zeitsanduhr: +1 Energie (erste Runde)!")
+        if p.has_relic("card_master"):
+            drawn = p.draw_hand(2); self._log(f"🎴 Kartenmeister: +{drawn} Karten!")
+        if p.has_relic("focus_lens"):
+            p.focus += 2; self._log("🔎 Fokuslinse: +2 Fokus!")
         if (self.daily_mod or {}).get("start_lucky"):
             p.lucky += self.daily_mod["start_lucky"]
             self._log(f"📅 Glückstag: +{self.daily_mod['start_lucky']} Glücksrunde!")
@@ -1064,9 +1101,19 @@ class Game:
         blk0 = self.player.block
         gold0 = self.player.gold
 
+        # Fokus: nächste Angriffskarte bekommt +Fokus Schaden (über Stärke), einmalig
+        focus_applied = 0
+        if card.type == "attack" and self.player.focus > 0:
+            focus_applied = self.player.focus
+            self.player.strength += focus_applied
+            self.player.focus = 0
+
         logs = self.resolver.resolve(card, self.player, self.enemy, self.slot_machine)
         for log in logs:
             self._log(log)
+        if focus_applied:
+            self.player.strength -= focus_applied
+            self._log(f"🎯 Fokus verbraucht (+{focus_applied} Schaden)")
 
         # Aderlass-Amulett: Heilung beim Spielen von Angriffskarten
         if card.type == "attack" and self.player.has_relic("leech_charm"):
@@ -1085,6 +1132,9 @@ class Game:
         if self.player.coin_rain_active:
             self.player.add_gold(10)
             self._log("   🪙 Münzregen: +10 Gold!")
+        # Glücksmünze-Relikt: +1 Gold pro Karte
+        if self.player.has_relic("lucky_coin"):
+            self.player.add_gold(1)
 
         # Bonus-Spins durch Karte?
         self.spins_remaining += self.player.bonus_spins
@@ -1352,6 +1402,12 @@ class Game:
         if self.enemy.is_boss and self.player.has_relic("trophy"):
             self.player.strength += 1
             self._log("🏆 Trophäensammlung: +1 Stärke dauerhaft!")
+
+        # Aasfresser: Heilung bei jedem Kill
+        if self.player.has_relic("scavenger"):
+            healed = self.player.heal_hp(max(1, self.player.max_hp // 10))
+            if healed > 0:
+                self._log(f"🦅 Aasfresser: +{healed} HP!")
 
         # ─── Erfolge ───
         self._award("first_blood")
@@ -1833,6 +1889,7 @@ class Game:
             "energy": p.energy, "max_energy": p.max_energy,
             "burn": p.burn, "strength": p.strength, "lucky": p.lucky,
             "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
+            "vulnerable": p.vulnerable, "rage": p.rage, "focus": p.focus,
             "class_id": p.class_id, "phoenix_used": p.phoenix_used,
             "shield_up": p.shield_up, "reflect": p.reflect,
             "coin_rain_active": p.coin_rain_active, "next_free_card": p.next_free_card,
@@ -1857,6 +1914,7 @@ class Game:
         p.energy = d.get("energy", p.energy); p.max_energy = d.get("max_energy", p.max_energy)
         p.burn = d.get("burn", 0); p.strength = d.get("strength", 0); p.lucky = d.get("lucky", 0)
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
+        p.vulnerable = d.get("vulnerable", 0); p.rage = d.get("rage", 0); p.focus = d.get("focus", 0)
         p.class_id = d.get("class_id")
         p.phoenix_used = d.get("phoenix_used", False)
         p.shield_up = d.get("shield_up", False); p.reflect = d.get("reflect", False)
@@ -1886,6 +1944,7 @@ class Game:
             "asset": e.asset,
             "burn": e.burn, "weakened": e.weakened,
             "poison": e.poison, "vulnerable": e.vulnerable,
+            "frost": e.frost, "stunned": e.stunned, "doom": e.doom, "marked": e.marked,
             "intent": e.intent, "intent_value": e.intent_value,
             "undying_used": e._undying_used, "jam_next": e.jam_next,
             "turn_count": e.turn_count,
@@ -1906,6 +1965,8 @@ class Game:
         e = Enemy(etype)
         e.block = d.get("block", 0); e.burn = d.get("burn", 0); e.weakened = d.get("weakened", 0)
         e.poison = d.get("poison", 0); e.vulnerable = d.get("vulnerable", 0)
+        e.frost = d.get("frost", 0); e.stunned = d.get("stunned", 0)
+        e.doom = d.get("doom", 0); e.marked = d.get("marked", 0)
         e.intent = d.get("intent", "attack"); e.intent_value = d.get("intent_value", e.damage)
         e._undying_used = d.get("undying_used", False)
         e.jam_next = d.get("jam_next", False)
@@ -2186,9 +2247,10 @@ class Game:
             STATE_SLOT_SPIN, STATE_ENEMY_TURN, STATE_REWARD, STATE_EVENT, STATE_SHOP)
         if not in_run:
             return "bg_kneipe"
-        if self.act >= 4:
-            return "bg_void"   # surrealer Endlos-Abstieg
-        return ["bg_kneipe", "bg_casino", "bg_cursed"][(self.act - 1) % 3]
+        # Hintergrund des aktuellen Akt-Themas (Fallback bg_void, falls Sprite fehlt)
+        bg = self._act_theme()[2]
+        import assets
+        return bg if assets.has("ui", bg) else "bg_void"
 
     def _draw(self):
         self.ui.set_scene(self._scene_for_state())

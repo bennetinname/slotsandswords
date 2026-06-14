@@ -1,16 +1,15 @@
 ====================================================================
- SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.10.0)
+ SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.12.0)
 ====================================================================
-Sammlung der Bild-Prompts fuer alles, wofuer noch Grafik fehlt.
-Aufbau wie gehabt:  [STYLE] + [SUBJECT] + [TECH].
-STYLE/TECH unten einmal definiert, pro Bild nur den SUBJECT-Teil tauschen.
-Tipp: gleichen Seed + ganzen Block zusammen generieren -> konsistenter Stil.
+Bild-Prompts fuer alles, wofuer noch Grafik fehlt.
+Aufbau:  [STYLE] + [SUBJECT] + [TECH]. STYLE/TECH einmal unten, pro Bild
+nur den SUBJECT-Teil tauschen. Gleichen Seed + ganzen Block zusammen
+generieren -> konsistenter Stil.
 
-EINBINDEN (wie bei den letzten Runden):
-- Sprites kommen auf MAGENTA-Hintergrund (#FF00FF), klar abgegrenzt,
-  pro Sprite etwas Abstand lassen (ein grosses Sheet ist ok).
-- Claude schneidet sie per Connected-Components, keyt Magenta transparent,
-  trimmt eng und legt sie in den jeweiligen Zielordner (je Block angegeben).
+EINBINDEN: Sprites auf MAGENTA-Hintergrund (#FF00FF), klar abgegrenzt,
+Abstand lassen (ein grosses Sheet ist ok). Claude schneidet per
+Connected-Components, keyt Magenta transparent, trimmt und legt sie ab.
+AUSNAHME Hintergruende: VOLLBILD-Szenen OHNE Magenta, randlos.
 
 --------------------------------------------------------------------
 [STYLE]
@@ -25,62 +24,60 @@ crisp pixels, nearest-neighbor, no anti-aliasing on outer edge,
 export PNG with alpha, generate at 4x then downscale to target size.
 
 ====================================================================
- 1) NEUE GEGNER v1.10.0  (~140x180, Bosse ~200x220, Magenta-HG)
+ 1) NEUE GEGNER v1.12.0  (~140x180, Bosse ~200x220, Magenta-HG)
 ====================================================================
-Diese 7 Gegner sind im Spiel, nutzen aber noch den prozeduralen Fallback.
-Ziel: assets/enemies/<name>.png
+Im Spiel, nutzen aber noch den prozeduralen Fallback. Ziel: assets/enemies/
 
- AKT 1 "Die Kneipe":
-  wuerfelgnom.png   – tiny manic gnome juggling oversized dice, gambler's
-                      visor, coins spilling, chaotic grin
-  bierork.png       – fat beer-belly orc, foaming tankard, suspenders,
-                      mid-burp, greenish skin, goofy-menacing
- AKT 2 "Untergrund-Casino":
-  roulettegeist.png – spectral croupier fused with a spinning roulette
-                      wheel, glowing red/black numbers, "all or nothing" vibe
-  muenzgolem.png    – hulking golem built from stacked gold coins & ingots,
-                      glowing coin-slot eyes, very armored, heavy
- AKT 3 "Verfluchtes Reich":
-  schattenkraehe.png– giant shadow crow, glowing purple eyes, razor talons
-                      trailing dark smoke, ragged feathers
-  gruftwaechter.png – ancient stone crypt guardian, mossy armor, huge shield
-                      & mace, ever-glowing rune eyes, immovable
-  boss_bankhalter.png – BOSS: "the House" personified – sinister banker/
-                      casino-owner in a gold pinstripe suit, monocle, fans
-                      of cash & golden chips, vault door behind him (~200x220)
+ AKT 4 "Die Kanalisation" (Gift/Seuche):
+  kanalratte.png    – huge mangy sewer rat, dog-sized, dripping fangs,
+                      matted fur, glowing sickly eyes, green slime
+  seuchendoktor.png – plague doctor, long beaked mask, tattered robe,
+                      vials of green toxin, sinister, NOT helpful
+  boss_brutmutter.png – BOSS: grotesque bloated brood-mother, egg sacs,
+                      spilling larvae & spores, green-purple, dripping (~200x220)
+ AKT 5 "Der Frostpalast" (Frost):
+  frostgolem.png    – massive golem of jagged blue ice, glowing frost-core
+                      chest, heavy, slow, icicle fists
+  eishexe.png       – elegant ice witch, frost-blue gown, breath of cold mist,
+                      crystal staff, pale skin
+  boss_frostkoenig.png – BOSS: towering frost king on an ice throne, crown of
+                      icicles, glacial cloak, cold blue glow, regal-cruel (~200x220)
+ AKT 6 "Die Unterwelt" (Feuer/Verhaengnis):
+  hoellenhund.png   – three-headed hellhound, cerberus, blazing maw, embers,
+                      black-red fur, smoking drool
+  qualdaemon.png    – muscular torment demon, horns, whip of fire, scarred
+                      red skin, sadistic grin
+  boss_luzifer.png  – BOSS: the devil himself, elegant horned lord in a
+                      black-gold suit, wreathed in flames, throne of skulls,
+                      charismatic & terrifying (~200x220)
 
 ====================================================================
- 2) NEUE RELIKT-ICONS v1.10.0  (64x64, Magenta-HG)
+ 2) NEUE AKT-HINTERGRUENDE  (VOLLBILD ~1200x800, KEIN Magenta, randlos)
 ====================================================================
-Einzelnes leuchtendes Schmuck-/Relikt-Objekt, zentriert. Dateiname = ID.
-Diese 9 Relikte nutzen bisher nur ihr Emoji.
-Ziel: assets/relics/<id>.png
+Dunkel + leicht unscharf (Text davor lesbar), Vorbild bg_kneipe.
+Ziel: assets/ui/<name>.png  (Code laedt sie automatisch, sonst bg_void).
 
-  antidote.png      – small glass vial with bright green antidote, cork + cross
-  purse.png         – fat coin purse bursting with gold, drawstring
-  leech_charm.png   – dark amulet with a leech / blood-drop gem, red glow
-  mirror_shield.png – round polished mirror-shield reflecting a glint
-  phoenix.png       – single glowing phoenix feather, orange-gold embers
-  tip_jar.png       – glass tip jar with a few coins + "danke" vibe
-  extra_draw.png    – two crossed playing cards being drawn, motion sparkle
-  counterfeit.png   – stack of fake banknotes with a sly wink stamp
-  chainmail.png     – folded chainmail shirt / linked rings, steel sheen
+  bg_sewer.png  – grimy underground sewer: dripping pipes, green murky
+                  water, slime, faint torchlight, claustrophobic (Akt 4)
+  bg_frost.png  – frozen palace hall: blue ice walls, frosted pillars,
+                  icicles, cold moonlight, snow drift (Akt 5)
+  bg_hell.png   – infernal cavern: rivers of lava, jagged black rock,
+                  glowing embers, distant fire, red-orange glow (Akt 6)
+
+====================================================================
+ 3) OPTIONAL – STATUS-EFFEKT-ICONS (32x32, Magenta-HG)
+====================================================================
+Aktuell werden Status als Emoji ueber dem Gegner / als Chips gezeigt.
+Eigene Mini-Icons waeren schicker. Ziel: assets/status/<name>.png
+  frost.png (Schneeflocke), stun.png (Sterne/Schwindel), doom.png
+  (Sanduhr-Totenkopf), marked.png (Zielkreuz/Blut), vulnerable.png
+  (zerbrochenes Herz), rage.png (Flammen-Faust), focus.png (Auge/Visier)
 
 --------------------------------------------------------------------
-PRIORITAET: 1) neue Gegner (ersetzen Procedural-Fallback)  2) Relikt-Icons
+PRIORITAET: 1) neue Gegner-Sprites  2) Akt-Hintergruende  3) Status-Icons
 --------------------------------------------------------------------
 
-====================================================================
- BEREITS EINGEBAUT (Referenz – nichts mehr zu tun)
-====================================================================
-* Akt-Hintergruende: bg_kneipe, bg_casino, bg_cursed, bg_void
-* Klassen-Portraits: class_knight, class_gambler, class_witch
-* Gegner-Sprites: schleim, schlaeger, pilzkoenigin, spiegel, gluecksgeist,
-  boss_fortuna, falschspieler, einarmiger_bandit, geisterbraut,
-  knochenkoch, boss_sensenmann (+ alte Roster)
-* Relikt-Icons (alt): poison_boost, gamble_discount, trophy, vamp_tooth,
-  anatomy, fortune_cookie, witch_cauldron, watchtower, four_leaf u.a.
-* Karten-Effekt-Icons: atk_slash, defense_shield, heal_herb, fire,
-  death_skull, gold_coin, energy_bolt, dice_chaos, chicken, poison_vial,
-  strength_fist, luck_clover, shield_bash
-* Event: casino. Slot-Cabinet. Status-Icons.
+BEREITS EINGEBAUT (Referenz): alle Gegner bis v1.10, Akt-BGs 1-3 + void,
+Klassen-Portraits, alle Relikt-Icons bis v1.10, Karten-Effekt-Icons,
+Slot-Cabinet, Casino-Event. (v1.12 Relikt-Icons fehlen noch -> Emoji-
+Fallback ist ok, optional spaeter nachreichen.)

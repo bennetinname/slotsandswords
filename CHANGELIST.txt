@@ -1,6 +1,42 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.12.0 – 2026-06-14]  RIESEN-CONTENT-UPDATE 2
+-----------------------------------------------
+6 NEUE STATUSEFFEKTE:
+* Frost (Gegner): −50% Angriffsschaden für N Runden.
+* Betäubt (Gegner): überspringt seinen nächsten Zug komplett.
+* Verhängnis (Gegner): Countdown, dann ein massiver Selbstschlag.
+* Markiert (Gegner): nimmt pauschal +X Schaden pro Treffer.
+* Verwundbar (Spieler): du nimmst +50% Schaden (N Runden).
+* Wut (Spieler): +X Stärke zu JEDEM Rundenstart. Fokus (Spieler):
+  nächste Angriffskarte macht +X Schaden.
+
+22 NEUE KARTEN: u.a. Frostklinge, Betäubungshieb, Brandmal, Verhängnis,
+Klingenwalzer (5 Treffer), Hinterhalt (x2 gg. betäubt/gefroren),
+Seelenschnitt (+3 je Debuff), Blutrausch, Urteil, Eisregen, Eingraben
+(Block verdoppeln), Frostpanzer, Ausdauer, Festungswall, Kampfrausch,
+Konzentration, Sturmlauf, Opfergabe, Giftschwade, Reinigung,
+Wildes Glück, Henkersmahlzeit.
+
+12 NEUE RELIKTE: Eiszapfen-Amulett, Brandeisen, Wuttotem, Fokuslinse,
+Zeitsanduhr, Kartenmeister, Glücksmünze, Dornenkrone, Aasfresser,
+Berserkerblut, Schicksalsglocke, Eisherz.
+
+3 NEUE AKTE (Themen zyklisch jetzt 6): AKT 4 "Die Kanalisation"
+(Gift/Seuche), AKT 5 "Der Frostpalast" (Frost), AKT 6 "Die Unterwelt"
+(Feuer). Mit eigenen Gegner-Pools + Hintergründen.
+
+9 NEUE GEGNER inkl. 3 Bosse: Riesenkanalratte, Seuchendoktor, BOSS
+Die Brutmutter; Frostgolem, Eishexe, BOSS Der Frostkönig; Höllenhund,
+Qualdämon, BOSS Luzifer (Sprites & Akt-Hintergründe folgen – Prompts in
+TODO/assets_prompt.txt; bis dahin Procedural-Fallback bzw. bg_void).
+
+Gesamt jetzt: 92 Karten · 42 Relikte · 37 Gegner · 6 Akt-Themen.
+(Spielstände bleiben gültig – neue Felder additiv mit Default.)
+
+─────────────────────────────────────────────────────
+
 [v1.11.0 – 2026-06-14]  NEUE MUSIK & TASTATURSTEUERUNG
 ------------------------------------------------------
 MUSIK (vorher ein einziger, eintöniger Loop):

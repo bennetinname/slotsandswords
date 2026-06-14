@@ -495,6 +495,121 @@ class CardEffectResolver:
             enemy.armor = max(0, enemy.armor - 3)
             logs.append(f"🔨 {card.name}: {actual} Schaden, Rüstung −3 (jetzt {enemy.armor})!")
 
+        # ═══ Karten v1.12.0: neue Statuseffekte ═══
+        elif effect == "frost_strike":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.frost += 2
+            logs.append(f"❄️ {card.name}: {actual} Schaden + 2 Frost (Gegner schlägt schwächer)!")
+
+        elif effect == "stun_bash":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.stunned += 1
+            logs.append(f"💫 {card.name}: {actual} Schaden + BETÄUBT (überspringt 1 Zug)!")
+
+        elif effect == "mark_strike":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.marked += 4
+            logs.append(f"🎯 {card.name}: {actual} Schaden + Markiert (+4 Schaden/Treffer)!")
+
+        elif effect == "doom_card":
+            enemy.doom = 3
+            logs.append(f"💀 {card.name}: VERHÄNGNIS! In 3 Runden trifft der Gegner ein massiver Schlag.")
+
+        elif effect == "flurry5":
+            total = sum(enemy.take_damage(card.damage + player.strength) for _ in range(5))
+            logs.append(f"🌪️ {card.name}: 5 Treffer, {total} Schaden!")
+
+        elif effect == "ambush":
+            dmg = card.damage + player.strength
+            if enemy.stunned > 0 or enemy.frost > 0:
+                dmg *= 2
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🗡️ {card.name}: {actual} Schaden{' (HINTERHALT x2!)' if dmg != card.damage + player.strength else ''}")
+
+        elif effect == "soul_cut":
+            debuffs = sum(1 for v in (enemy.poison, enemy.burn, enemy.vulnerable,
+                                      enemy.frost, enemy.weakened, enemy.marked, enemy.doom) if v > 0)
+            dmg = 10 + 3 * debuffs + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🌑 {card.name}: {actual} Schaden (+3 je Debuff, {debuffs} aktiv)!")
+
+        elif effect == "bloodrage":
+            actual = enemy.take_damage(card.damage + player.strength)
+            player.rage += 1
+            logs.append(f"🩸 {card.name}: {actual} Schaden, +1 Wut (Stärke pro Runde)!")
+
+        elif effect == "judgement":
+            dmg = (30 if enemy.doom > 0 else 12) + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"⚖️ {card.name}: {actual} Schaden{' (URTEIL über den Verdammten!)' if enemy.doom > 0 else ''}")
+
+        elif effect == "icestorm":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.frost += 2
+            logs.append(f"🌨️ {card.name}: {actual} Schaden + 2 Frost!")
+
+        elif effect == "entrench":
+            gain = player.block
+            player.block += gain
+            logs.append(f"🏰 {card.name}: Block verdoppelt (+{gain}, jetzt {player.block})!")
+
+        elif effect == "frost_armor":
+            block_amount = card.block * (2 if player.shield_up else 1)
+            player.block += block_amount
+            enemy.frost += 2
+            logs.append(f"🧊 {card.name}: +{block_amount} Block, Gegner +2 Frost!")
+
+        elif effect == "endure":
+            block_amount = card.block * (2 if player.shield_up else 1)
+            player.block += block_amount
+            healed = player.heal_hp(4)
+            logs.append(f"🛡️ {card.name}: +{block_amount} Block, +{healed} HP!")
+
+        elif effect == "rage_power":
+            player.rage += 2
+            logs.append(f"😤 {card.name}: +2 Wut! (Stärke wächst jede Runde)")
+
+        elif effect == "focus_power":
+            player.focus += 6
+            logs.append(f"🎯 {card.name}: +6 Fokus (nächste Angriffskarte macht mehr Schaden)!")
+
+        elif effect == "rush":
+            player.energy += 2
+            drawn = player.draw_hand(1)
+            logs.append(f"⚡ {card.name}: +2 Energie, +{drawn} Karte!")
+
+        elif effect == "sacrifice_card":
+            player.take_damage(6, ignore_block=True)
+            player.strength += 2
+            player.energy += 1
+            logs.append(f"🔥 {card.name}: −6 HP, +2 Stärke, +1 Energie!")
+
+        elif effect == "mega_poison":
+            stacks = 9 + (1 if player.has_relic("poison_boost") else 0)
+            enemy.poison += stacks
+            logs.append(f"☠️ {card.name}: +{stacks} Gift! (Gegner: {enemy.poison})")
+
+        elif effect == "cleanse":
+            removed = []
+            if player.burn: removed.append("Brennen"); player.burn = 0
+            if player.poison: removed.append("Gift"); player.poison = 0
+            if player.vulnerable: removed.append("Verwundbar"); player.vulnerable = 0
+            player.block += 6
+            logs.append(f"✨ {card.name}: +6 Block, entfernt: {', '.join(removed) or 'nichts'}.")
+
+        elif effect == "wild_luck":
+            if random.random() < 0.5:
+                player.strength += 3
+                logs.append(f"🍀 {card.name}: GLÜCK! +3 Stärke!")
+            else:
+                enemy.poison += 6
+                logs.append(f"🍀 {card.name}: Naja – dafür +6 Gift auf den Gegner!")
+
+        elif effect == "feast":
+            actual = enemy.take_damage(card.damage + player.strength)
+            healed = player.heal_hp(actual)
+            logs.append(f"🍖 {card.name}: {actual} Schaden, +{healed} HP gesaugt!")
+
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")
 

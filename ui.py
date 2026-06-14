@@ -314,6 +314,24 @@ class UIRenderer:
                                text_col=ORANGE, fill=(50, 40, 10, 160))
             hot.append((pygame.Rect(col_x, cy, w, ch),
                         f"🌵 Dornen: reflektiert {player.thorns} Schaden bei jedem Gegnertreffer (ganzer Kampf)."))
+            col_x += w + 6
+        if getattr(player, "rage", 0) > 0:
+            w, ch = self._chip(f"😤 {player.rage}", self.font_tiny, col_x, cy,
+                               text_col=RED, fill=(60, 15, 15, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"😤 Wut: +{player.rage} Stärke zu Beginn JEDER Runde (ganzer Kampf)."))
+            col_x += w + 6
+        if getattr(player, "focus", 0) > 0:
+            w, ch = self._chip(f"🎯 {player.focus}", self.font_tiny, col_x, cy,
+                               text_col=ACCENT, fill=(60, 45, 10, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"🎯 Fokus: deine nächste Angriffskarte macht +{player.focus} Schaden."))
+            col_x += w + 6
+        if getattr(player, "vulnerable", 0) > 0:
+            w, ch = self._chip(f"💔 {player.vulnerable}", self.font_tiny, col_x, cy,
+                               text_col=HP_RED, fill=(60, 12, 12, 160))
+            hot.append((pygame.Rect(col_x, cy, w, ch),
+                        f"💔 Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden)."))
 
         # Energie & Gold (Mitte-links)
         ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
@@ -590,17 +608,22 @@ class UIRenderer:
         self.screen.blit(plate, (body_x - (nw + 24) // 2, y + height - 18))
         self._text(name, nf, ncol, body_x, y + height - 14, center=True)
 
-        # Status-Icons nebeneinander über dem Kopf
-        sx = body_x - 50
-        for cond, txt, col in [
+        # Status-Icons über dem Kopf (zwei Reihen, damit es nicht zu breit wird)
+        conds = [
             (enemy.burn > 0,       f"🔥{enemy.burn}",      ORANGE),
             (enemy.poison > 0,     f"☠️{enemy.poison}",     GREEN),
             (enemy.vulnerable > 0, f"🎯{enemy.vulnerable}", RED),
             (enemy.weakened > 0,   f"😵{enemy.weakened}",   PURPLE),
-        ]:
-            if cond:
-                self._text(txt, self.font_small, col, sx, body_y - 84, shadow=True)
-                sx += 36
+            (getattr(enemy, "frost", 0) > 0,   f"❄️{enemy.frost}",   CYAN),
+            (getattr(enemy, "marked", 0) > 0,  f"🩸{enemy.marked}",  RED_DARK),
+            (getattr(enemy, "stunned", 0) > 0, "💫",                 WHITE),
+            (getattr(enemy, "doom", 0) > 0,    f"💀{enemy.doom}",    CURSE_COL),
+        ]
+        active = [(t, c) for ok, t, c in conds if ok]
+        for i, (txt, col) in enumerate(active):
+            row = i // 4
+            sx = body_x - 50 + (i % 4) * 36
+            self._text(txt, self.font_small, col, sx, body_y - 84 - row * 22, shadow=True)
 
         # Block-Schild (gut sichtbar, damit klar ist warum Schaden absorbiert wird)
         if getattr(enemy, "block", 0) > 0:

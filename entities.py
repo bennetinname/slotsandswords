@@ -99,6 +99,16 @@ class Card:
         "counter": "defense_shield", "evade": "defense_shield",
         "energize": "energy_bolt", "deep_draw": "energy_bolt",
         "berserk_rage": "strength_fist", "meditate": "strength_fist",
+        # Karten v1.12.0
+        "frost_strike": "atk_slash", "icestorm": "atk_slash", "stun_bash": "atk_slash",
+        "mark_strike": "atk_slash", "flurry5": "atk_slash", "ambush": "atk_slash",
+        "feast": "atk_slash", "bloodrage": "atk_slash",
+        "doom_card": "death_skull", "soul_cut": "death_skull", "judgement": "death_skull",
+        "entrench": "defense_shield", "frost_armor": "defense_shield",
+        "endure": "defense_shield", "cleanse": "defense_shield",
+        "rage_power": "strength_fist", "focus_power": "strength_fist",
+        "sacrifice_card": "strength_fist",
+        "rush": "energy_bolt", "mega_poison": "poison_vial", "wild_luck": "luck_clover",
     }
 
     def get_effect_icon(self):
@@ -136,6 +146,10 @@ class Player:
         self.shield_up = False # Doppel-Block diese Runde
         self.reflect = False   # Reflektiert nächsten Schaden
         self.dodge = False     # Weicht dem nächsten Gegnerangriff aus
+        # ─── Neue Statuseffekte (v1.12.0) ───
+        self.vulnerable = 0    # Spieler nimmt +50% Schaden (Runden, sinkt um 1)
+        self.rage = 0          # +X Stärke zu JEDEM Rundenstart (bleibt ganzen Kampf)
+        self.focus = 0         # nächste Angriffskarte macht +X Schaden (einmalig)
         self.flat_reduction = 0     # Pauschale Schadensreduktion pro Treffer (Kettenhemd)
         self.has_phoenix = False    # Phönixfeder aktiv?
         self.phoenix_used = False   # einmal pro RUN
@@ -235,6 +249,12 @@ class Player:
         self.next_free_card = False
         if self.shield_up:
             self.shield_up = False
+        # Wut: +X Stärke zu jedem Rundenstart (Aufbau über den Kampf)
+        if self.rage > 0:
+            self.strength += self.rage
+        # Verwundbar baut pro Runde ab
+        if self.vulnerable > 0:
+            self.vulnerable -= 1
         # Gegengift-Relikt: kein Gift auf dir
         if any(r.get("id") == "antidote" for r in self.relics):
             self.poison = 0
@@ -255,6 +275,9 @@ class Player:
     
     def take_damage(self, amount, ignore_block=False):
         """Nimmt Schaden, reduziert durch Block"""
+        # Verwundbar: +50% erlittener Schaden (vor Block)
+        if self.vulnerable > 0 and amount > 0:
+            amount = int(amount * 1.5)
         if not ignore_block:
             absorbed = min(self.block, amount)
             self.block -= absorbed
@@ -349,6 +372,11 @@ class Enemy:
         self.poison = 0     # Gift: tickt jede Runde, sinkt NICHT (Build-up-Archetyp)
         self.vulnerable = 0 # Runden mit +50% Schadensaufnahme
         self.weakened = 0   # Runden mit halbiertem Schaden
+        # ─── Neue Statuseffekte (v1.12.0) ───
+        self.frost = 0      # Frost: Angriffsschaden -50% für N Runden
+        self.stunned = 0    # Betäubt: überspringt N Züge komplett
+        self.doom = 0       # Verhängnis: Countdown, dann massiver Schlag
+        self.marked = 0     # Markiert: nimmt +X Bonus-Schaden pro Treffer
         
         # KI: Was plant der Gegner diese Runde?
         self.intent = "attack"
@@ -452,6 +480,8 @@ class Enemy:
         """Gegner nimmt Schaden"""
         if self.vulnerable > 0:
             amount = int(amount * 1.5)
+        if self.marked > 0 and amount > 0:
+            amount += self.marked      # Markiert: pauschaler Bonus pro Treffer
         effective = max(0, amount - self.armor)
         absorbed = min(self.block, effective)
         self.block -= absorbed
@@ -479,29 +509,47 @@ class Enemy:
             self.hp = max(0, self.hp - self.poison)
             result.append(f"☠️ {self.name} leidet unter Gift! ({self.poison} Schaden)")
 
+        # Verhängnis: Countdown, am Ende ein massiver Selbstschlag
+        if self.doom > 0:
+            self.doom -= 1
+            if self.doom == 0:
+                boom = max(20, self.max_hp // 2)
+                self.hp = max(0, self.hp - boom)
+                result.append(f"💥 VERHÄNGNIS bricht über {self.name} herein! ({boom} Schaden)")
+
         # Status-Abbau
         if self.weakened > 0:
             self.weakened -= 1
         if self.vulnerable > 0:
             self.vulnerable -= 1
+        if self.marked > 0:
+            self.marked = max(0, self.marked - 1)
 
-        # Gift kann töten, bevor der Gegner handelt
+        # Gift/Verhängnis kann töten, bevor der Gegner handelt
         if self.hp <= 0:
             return result
 
+        # Betäubt: überspringt den Zug komplett
+        if self.stunned > 0:
+            self.stunned -= 1
+            result.append(f"💫 {self.name} ist betäubt und kann nicht handeln!")
+            self._randomize_intent()
+            return result
+
+        def _atk_dmg(v):
+            if self.weakened > 0:
+                v = v // 2
+            if self.frost > 0:
+                v = v // 2        # Frost: halbierter Angriffsschaden
+            return v
+
         dealt = 0
         if self.intent == "attack":
-            dmg = self.intent_value
-            if self.weakened > 0:
-                dmg = dmg // 2
-            dealt = player.take_damage(dmg)
+            dealt = player.take_damage(_atk_dmg(self.intent_value))
             result.append(f"{self.name} greift an! ({dealt} Schaden)")
 
         elif self.intent == "heavy_attack":
-            dmg = self.intent_value
-            if self.weakened > 0:
-                dmg = dmg // 2
-            dealt = player.take_damage(dmg)
+            dealt = player.take_damage(_atk_dmg(self.intent_value))
             result.append(f"{self.name} HAMMERSCHLAG! ({dealt} Schaden)")
 
         elif self.intent == "defend":
@@ -515,6 +563,10 @@ class Enemy:
 
         # ─── Einzigartige Mechaniken ───
         result.extend(self._apply_mechanic(player, dealt))
+
+        # Frost baut nach dem Zug ab
+        if self.frost > 0:
+            self.frost -= 1
 
         # Nächste Aktion planen
         self._randomize_intent()
@@ -570,6 +622,31 @@ class Enemy:
         elif m == "venom" and attacked:
             player.poison += 2
             out.append(f"☠️ {self.name} vergiftet dich! (+2 Gift)")
+
+        elif m == "plague" and attacked:
+            player.poison += 2
+            player.vulnerable += 1
+            out.append(f"🦠 {self.name} infiziert dich! (+2 Gift, +1 Verwundbar)")
+
+        elif m == "infest":
+            stacks = 2 + self.turn_count // 2     # eskaliert über die Zeit
+            player.poison += stacks
+            out.append(f"🥚 {self.name} verseucht dich! (+{stacks} Gift)")
+
+        elif m == "chill" and attacked:
+            player.vulnerable += 2
+            out.append(f"❄️ {self.name} lässt dich erstarren! (+2 Verwundbar)")
+
+        elif m == "freeze":
+            if attacked:
+                player.vulnerable += 1
+                out.append(f"🧊 {self.name} friert dich ein! (+1 Verwundbar)")
+
+        elif m == "infernal":
+            player.burn += 2
+            if self.turn_count % 3 == 0:
+                player.burn += 2
+            out.append(f"🔥 {self.name} entfacht das Höllenfeuer! (+Brennen)")
 
         elif m == "pierce" and attacked:
             # Schattenkrähe: 3 Schaden ignorieren Block
