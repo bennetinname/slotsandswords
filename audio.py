@@ -239,57 +239,113 @@ _MINOR = [0, 3, 7]
 _MAJOR = [0, 4, 7]
 
 
-def _compose(progression, minor=True, note_dur=0.34, octave=0, lead=True,
-             hat=False, gain=0.9, bass_oct=-12, drive=False, _samples_only=False):
-    """Baut einen schleifbaren Track aus einer Akkordfolge (Halbton-Grundtöne).
-    Layer: Arpeggio + Bass + Pad (+ optional Lead-Melodie + Hi-Hat)."""
-    chord_iv = _MINOR if minor else _MAJOR
-    beats_per_chord = 4
-    arp = []; bs = []; pad = []; lead_l = []; hatt = []
-    rng = _random.Random(hash(tuple(progression)) & 0xffffffff)
-    for root in progression:
-        froot = _hz(root + octave)
-        tones = [_hz(root + octave + iv) for iv in chord_iv]
-        # Arpeggio (auf/ab durch die Akkordtöne)
-        seq = tones + [tones[1]]
-        for b in range(beats_per_chord):
-            fr = seq[b % len(seq)]
-            kind = "saw" if drive else "triangle"
-            arp = _cat(arp, _env(_osc(fr, note_dur, kind), 0.012, note_dur * 0.45, 0.16))
-        # Bass: Grundton, pro Akkord gehalten + Oktav-Puls
-        bfr = _hz(root + bass_oct)
-        bseg = _env(_osc(bfr, note_dur * beats_per_chord, "sine"), 0.02,
-                    note_dur * beats_per_chord * 0.3, 0.30)
-        bs = _cat(bs, bseg)
-        # Pad: gehaltener Akkord, sehr leise (Fülle)
-        pseg = _mix(*[_env(_osc(t, note_dur * beats_per_chord, "sine"),
-                            note_dur, note_dur * beats_per_chord * 0.4, 0.05) for t in tones])
-        pad = _cat(pad, pseg)
-        # Lead: einzelne Akkordtöne mit Pausen (Melodie-Andeutung)
-        if lead:
-            for b in range(beats_per_chord):
-                if rng.random() < 0.55:
-                    fr = tones[rng.randint(0, len(tones) - 1)] * 2
-                    lead_l = _cat(lead_l, _env(_osc(fr, note_dur, "square"),
-                                               0.008, note_dur * 0.5, 0.07))
-                else:
-                    lead_l = _cat(lead_l, [0.0] * int(SAMPLE_RATE * note_dur))
-        # Hi-Hat: kurzer Noise-Tick auf jedem Beat
-        if hat:
-            for b in range(beats_per_chord):
-                tick = _env(_osc(0, 0.03, "noise"), 0.001, 0.025, 0.06 if b % 2 else 0.1)
-                hatt = _cat(hatt, tick, [0.0] * int(SAMPLE_RATE * (note_dur - 0.03)))
+_MINOR_SCALE = [0, 2, 3, 5, 7, 8, 10]   # natürliches Moll
 
-    layers = [arp, bs, pad]
-    if lead and lead_l:
-        layers.append(lead_l)
-    if hat and hatt:
-        layers.append(hatt)
-    n = min(len(l) for l in layers if l)
+
+def _triad(root, qual):
+    return [root, root + (4 if qual == "maj" else 3), root + 7]
+
+
+def _osc2(freq, dur, kind, cents):
+    """Zwei leicht verstimmte Oszillatoren -> wärmer, weniger steril."""
+    a = _osc(freq, dur, kind)
+    b = _osc(freq * (2.0 ** (cents / 1200.0)), dur, kind)
+    return [(a[i] + b[i]) * 0.5 for i in range(len(a))]
+
+
+def _seg(freq, dur, kind, vol, atk=0.012, rel=None, cents=0.0):
+    if freq <= 0:
+        return [0.0] * int(SAMPLE_RATE * dur)
+    s = _osc2(freq, dur, kind, cents) if cents else _osc(freq, dur, kind)
+    return _env(s, atk, dur * 0.5 if rel is None else rel, vol)
+
+
+def _pad_to(seg, length):
+    if len(seg) < length:
+        seg = seg + [0.0] * (length - len(seg))
+    return seg[:length]
+
+
+def _lowpass(buf, a):
+    """Einpoliger Tiefpass: nimmt Schärfe raus, klingt wärmer."""
+    y = 0.0
+    for i in range(len(buf)):
+        y += a * (buf[i] - y)
+        buf[i] = y
+    return buf
+
+
+def _softclip(buf):
+    for i in range(len(buf)):
+        x = buf[i]
+        x = 1.0 if x > 1 else (-1.0 if x < -1 else x)
+        buf[i] = x - (x * x * x) / 3.0
+    return buf
+
+
+def _compose(prog, key=220.0, note_dur=0.36, repeats=2, drums=0, lp=0.22,
+             gain=0.8, lead_density=0.6, _samples_only=False):
+    """Schleifbarer Track aus einer diatonischen Moll-Akkordfolge.
+    prog = Liste von (grundton_halbton, 'min'/'maj'). Layer: Pad, Bass,
+    Arpeggio, sparsame Melodie (stufenweise), optional sanfte Drums."""
+    BS = int(SAMPLE_RATE * note_dur)
+    mel, arp, bass, pad, dr = [], [], [], [], []
+    rng = _random.Random((hash(tuple(prog)) ^ int(key)) & 0xffffffff)
+    deg = 4  # Start-Skalengrad der Melodie
+    for _rep in range(repeats):
+        for (root, qual) in prog:
+            tones = _triad(root, qual)
+            chordset = set(t % 12 for t in tones)
+            # Bass: Grundton (2 Beats) + Quinte (2 Beats), tiefe Oktave
+            bass = _cat(bass, _pad_to(_seg(key * 0.5 * 2 ** (root / 12.0),
+                                           note_dur * 2, "sine", 0.24, rel=note_dur, cents=4), 2 * BS))
+            bass = _cat(bass, _pad_to(_seg(key * 0.5 * 2 ** ((root + 7) / 12.0),
+                                           note_dur * 2, "sine", 0.19, rel=note_dur, cents=4), 2 * BS))
+            # Pad: gehaltener Akkord, weich, leise
+            pseg = _mix(*[_seg(key * 2 ** (t / 12.0), note_dur * 4, "triangle",
+                               0.085, atk=note_dur * 0.6, rel=note_dur * 1.6, cents=7) for t in tones])
+            pad = _cat(pad, _pad_to(pseg, 4 * BS))
+            # Arpeggio: Akkordtöne im Muster Grund-Terz-Quinte-Terz
+            pat = [0, 1, 2, 1]
+            for b in range(4):
+                fr = key * 2 ** (tones[pat[b]] / 12.0)
+                arp = _cat(arp, _pad_to(_seg(fr, note_dur, "triangle", 0.11,
+                                             atk=0.01, rel=note_dur * 0.55, cents=5), BS))
+            # Melodie: stufenweise, Akkordton auf Schlag 1/3, viele Pausen
+            for b in range(4):
+                strong = b in (0, 2)
+                rest_p = 0.12 if strong else (1.0 - lead_density) * 0.8
+                if rng.random() < rest_p:
+                    mel = _cat(mel, [0.0] * BS)
+                    continue
+                deg = max(0, min(13, deg + rng.choice([-2, -1, -1, 0, 1, 1, 2])))
+                semi = _MINOR_SCALE[deg % 7] + 12 * (deg // 7)
+                if strong and (semi % 12) not in chordset:
+                    nearest = min(chordset, key=lambda c: abs(c - semi % 12))
+                    semi = semi - semi % 12 + nearest
+                fr = key * 2 ** ((semi + 12) / 12.0)   # eine Oktave über Basis
+                mel = _cat(mel, _pad_to(_seg(fr, note_dur, "triangle", 0.16,
+                                             atk=0.01, rel=note_dur * 0.6, cents=6), BS))
+            # Drums: weicher Kick auf 1&3, dezente Snare auf 2&4
+            if drums:
+                for b in range(4):
+                    if b in (0, 2):
+                        k = _env(_sweep(120, 45, min(0.16, note_dur), "sine"), 0.001, 0.12, 0.55)
+                        dr = _cat(dr, _pad_to(k, BS))
+                    elif drums >= 2 and b in (1, 3):
+                        s = _lowpass(_env(_osc(0, min(0.11, note_dur), "noise"), 0.001, 0.09, 0.16), 0.5)
+                        dr = _cat(dr, _pad_to(s, BS))
+                    else:
+                        dr = _cat(dr, [0.0] * BS)
+
+    layers = [pad, bass, arp, mel] + ([dr] if drums else [])
+    n = min(len(l) for l in layers)
     track = _mix(*[l[:n] for l in layers])
-    # sanftes Gesamt-Tremolo
+    track = _lowpass(track, lp)              # Wärme
+    # sehr sanftes Tremolo für „Atmen"
     for i in range(len(track)):
-        track[i] *= 0.9 + 0.1 * math.sin(2 * math.pi * 0.07 * i / SAMPLE_RATE)
+        track[i] *= 0.94 + 0.06 * math.sin(2 * math.pi * 0.08 * i / SAMPLE_RATE)
+    track = _softclip(track)
     if _samples_only:
         return track, gain
     return _to_sound(track, gain=gain)
@@ -314,22 +370,24 @@ def export_tracks(out_dir):
         _write_wav(samples, gain, os.path.join(out_dir, name + ".wav"))
 
 
-# Track-Rezepte (Akkordfolgen in Halbtönen relativ zu A).
-# Längere, sich entwickelnde Folgen -> weniger eintönig.
+# Track-Rezepte: diatonische Moll-Akkordfolgen (root-Halbton, Qualität).
 _TRACK_RECIPES = {
-    # Menü/Übersicht: warm, ruhig, leicht melancholisch
-    "menu":    dict(progression=[0, -2, 5, 3, 0, -2, -4, -5], minor=True,
-                    note_dur=0.42, lead=True, hat=False, gain=0.85),
-    # Karte/Erkundung: neugierig, mittleres Tempo
-    "explore": dict(progression=[0, 5, 3, 7, 0, 5, 8, 7], minor=True,
-                    note_dur=0.34, lead=True, hat=True, gain=0.85),
-    # Kampf: treibend, mehr Biss (Saw-Arp + Hi-Hat)
-    "combat":  dict(progression=[0, 0, 5, 5, 3, 3, -2, 2], minor=True,
-                    note_dur=0.24, lead=True, hat=True, gain=0.9, drive=True),
-    # Boss: schnell, düster, gespannt
-    "boss":    dict(progression=[0, -1, 0, -1, 5, 4, 7, 6], minor=True,
-                    note_dur=0.20, lead=True, hat=True, gain=0.95, drive=True,
-                    bass_oct=-24),
+    # Menü: i–VI–III–VII (klassisch, warm-melancholisch), ruhig
+    "menu":    dict(prog=[(0, "min"), (8, "maj"), (3, "maj"), (10, "maj")],
+                    key=220.0, note_dur=0.40, repeats=2, drums=0, lp=0.16,
+                    gain=0.80, lead_density=0.5),
+    # Karte/Erkundung: i–III–VII–VI, etwas Bewegung, leichter Kick
+    "explore": dict(prog=[(0, "min"), (3, "maj"), (10, "maj"), (8, "maj")],
+                    key=220.0, note_dur=0.34, repeats=2, drums=1, lp=0.24,
+                    gain=0.80, lead_density=0.6),
+    # Kampf: i–VI–VII–V(dur), treibend mit Kick+Snare
+    "combat":  dict(prog=[(0, "min"), (8, "maj"), (10, "maj"), (7, "maj")],
+                    key=196.0, note_dur=0.27, repeats=2, drums=2, lp=0.34,
+                    gain=0.85, lead_density=0.7),
+    # Boss: i–VI–iv–V(dur), düster, schnell, tiefere Tonart
+    "boss":    dict(prog=[(0, "min"), (8, "maj"), (5, "min"), (7, "maj")],
+                    key=165.0, note_dur=0.23, repeats=2, drums=2, lp=0.40,
+                    gain=0.90, lead_density=0.7),
 }
 
 
