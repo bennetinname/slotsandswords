@@ -1,6 +1,18 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.10.1 – 2026-06-14]  SPRITES FÜR DEN NEUEN CONTENT
+-----------------------------------------------------
+16 neue Sprites aus dem Sheet geschnitten (Magenta-Keying) und eingebaut:
+* 7 Gegner ersetzen den prozeduralen Fallback: Würfelgnom, Bierbauch-Ork,
+  Roulette-Geist, Münzgolem, Schattenkrähe, Gruftwächter, Boss Bankhalter.
+* 9 Relikt-Icons ersetzen das Emoji in der Reliktleiste: Gegengift,
+  Dukatenbeutel, Aderlass-Amulett, Spiegelschild, Phönixfeder, Trinkglas,
+  Doppeldecker, Falschgeld, Kettenhemd.
+(Reine Assets -> Patch, Spielstände bleiben gültig.)
+
+─────────────────────────────────────────────────────
+
 [v1.10.0 – 2026-06-14]  RIESEN-CONTENT-UPDATE
 ---------------------------------------------
 (Minor-Bump: Save-Format um phoenix_used erweitert -> alte Saves verfallen.)
