@@ -1802,21 +1802,25 @@ class Game:
         }
 
     def _deserialize_player(self, d):
-        p = Player()  # baut Starterdeck – wird gleich überschrieben
-        p.max_hp = d["max_hp"]; p.hp = d["hp"]; p.gold = d["gold"]; p.block = d["block"]
-        p.energy = d["energy"]; p.max_energy = d["max_energy"]
-        p.burn = d["burn"]; p.strength = d["strength"]; p.lucky = d["lucky"]
+        # Defensiv: JEDES Feld per .get mit Default -> alte Saves ohne neue
+        # Felder bleiben IMMER ladbar (siehe savegame.load_save).
+        p = Player()  # baut Defaults (Starterdeck, volle HP) – selektiv überschrieben
+        p.max_hp = d.get("max_hp", p.max_hp); p.hp = d.get("hp", p.hp)
+        p.gold = d.get("gold", p.gold); p.block = d.get("block", 0)
+        p.energy = d.get("energy", p.energy); p.max_energy = d.get("max_energy", p.max_energy)
+        p.burn = d.get("burn", 0); p.strength = d.get("strength", 0); p.lucky = d.get("lucky", 0)
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
         p.class_id = d.get("class_id")
         p.phoenix_used = d.get("phoenix_used", False)
-        p.shield_up = d["shield_up"]; p.reflect = d["reflect"]
-        p.coin_rain_active = d["coin_rain_active"]; p.next_free_card = d["next_free_card"]
+        p.shield_up = d.get("shield_up", False); p.reflect = d.get("reflect", False)
+        p.coin_rain_active = d.get("coin_rain_active", False)
+        p.next_free_card = d.get("next_free_card", False)
         p._total_damage_taken = d.get("total_damage_taken", 0)
         p.bonus_spins = d.get("bonus_spins", 0)
-        p.deck = [self._deserialize_card(c) for c in d["deck"]]
-        p.hand = [self._deserialize_card(c) for c in d["hand"]]
-        p.discard = [self._deserialize_card(c) for c in d["discard"]]
-        p.relics = [dict(r) for r in d["relics"]]
+        if "deck" in d:    p.deck = [self._deserialize_card(c) for c in d["deck"]]
+        if "hand" in d:    p.hand = [self._deserialize_card(c) for c in d["hand"]]
+        if "discard" in d: p.discard = [self._deserialize_card(c) for c in d["discard"]]
+        if "relics" in d:  p.relics = [dict(r) for r in d["relics"]]
         st = d.get("stats", {})
         p.damage_dealt = st.get("damage_dealt", 0)
         p.gold_earned = st.get("gold_earned", 0)
@@ -1841,18 +1845,21 @@ class Game:
         }
 
     def _deserialize_enemy(self, d):
+        # Defensiv: jedes Feld mit Default -> Saves bleiben immer ladbar.
+        hp = d.get("hp", 30)
         etype = {
-            "name": d["name"], "hp": d["hp"], "max_hp": d["max_hp"],
-            "damage": d["damage"], "armor": d["armor"],
-            "gold_reward": tuple(d["gold_reward"]), "color": tuple(d["color"]),
-            "tooltip": d["tooltip"], "tier": d["tier"],
-            "is_boss": d["is_boss"], "is_elite": d["is_elite"],
+            "name": d.get("name", "Gegner"), "hp": hp, "max_hp": d.get("max_hp", hp),
+            "damage": d.get("damage", 6), "armor": d.get("armor", 0),
+            "gold_reward": tuple(d.get("gold_reward", (8, 15))),
+            "color": tuple(d.get("color", ENEMY_COLOR)),
+            "tooltip": d.get("tooltip", ""), "tier": d.get("tier", 1),
+            "is_boss": d.get("is_boss", False), "is_elite": d.get("is_elite", False),
             "mechanic": d.get("mechanic"), "asset": d.get("asset"),
         }
         e = Enemy(etype)
-        e.block = d["block"]; e.burn = d["burn"]; e.weakened = d["weakened"]
+        e.block = d.get("block", 0); e.burn = d.get("burn", 0); e.weakened = d.get("weakened", 0)
         e.poison = d.get("poison", 0); e.vulnerable = d.get("vulnerable", 0)
-        e.intent = d["intent"]; e.intent_value = d["intent_value"]
+        e.intent = d.get("intent", "attack"); e.intent_value = d.get("intent_value", e.damage)
         e._undying_used = d.get("undying_used", False)
         e.jam_next = d.get("jam_next", False)
         e.turn_count = d.get("turn_count", 0)
@@ -1884,10 +1891,22 @@ class Game:
         self.running = False
 
     def _load_run(self):
-        """Lädt einen gespeicherten Run (nur falls versionskompatibel)"""
+        """Lädt einen gespeicherten Run. Saves sind versionsunabhängig gültig;
+        bei einem echten Defekt fällt es sauber ins Menü zurück (ohne den
+        Speicherstand zu löschen)."""
         data = savegame.load_save()
-        if not data:
+        if not data or "player" not in data:
             return
+        try:
+            self._load_run_unsafe(data)
+        except Exception as exc:
+            # Schutznetz: niemals crashen, niemals den Save löschen
+            print(f"[load_run] Konnte Save nicht laden: {exc}")
+            self.player = None
+            self.enemy = None
+            self.state = STATE_MENU
+
+    def _load_run_unsafe(self, data):
         self.player = self._deserialize_player(data["player"])
         self.floor_num = data.get("floor_num", 1)
         self.turn_num = data.get("turn_num", 1)

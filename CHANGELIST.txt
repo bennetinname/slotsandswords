@@ -1,6 +1,20 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.10.2 – 2026-06-14]  SPIELSTÄNDE BLEIBEN IMMER GÜLTIG
+--------------------------------------------------------
+Grundsatz ab jetzt: ein Update darf NIEMALS einen Spielstand verwerfen.
+* Der Versions-Check in savegame.load_save wurde ENTFERNT – Saves laden
+  jetzt unabhängig von der Spielversion (auch über Minor-Sprünge hinweg).
+* Die gesamte Deserialisierung (Spieler/Gegner/Karten) liest jedes Feld
+  defensiv mit Default – neue Felder brechen alte Saves nicht mehr.
+* Schutznetz: sollte ein Stand wirklich beschädigt sein, fällt das Spiel
+  sauber ins Menü zurück OHNE den Speicherstand zu löschen.
+* Damit sind künftige Versionsnummern fürs Speichern egal; Minor- wie
+  Patch-Updates lassen laufende Runs gültig.
+
+─────────────────────────────────────────────────────
+
 [v1.10.1 – 2026-06-14]  SPRITES FÜR DEN NEUEN CONTENT
 -----------------------------------------------------
 16 neue Sprites aus dem Sheet geschnitten (Magenta-Keying) und eingebaut:

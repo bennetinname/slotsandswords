@@ -33,9 +33,12 @@ jedem Boss ein „Akt geschafft"-Screen, dann weiter.
   oben in `CHANGELOG` EINE kurze Zeile ergänzen (wird in-game unter „Was ist
   neu" gezeigt), und einen Abschnitt in `CHANGELIST.txt` (ausführlich).
   Danach EXE neu bauen.
-- **Save-Kompatibilität:** `savegame.load_save` vergleicht nur **major.minor**.
-  -> Patch-Bumps (1.7.0→1.7.1) lassen Spielstände gültig; Minor-Bumps (1.7→1.8)
-  verwerfen alte Saves. Patch wählen, wenn das Save-Format gleich bleibt.
+- **Save-Kompatibilität (HARTE REGEL):** Spielstände müssen IMMER gültig
+  bleiben — ein Update darf NIEMALS einen Save verwerfen. `savegame.load_save`
+  hat KEINEN Versions-Check mehr (lädt versionsunabhängig). Deshalb: neue
+  Save-Felder NUR additiv mit Default, und in `_deserialize_*` (game.py) jedes
+  Feld defensiv per `.get(...)` lesen. Versionsnummer (Minor/Patch) ist fürs
+  Speichern egal. NIE den Versions-Gate wieder einbauen.
 - **Laufzeitdaten** (`highscores.json`, `savegame.json`, `options.json`) IMMER
   über `paths.data_path(...)` schreiben — nicht relativ/`__file__`! In der
   One-File-EXE zeigt `__file__` in den temporären `_MEI`-Ordner, der beim

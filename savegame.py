@@ -18,8 +18,12 @@ def has_save():
 def load_save():
     """
     Lädt den Speicherstand als Dict.
-    Gibt None zurück, wenn keine Datei da, sie korrupt oder die
-    Version inkompatibel ist (Save-Versionierung).
+    Gibt None NUR zurück, wenn keine Datei da oder sie wirklich korrupt ist.
+
+    WICHTIG: Spielstände werden NIE wegen der Version verworfen (Wunsch des
+    Users: "Saves müssen IMMER gültig bleiben, egal was passiert"). Neue
+    Save-Felder werden additiv mit Defaults hinzugefügt, und die
+    Deserialisierung in game.py liest jedes Feld defensiv per .get(...).
     """
     if not os.path.exists(_path()):
         return None
@@ -30,16 +34,7 @@ def load_save():
         return None
     if not isinstance(data, dict):
         return None
-    if _major_minor(data.get("version")) != _major_minor(GAME_VERSION):
-        # Andere Major.Minor-Version -> Save-Format evtl. inkompatibel
-        # (reine Patch-Updates wie 1.6.0 -> 1.6.1 bleiben kompatibel)
-        return None
     return data
-
-
-def _major_minor(v):
-    parts = str(v).split(".")
-    return tuple(parts[:2]) if len(parts) >= 2 else (str(v),)
 
 
 def has_valid_save():
