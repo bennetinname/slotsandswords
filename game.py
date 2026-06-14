@@ -279,6 +279,8 @@ class Game:
                         self._start_game()
                 elif event.key == pygame.K_m:
                     audio.toggle_mute()
+                else:
+                    self._handle_key(event.key)
 
             if event.type == pygame.MOUSEWHEEL:
                 self._handle_scroll(event.y)
@@ -315,6 +317,36 @@ class Game:
             self.state = STATE_MENU
         else:  # Hauptmenü
             self.running = False
+
+    def _handle_key(self, key):
+        """Tastatursteuerung: Karten 1-9, Leertaste = drehen / Zug beenden / weiter."""
+        # Zahlentasten 1..9
+        if pygame.K_1 <= key <= pygame.K_9:
+            idx = key - pygame.K_1
+            if self.state == STATE_PLAYER_TURN:
+                if idx < len(self.player.hand or []):
+                    self._try_play_card(self.player.hand[idx])
+            elif self.state == STATE_REWARD and self.reward_card_rects:
+                if idx < len(self.reward_card_rects):
+                    self._pick_reward_card(idx)
+            return
+
+        if key in (pygame.K_SPACE, pygame.K_RETURN):
+            if self.state == STATE_PLAYER_TURN:
+                self._start_slot_phase()                 # = "Slot drehen"
+            elif self.state == STATE_SLOT_SPIN:
+                can_spin = (self.spins_remaining > 0 and not self.slot_machine.spinning
+                            and not self.slot_death_pending
+                            and self.enemy is not None and self.enemy.hp > 0)
+                if can_spin:
+                    self._do_spin()
+                elif (self.spins_remaining == 0 and not self.slot_machine.spinning
+                      and not self.slot_death_pending):
+                    self._start_enemy_turn()             # = "Weiter"
+            elif self.state == STATE_REWARD:
+                self._skip_reward()                      # = "Überspringen"
+            elif self.state == STATE_ACT_CLEAR:
+                audio.play("click"); self.state = STATE_MAP
 
     def _compute_menu_layout(self):
         """Layout der Hauptmenü-Buttons. Quelle für Zeichnen UND Klick."""
@@ -1167,7 +1199,22 @@ class Game:
         self.enemy_turn_log = []
         self._log("⚔️ Gegner ist am Zug...")
     
+    def _music_for_state(self):
+        """Passender Musik-Track je Spielzustand."""
+        s = self.state
+        if s in (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN, STATE_REWARD):
+            if self.enemy and getattr(self.enemy, "is_boss", False):
+                return "boss"
+            return "combat"
+        if s in (STATE_MAP, STATE_REST, STATE_EVENT, STATE_ACT_CLEAR, STATE_SHOP):
+            return "explore"
+        return "menu"
+
     def _update(self, dt):
+        # Musik passend zum Zustand umschalten (play_music ist günstig, wenn gleich)
+        if not audio.is_muted():
+            audio.play_music(self._music_for_state())
+
         # Animationen laufen immer (auch während Hit-Stop)
         self._update_particles(dt)
         # Erfolgs-Toasts ticken (laufen über jedem State weiter)

@@ -1,6 +1,28 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.11.0 – 2026-06-14]  NEUE MUSIK & TASTATURSTEUERUNG
+------------------------------------------------------
+MUSIK (vorher ein einziger, eintöniger Loop):
+* Jetzt 4 eigene Tracks, die je nach Situation wechseln: Menü (ruhig),
+  Karte/Erkundung, Kampf (treibend) und Boss (düster/schnell).
+* Jeder Track hat eine längere, sich entwickelnde Akkordfolge + Lead +
+  Bass + Pad (+ Hi-Hat im Kampf) – deutlich weniger monoton.
+* Die Tracks sind als WAV vorgerendert (assets/music/) -> laden sofort,
+  kein Synth-Ruckler. Fällt eine Datei, baut das Spiel sie prozedural im
+  Hintergrund nach (kein Freeze).
+* DROP-IN für eigene Musik: lege eine Datei assets/music/<name>.ogg
+  (oder .wav/.mp3) mit name = menu/explore/combat/boss ab -> sie ersetzt
+  automatisch den Standard-Track. (Bitte nur lizenzfreie Musik einbauen.)
+
+TASTATURSTEUERUNG:
+* Im Kampf: Tasten 1–9 spielen die Karte an der Position.
+* Leertaste/Enter = "Slot drehen" bzw. im Slot "Drehen"/"Weiter".
+* Belohnung: 1–3 wählt die Karte, Leertaste = überspringen.
+* "Akt geschafft": Leertaste = weiter. (ESC = Pause, M = Stumm bleiben.)
+
+─────────────────────────────────────────────────────
+
 [v1.10.3 – 2026-06-14]  KEINE SICH KREUZENDEN PFADE
 ---------------------------------------------------
 * Auf der Akt-Karte konnten sich Pfade optisch kreuzen, obwohl man nur

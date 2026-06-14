@@ -1448,7 +1448,7 @@ class UIRenderer:
                 "Energie (⚡) zahlt Karten — Ungespieltes bleibt in der Hand.",
                 "Angriff ⚔ · Verteidigung 🛡 (Block bleibt!) · Special ✨.",
                 "COMBO: gleicher Kartentyp hintereinander = Bonus.",
-                "Karte hovern zeigt den Schaden vorab. Dann 'Slot drehen'.",
+                "Tasten 1-7 = Karte spielen · Leertaste = drehen / weiter.",
             ]),
             ("🎰  SLOTS & GEGNER", ACCENT, [
                 "3 gleiche = JACKPOT · Paare & Mix-Synergien geben Extra-Boni.",
