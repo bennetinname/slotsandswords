@@ -27,6 +27,15 @@ ASSETS:
 * assets_prompt.txt aufgeräumt: nur noch fehlende Assets (12 v1.12-Relikt-Icons
   + optionale Joker-Icons) plus Styleguide; alles Vorhandene entfernt.
 
+AUFRÄUMEN / PERFORMANCE / RAM (gleiche Version):
+* Toten Code entfernt: ungenutzte Funktionen (_restart, _next_floor, _win_game,
+  button_hovered, draw_card_removal, discard_hand, _hz, stop_music, get_volumes)
+  und tote Imports (copy/time/math/os, calculate_score, ungenutzter constants-*).
+* RAM: Abdunkel-Overlays (_dim) werden jetzt gecacht statt jede Frame eine
+  3,8-MB-Surface neu zu allozieren -> deutlich weniger GC-Druck, flüssiger.
+* RAM: Musik-Cache mit LRU-Cap (max. 6 Tracks) statt bis zu 22 dauerhaft im
+  Speicher; nur die 3 Start-Tracks werden vorab gebaut, Akt-Tracks bei Bedarf.
+
 [v1.14.0 – 2026-06-14]  NEUER SPIELMODUS: SLOT-MODUS (BALATRO-STYLE)
 -------------------------------------------------------------------
 Ein komplett eigenes Spiel im Hauptmenü unter "🎰 Slot-Modus":

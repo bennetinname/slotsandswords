@@ -238,10 +238,6 @@ _combo_sounds = {}
 # Musik-Engine: mehrere situationsabhängige Tracks
 # ─────────────────────────────────────────────
 
-# Gleichstufige Stimmung: Halbton-Offset (von A=220) -> Frequenz
-def _hz(semis, base=220.0):
-    return base * (2.0 ** (semis / 12.0))
-
 # Akkord als Halbton-Offsets relativ zum Grundton
 _MINOR = [0, 3, 7]
 _MAJOR = [0, 4, 7]
@@ -496,21 +492,46 @@ def _get_track(name):
     return None
 
 
+MUSIC_CACHE_MAX = 6          # max. gleichzeitig gehaltene Tracks (RAM-Cap)
+_lru = []                    # Track-Namen, zuletzt benutzt zuletzt
+
+
+def _touch(name):
+    """Markiert einen Track als zuletzt benutzt (für LRU-Eviction)."""
+    if name in _lru:
+        _lru.remove(name)
+    _lru.append(name)
+
+
+def _evict_music():
+    """Verwirft die ältesten Tracks über dem Cap (nie den laufenden)."""
+    while len(_music_cache) > MUSIC_CACHE_MAX:
+        victim = next((n for n in _lru if n != _playing_track), None)
+        if victim is None:
+            break
+        _lru.remove(victim)
+        _music_cache.pop(victim, None)
+
+
 def _bg_build(name):
     snd = _build_track(name)
     with _music_lock:
         _music_cache[name] = snd
+        _touch(name)
+        _evict_music()
     _building.discard(name)
 
 
 def _prebuild_music():
-    """Baut alle Tracks im Hintergrund (kein Freeze). Priorität: zuerst Menü/Kampf."""
-    for name in ("menu", "combat", "explore", "boss"):
+    """Baut die zuerst benötigten Tracks im Hintergrund vor (kein Start-Freeze).
+    Akt-Tracks werden erst bei Bedarf gebaut (spart RAM)."""
+    for name in ("menu", "combat", "explore"):
         if name in _music_cache:
             continue
         snd = _build_track(name)
         with _music_lock:
             _music_cache[name] = snd
+            _touch(name)
 
 
 # ─────────────────────────────────────────────
@@ -591,18 +612,13 @@ def play_music(name):
     _music_channel.play(snd, loops=-1)
     _music_channel.set_volume(_music_vol * _master_vol)
     _playing_track = name
+    with _music_lock:
+        _touch(name)
 
 
 def start_music():
     """Startet/setzt Musik fort (Default: Menü-Track)."""
     play_music(_current_music or "menu")
-
-
-def stop_music():
-    global _playing_track
-    if _music_channel:
-        _music_channel.stop()
-    _playing_track = None
 
 
 def _refresh_music_volume():
@@ -625,10 +641,6 @@ def set_music(v):
 def set_sfx(v):
     global _sfx_vol
     _sfx_vol = min(1.0, max(0.0, float(v)))
-
-
-def get_volumes():
-    return _master_vol, _music_vol, _sfx_vol
 
 
 def is_muted():

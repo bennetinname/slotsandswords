@@ -920,17 +920,18 @@ class UIRenderer:
                                  y - lift + h // 2 - tsurf.get_height() // 2))
         return rect
 
-    def button_hovered(self, x, y, w, h):
-        mx, my = pygame.mouse.get_pos()
-        return x <= mx <= x + w and y <= my <= y + h
-
     # ═══════════════════════════════════════════════
     # OVERLAYS
     # ═══════════════════════════════════════════════
 
     def _dim(self, alpha=180):
-        overlay = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, alpha))
+        # Abdunkel-Overlays je Alpha cachen (sonst 3,8 MB Surface pro Frame).
+        cache = self.__dict__.setdefault("_dim_cache", {})
+        overlay = cache.get(alpha)
+        if overlay is None:
+            overlay = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, alpha))
+            cache[alpha] = overlay
         self.screen.blit(overlay, (0, 0))
 
     def draw_damage_number(self, text, x, y, color=RED, offset=0):
@@ -1151,7 +1152,6 @@ class UIRenderer:
         label = f"🆕 Update {version} laden" if version else "🆕 Update laden"
         w = self.font_small.size(label)[0] + 36
         rect = pygame.Rect(self.w - w - 16, 14, w, 38)
-        hot = rect.collidepoint(pygame.mouse.get_pos())
         self.draw_button(label, rect.x, rect.y, rect.w, rect.h,
                          color=GREEN, text_color=BLACK, pulsing=True)
         return rect
@@ -1786,10 +1786,6 @@ class UIRenderer:
         self.draw_button("Abbrechen", self.w // 2 - 80, self.h - 70, 160, 42,
                          color=GREY_DARK, text_color=WHITE)
         return rects
-
-    # Rückwärtskompatibilität (falls noch referenziert)
-    def draw_card_removal(self, player):
-        return self.draw_card_grid(player, "🔥 Welche Karte verbrennen?", ORANGE)
 
     # ═══════════════════════════════════════════════
     # KLASSENAUSWAHL

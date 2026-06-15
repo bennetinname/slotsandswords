@@ -3,7 +3,6 @@
 import pygame
 import random
 import time
-import math
 from constants import *
 import assets
 
@@ -282,7 +281,7 @@ class SlotMachine:
             effects.extend(self._chaos_effect(player, enemy, multiplier=3))
         elif sym == "STAR":
             player.strength += 3
-            effects.append(f"⭐⭐⭐ STERNENPOWER! +3 Stärke permanent!")
+            effects.append("⭐⭐⭐ STERNENPOWER! +3 Stärke permanent!")
         elif sym == "BOMB":
             dmg = 40
             self_dmg = 10
@@ -293,7 +292,7 @@ class SlotMachine:
             player.max_hp += 10
             player.hp += 10
             player.add_gold(25)
-            effects.append(f"👑👑👑 TRIPLE CROWN! +10 Max HP, +25 Gold!")
+            effects.append("👑👑👑 TRIPLE CROWN! +10 Max HP, +25 Gold!")
         elif sym == "BEER":
             healed = player.heal_hp(20)
             enemy.weakened += 2
@@ -306,7 +305,7 @@ class SlotMachine:
             enemy.hp = e_hp  # Bleibt gleich... wait
             actual_dmg = max(0, p_hp - e_hp)
             enemy.hp = max(1, enemy.hp - actual_dmg)
-            effects.append(f"🌀🌀🌀 HP-VORTEX! Chaos! Schmerz! Freude!")
+            effects.append("🌀🌀🌀 HP-VORTEX! Chaos! Schmerz! Freude!")
         elif sym == "LIGHTNING":
             actual = enemy.take_damage(35 + player.strength)
             player.energy += 2
@@ -408,7 +407,7 @@ class SlotMachine:
             return f"⚡ Blitz: {actual} Schaden"
         elif sym == "SHIELD":
             player.block += random.randint(6, 12)
-            return f"🛡️ Schutzschild: +Block"
+            return "🛡️ Schutzschild: +Block"
         elif sym == "TARGET":
             dmg = (random.randint(6, 12) + player.strength) * 2
             actual = enemy.take_damage(dmg)

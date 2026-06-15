@@ -1,7 +1,6 @@
 """Kern-Spielklassen: Spieler, Gegner, Karten"""
 
 import random
-import copy
 from constants import *
 
 
@@ -234,11 +233,6 @@ class Player:
         """Zieht die volle Starthand zu Kampfbeginn"""
         self.hand = []
         self.draw_hand(PLAYER_HAND_SIZE)
-    
-    def discard_hand(self):
-        """Wirft alle Handkarten ab"""
-        self.discard.extend(self.hand)
-        self.hand = []
     
     def start_turn(self):
         """Rundenstart: Energie auffüllen, Karten nachziehen (Block bleibt erhalten!)"""
@@ -698,7 +692,7 @@ class Enemy:
                 out.append(f"☠️ {self.name} schwingt die Sense! ({cut} Extra-Schaden)")
             elif fate == "poison":
                 player.poison += 4
-                out.append(f"☠️ Todeshauch: +4 Gift auf dich!")
+                out.append("☠️ Todeshauch: +4 Gift auf dich!")
             elif fate == "drain":
                 healed = self.heal(14)
                 out.append(f"🩸 {self.name} erntet Leben (+{healed} HP für ihn)!")
@@ -710,7 +704,7 @@ class Enemy:
             wheel = random.choice(["poison", "steal", "heal", "double"])
             if wheel == "poison":
                 player.poison += 3
-                out.append(f"🎡 Schicksalsrad: GIFT! (+3 Gift auf dich)")
+                out.append("🎡 Schicksalsrad: GIFT! (+3 Gift auf dich)")
             elif wheel == "steal":
                 stolen = min(player.gold, 10)
                 if stolen > 0:

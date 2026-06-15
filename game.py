@@ -2,14 +2,13 @@
 
 import pygame
 import random
-import time
 import math
 from constants import *
 from entities import Player, Enemy, Card
 from slots import SlotMachine
 from ui import UIRenderer
 from card_effects import CardEffectResolver
-from highscores import load_highscores, add_highscore, calculate_score
+from highscores import load_highscores, add_highscore
 import savegame
 import audio
 import mapgen
@@ -813,9 +812,6 @@ class Game:
             self.player.heal_mult = m["heal_mult"]
 
         self.state = STATE_MAP
-    
-    def _restart(self):
-        self.__init__(self.screen, self.clock)
     
     def _act_theme(self):
         """Akt-Thema (name, accent, gegner-namen, boss-name) – zyklisch."""
@@ -2011,20 +2007,6 @@ class Game:
         self.shop_upgrade_mode = False
         audio.play("click")
         self._finish_node()
-    
-    def _next_floor(self):
-        """Zur nächsten Etage (endlos)"""
-        self.floor_num += 1
-        self.turn_num = 1
-        self._spawn_enemy()
-        self._start_combat()
-    
-    def _win_game(self):
-        """Spiel gewonnen"""
-        self.state = STATE_VICTORY
-        self._save_highscore(won=True)
-        audio.stop_spin()
-        audio.play("win")
     
     def _save_highscore(self, won=False):
         """Speichert den Punktestand (nur einmal pro Run)"""

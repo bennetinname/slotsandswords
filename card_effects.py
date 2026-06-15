@@ -1,7 +1,6 @@
 """Karten-Effekte: Auflösung aller Karteneffekte"""
 
 import random
-from constants import *
 
 
 class CardEffectResolver:
@@ -135,7 +134,7 @@ class CardEffectResolver:
                 logs.append(f"   ...{actual} CHAOS-SCHADEN!")
             elif chaos_roll < 0.48:
                 player.strength += random.randint(2, 5)
-                logs.append(f"   ...MASSIVER STÄRKE-BOOST!")
+                logs.append("   ...MASSIVER STÄRKE-BOOST!")
             elif chaos_roll < 0.60:
                 healed = player.heal_hp(player.max_hp // 2)
                 logs.append(f"   ...HALBHEILUNG: +{healed} HP!")

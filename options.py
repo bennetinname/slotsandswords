@@ -1,7 +1,6 @@
 """Persistente Spieloptionen (Lautstärke, Anzeige) in options.json."""
 
 import json
-import os
 import paths
 
 OPTIONS_FILE = "options.json"
