@@ -23,54 +23,16 @@ crisp pixels, nearest-neighbor, no anti-aliasing on outer edge,
 export PNG with alpha, generate at 4x then downscale to target size.
 
 ====================================================================
- 1) RELIKT-ICONS v1.12  (je ~64x64, Magenta-HG)  -> assets/relics/
+ AKTUELL OFFEN: (nichts)
 ====================================================================
-Im Spiel, nutzen aktuell aber nur den Emoji-Fallback. Kleines, klar
-lesbares Einzel-Objekt zentriert, satter Glanzpunkt, wie die bestehenden
-Relikt-Icons (vgl. assets/relics/phoenix.png, four_leaf.png).
-
-  frostbite.png       – Amulett mit einem klaren blauen EISZAPFEN als
-                        Anhaenger, frostiger Schimmer, kalte Aura
-  branding.png        – gluehendes BRANDEISEN (Stempel) mit orange-rot
-                        gluehender Spitze, rauchend
-  rage_totem.png      – kleines Stammes-TOTEM mit wuetendem Gesicht,
-                        rote Aura, Flammen-/Faust-Motiv
-  focus_lens.png      – elegante LUPE / Monokel-Linse, goldener Rand,
-                        gold-gelber Lichtreflex (Ziel/Fokus)
-  time_glass.png      – SANDUHR mit leuchtendem blauem Sand, goldener
-                        Rahmen, dezent magisch
-  card_master.png     – Faecher aus 3 SPIELKARTEN, golden verziert,
-                        meisterhaft, leichter Glanz
-  lucky_coin.png      – glaenzende GOLDMUENZE mit Kleeblatt-Praegung,
-                        Funkeln, Reichtum
-  thorn_crown.png     – DORNENKRONE aus dunklen Ranken mit spitzen
-                        Dornen, ein paar Bluttropfen
-  scavenger.png       – Aasfresser-Motiv: KRAEHEN-SCHAEDEL oder Knochen
-                        mit gruenlichem Heil-Schimmer
-  berserker_blood.png – Phiole/Flakon mit BLUTROTER Fluessigkeit,
-                        wilder roter Schein, Staerke
-  doom_bell.png       – dunkle SCHICKSALSGLOCKE mit Totenkopf-Gravur,
-                        violett-schwarze Aura, unheilvoll
-  ice_heart.png       – kristallines HERZ AUS EIS, kaltblau, gefrostet,
-                        leicht durchscheinend
-
-====================================================================
- 2) OPTIONAL – SLOT-MODUS JOKER-ICONS  (je ~64x64, Magenta-HG)
-====================================================================
-Nur Kosmetik – im Slot-Modus werden Joker aktuell als Emoji gezeigt,
-das ist voellig ok. Bei Lust auf Politur -> assets/jokers/<id>.png
-(ids: clover_luck, gold_vein, twins, variety, reaper, fireworks,
-diamond_hand, chicken_farm, high_roller, crown_jewel). Stil wie die
-Relikt-Icons, kleines Kartenmotiv mit dem jeweiligen Symbol.
+Alle aktuell im Spiel genutzten Inhalte haben eigene Sprites. Wenn neuer
+Content dazukommt, hier die noetigen Prompts ergaenzen.
 
 --------------------------------------------------------------------
-PRIORITAET: 1) v1.12-Relikt-Icons (einzige echte Luecke)
-            2) optionale Joker-Icons (Politur)
---------------------------------------------------------------------
-
 BEREITS EINGEBAUT (Referenz, NICHT mehr noetig): alle Gegner-Sprites
 inkl. v1.12 (Kanalisation/Frostpalast/Unterwelt + Bosse), alle 6 Akt-
-Hintergruende + void, alle Status-Effekt-Icons (frost/stun/doom/marked/
-vulnerable/rage/focus/poison/burn/regen/block/strength/weak), Klassen-
-Portraits, Relikt-Icons bis v1.10, Karten-Effekt-Icons, Slot-Cabinet,
-Casino-Event, Logo/Icon.
+Hintergruende + void, alle Status-Effekt-Icons, Klassen-Portraits, ALLE
+Relikt-Icons (inkl. v1.12: frostbite/branding/rage_totem/focus_lens/
+time_glass/card_master/lucky_coin/thorn_crown/scavenger/berserker_blood/
+doom_bell/ice_heart), ALLE Slot-Modus-Joker-Icons (assets/jokers/),
+Karten-Effekt-Icons, Slot-Cabinet, Casino-Event, Logo/Icon.

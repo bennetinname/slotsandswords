@@ -27,6 +27,13 @@ ASSETS:
 * assets_prompt.txt aufgeräumt: nur noch fehlende Assets (12 v1.12-Relikt-Icons
   + optionale Joker-Icons) plus Styleguide; alles Vorhandene entfernt.
 
+ASSETS NACHGEREICHT (gleiche Version, kein Bump):
+* 12 Relikt-Icons v1.12 eingefügt (frostbite, branding, rage_totem, focus_lens,
+  time_glass, card_master, lucky_coin, thorn_crown, scavenger, berserker_blood,
+  doom_bell, ice_heart) -> kein Emoji-Fallback mehr in der Reliktleiste.
+* 10 Slot-Modus-Joker-Icons (assets/jokers/) eingefügt und in die Joker-Liste
+  + Shop-Karten verdrahtet (mit Emoji-Fallback, falls Sprite fehlt).
+
 AUFRÄUMEN / PERFORMANCE / RAM (gleiche Version):
 * Toten Code entfernt: ungenutzte Funktionen (_restart, _next_floor, _win_game,
   button_hovered, draw_card_removal, discard_hand, _hz, stop_music, get_volumes)

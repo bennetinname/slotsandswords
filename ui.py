@@ -1987,10 +1987,16 @@ class UIRenderer:
         for i, jid in enumerate(run.jokers):
             j = slotmode.JOKER_BY_ID.get(jid, {})
             jy = y + 38 + i * 50
-            self._text(f"{j.get('emoji','?')} {j.get('name','')}", self.font_small,
-                       ACCENT, x + 12, jy)
+            spr = assets.fit("jokers", jid, 30, 30)
+            if spr:
+                self.screen.blit(spr, (x + 10, jy))
+                tx = x + 46
+            else:
+                tx = x + 12
+            self._text((j.get('name', '') if spr else f"{j.get('emoji','?')} {j.get('name','')}"),
+                       self.font_small, ACCENT, tx, jy)
             self._draw_wrapped(j.get("desc", ""), self.font_tiny, INK_DIM,
-                            x + 12, jy + 18, 168, 14, 2)
+                            tx, jy + 18, x + 180 - tx, 14, 2)
 
     def _slotmode_bag(self, run, x, y):
         self._panel((x, y, 208, 300), radius=12, border=BLUE, border_w=2)
@@ -2036,6 +2042,10 @@ class UIRenderer:
             self._panel((rect.x, rect.y, rect.w, rect.h), radius=12, border=border, border_w=2)
             kind_lbl = {"symbol": "Symbol", "upgrade": "Upgrade", "joker": "Joker"}.get(o["kind"], "")
             self._text(kind_lbl, self.font_small, _lighten(border, 0.2), rect.x + 12, rect.y + 10)
+            if o["kind"] == "joker":
+                spr = assets.fit("jokers", o["joker"], 50, 50)
+                if spr:
+                    self.screen.blit(spr, (rect.right - 60, rect.y + 8))
             self._draw_wrapped(o["label"], self.font_medium, INK,
                             rect.x + 12, rect.y + 38, rect.w - 24, 22, 3)
             if o["kind"] == "joker":
