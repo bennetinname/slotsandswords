@@ -1,105 +1,25 @@
 TODO / IDEEN – Slots & Swords
 =============================
-(Ideen-Sammlung, grob nach Größe sortiert; Stand v1.12.0)
+(neue Ideen einfach hier oben reinschreiben)
 
 
-★ GROSSE BROCKEN (eigene, dicke Features) ★
+OFFEN
 --------------------------------------------------------------------
-ZWEITER SPIELMODUS (quasi ein eigenes Spiel; Auswahl im Hauptmenü)
-  Kandidaten – einer davon als „Modus 2":
-  - ENDLOS-ARENA / SURVIVAL: keine Karte, nur Gegner-Wellen am Stück.
-    Zwischen den Wellen 1 Belohnung wählen. Wie lange hältst du durch?
-    Score-/Highscore-getrieben, kurze Sessions. (Wiederverwendet Kampf +
-    Karten, braucht nur Wellen-Generator + Reward-Schleife.)
-  - [ERLEDIGT v1.14.0] REINER SLOT-MODUS (Balatro-Style): umgesetzt in
-    slotmode.py (Beutel + 10 Joker + Shop, Chips x Mult, endlos, Bestwert).
-    Ausbaubar: mehr Joker, Symbol-Editionen (Folie/Holo), Boss-Blinds.
-  - CASINO-DUELL (Blackjack/Poker gg. „das Haus"): thematisch perfekt,
-    eigene Regeln, eigene Progression. Komplett anderes Spielgefühl.
-  - BOSS-RUSH: alle Bosse hintereinander mit festem Start-Deck. Kurz, hart.
-  -> Empfehlung: Endlos-Arena ist am günstigsten (nutzt vorhandenes
-     Kampfsystem), Reiner Slot-Modus ist das „eigenständigste" Spiel.
-
-MUSIK-AUSBAU
-  - [ERLEDIGT v1.13.0] Eigene Musik PRO AKT (6 Akte, je explore/combat/boss).
-  - [ERLEDIGT v1.13.0] Akt-Abschluss-Jingle (Fanfare).
-  - Eigene Boss-Themen je Boss (nicht nur je Akt-Boss).
-  - Drop-in für echte, lizenzfreie Tracks ist schon eingebaut: einfach
-    assets/music/<name>.ogg ablegen -> schlägt den Synth. Ggf. kuratierte
-    CC0/Royalty-Free-Tracks beilegen (Quelle/Lizenz dokumentieren!).
-  - Dynamik: Musik leiser/gedämpft während Slot-Dreh, lauter bei Boss < 25% HP.
-
-KLASSEN-AUSBAU
-  - Mehr Start-Klassen (z.B. Hühner-Beschwörer, Gold-Magnat, Frost-Magier,
-    Berserker) – je eigenes Deck, Start-Relikt, evtl. eigene Mechanik.
-  - Klassen-spezifische Karten/Relikte im Belohnungspool höher gewichten.
-  - Klassen-Freischaltung über Erfolge (Meta-Progression).
+(aktuell nichts Dringendes – siehe „Ideen" weiter unten in der Historie/
+CHANGELIST.txt für größere Brocken wie weitere Klassen, Boss-Themen-Musik,
+Multiplikator-System, mehr Slot-Joker etc.)
 
 
-GAMEPLAY (mittel)
+ERLEDIGT in v1.15.0 (Details in CHANGELIST.txt)
 --------------------------------------------------------------------
-- Multiplikator-/Scaling-System (Balatro-Stil): Schaden x Multiplikator
-  statt nur additiv – mehr „Build explodiert"-Momente.
-- [ERLEDIGT v1.13.0] Schwierigkeitsgrade (Optionen): Einfach/Normal/Hart.
-- Aufstiegs-/Ascension-System: nach 1. Sieg höhere Stufen mit Modifikatoren.
-- Elite-Belohnungen aufwerten (garantiertes Relikt o. Karten-Wahl mit Seltenheit).
-- Mehr Slot-Symbole + tiefere Slot-Synergien (eigener kleiner „Build").
-- Karten-Seltenheit beim Schmieden/Entfernen feiner steuern.
-- Balancing-Pass: Gold-Inflation spät, Klassen gegeneinander, neue Status-Karten.
-
-
-META / REPLAY
---------------------------------------------------------------------
-- Daily: echte Tages-Bestenliste mit mehreren Einträgen (aktuell nur Bestwert).
-- Daily-Status mitspeichern (fortgesetzter Tages-Run zählt aktuell als normal).
-- [ERLEDIGT v1.13.0] Mehr Erfolge (Gift, Frost, Verhängnis, Daily-Streak,
-  Klassen-Akt-3, Slot-Meister). Casino-Modus-Erfolg wartet auf den Slot-Modus.
-- [ERLEDIGT v1.13.0] Erfolge-Screen zeigt, WAS ein Erfolg freischaltet.
-- Statistik-Screen ausbauen (meiste Karten gespielt, Lieblingsrelikt …).
-
-
-UX / KOMFORT
---------------------------------------------------------------------
-- [ERLEDIGT v1.13.0] Autosave zwischen Knoten (zusätzlich zum Pause-Save).
-- Karten-Tooltips überall einheitlich; Status-Effekte mit Hover-Erklärung
-  auch beim Gegner.
-- [ERLEDIGT v1.13.0] „Schnell"-Option: Animationen/Übergänge beschleunigen.
-- Maus-Hover-Highlight der wählbaren Map-Knoten deutlicher.
-- Controller-Support (optional).
-
-
-ASSETS / OPTIK
---------------------------------------------------------------------
-- Optionale eigene Mini-Icons für Status (frost/stun/doom/marked/rage/focus)
-  sind eingebaut – evtl. auch als Chips beim Spieler statt Emoji.
-- Eigene Relikt-Icons für die v1.12-Relikte (aktuell Emoji-Fallback).
-- Karten-Effekt-Icons für die ganz neuen Effekte (nutzen aktuell Sammel-Icons).
-- Akt-spezifische Partikel/Farbstimmung im Kampf.
-
-
-TECHNIK
---------------------------------------------------------------------
-- Seeded RNG zentral kapseln (aktuell nur global geseedet beim Daily).
-- Emoji-Font bündeln (sicherer Fallback auf fremden PCs).
-- EN-Lokalisierung (Strings zentralisieren).
-- Update-Funktion: Delta-Updates statt ganze EXE (später, optional).
-- Code-Signatur für die EXE, damit SmartScreen nicht warnt (kostet Geld).
-
-
-ERLEDIGT (Referenz; Details in CHANGELIST.txt)
---------------------------------------------------------------------
-- v1.14.0: NEUER SPIELMODUS – Slot-Modus (Balatro-Style): Beutel aufbauen,
-  10 Joker, Shop, Chips x Mult, endlos, Bestwert-Persistenz (slotmode.py)
-- v1.13.0: Musik pro Akt + Akt-Jingle, Schwierigkeitsgrade, Schnell-Option,
-  Autosave zwischen Knoten, 8 neue Erfolge + Freischalt-Anzeige im Screen
-- v1.12.0: Riesen-Update 2 (22 Karten, 12 Relikte, 9 Gegner, 3 Akte,
-  6 Statuseffekte) + alle Sprites/Akt-Hintergründe + IN-GAME-AUTO-UPDATE
-- v1.11.0: situationsabhängige Musik (Menü/Karte/Kampf/Boss) + Tastatursteuerung
-- v1.10.x: Riesen-Update 1 (14 Karten/9 Relikte/7 Gegner) + Sprites,
-  Stärke-Relikt-Nerf, Saves immer gültig, Klassen-Avatar im Kampf,
-  keine kreuzenden Map-Pfade
-- v1.9.x: Start-Klassen, Akt-Hintergründe, Klassen-Portraits, mehr Gegner
-- v1.8.x: Akt-Themen, Slot-Synergien, Karten-Effekt-Icons, Slot-Cabinet,
-  Tages-Challenge, Meta-Unlocks, Statuseffekte (Gift/Verwundbar/…)
-- v1.7.x: Erfolge, RAM-Optimierung, Glücksrad-Fix, Highscore-Persistenz,
-  Optionen, Kampf-UI, Karten-Lesbarkeit
+- [x] Spiel schwerer: Gegner-HP skaliert steiler (keine 1-Shots mehr).
+- [x] Anspruchsvollere Mechanik: skalierende Gegner-RÜSTUNG bremst
+      Stärke-Stacking/Multi-Hit.
+- [x] Gegner-Block/Schild skaliert mit der Tiefe (nicht mehr Anfangswert).
+- [x] Stärke-Bug: Wut-Runaway gedeckelt (max 8) -> keine +150-Stärke mehr.
+- [x] Viele Relikte: Mehrspalten-Layout (bleibt links vom Avatar) + "+N".
+- [x] Status-Effekte überlappen nicht mehr mit dem Gold (Umbruch links).
+- [x] Relikt-Hovertext liegt jetzt im Vordergrund (über den Karten).
+- [x] Ausgewählte/gehoverte Karte größer (1,4x) – besser lesbar.
+- [x] Asset-Prompts aufgeräumt: nur noch fehlende Assets + Styleguide.
+- [x] Frostpalast-Hintergrund: Rahmen weggeschnitten, füllt randlos.

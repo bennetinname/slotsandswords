@@ -1,15 +1,14 @@
 ====================================================================
- SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.12.0)
+ SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.15.0)
 ====================================================================
-Bild-Prompts fuer alles, wofuer noch Grafik fehlt.
-Aufbau:  [STYLE] + [SUBJECT] + [TECH]. STYLE/TECH einmal unten, pro Bild
-nur den SUBJECT-Teil tauschen. Gleichen Seed + ganzen Block zusammen
-generieren -> konsistenter Stil.
+Bild-Prompts fuer alles, wofuer noch Grafik fehlt. Hier stehen NUR noch
+nicht vorhandene Assets. Aufbau: [STYLE] + [SUBJECT] + [TECH]. STYLE/TECH
+einmal unten, pro Bild nur den SUBJECT-Teil tauschen. Gleichen Seed + ganzen
+Block zusammen generieren -> konsistenter Stil.
 
 EINBINDEN: Sprites auf MAGENTA-Hintergrund (#FF00FF), klar abgegrenzt,
 Abstand lassen (ein grosses Sheet ist ok). Claude schneidet per
 Connected-Components, keyt Magenta transparent, trimmt und legt sie ab.
-AUSNAHME Hintergruende: VOLLBILD-Szenen OHNE Magenta, randlos.
 
 --------------------------------------------------------------------
 [STYLE]
@@ -24,60 +23,54 @@ crisp pixels, nearest-neighbor, no anti-aliasing on outer edge,
 export PNG with alpha, generate at 4x then downscale to target size.
 
 ====================================================================
- 1) NEUE GEGNER v1.12.0  (~140x180, Bosse ~200x220, Magenta-HG)
+ 1) RELIKT-ICONS v1.12  (je ~64x64, Magenta-HG)  -> assets/relics/
 ====================================================================
-Im Spiel, nutzen aber noch den prozeduralen Fallback. Ziel: assets/enemies/
+Im Spiel, nutzen aktuell aber nur den Emoji-Fallback. Kleines, klar
+lesbares Einzel-Objekt zentriert, satter Glanzpunkt, wie die bestehenden
+Relikt-Icons (vgl. assets/relics/phoenix.png, four_leaf.png).
 
- AKT 4 "Die Kanalisation" (Gift/Seuche):
-  kanalratte.png    – huge mangy sewer rat, dog-sized, dripping fangs,
-                      matted fur, glowing sickly eyes, green slime
-  seuchendoktor.png – plague doctor, long beaked mask, tattered robe,
-                      vials of green toxin, sinister, NOT helpful
-  boss_brutmutter.png – BOSS: grotesque bloated brood-mother, egg sacs,
-                      spilling larvae & spores, green-purple, dripping (~200x220)
- AKT 5 "Der Frostpalast" (Frost):
-  frostgolem.png    – massive golem of jagged blue ice, glowing frost-core
-                      chest, heavy, slow, icicle fists
-  eishexe.png       – elegant ice witch, frost-blue gown, breath of cold mist,
-                      crystal staff, pale skin
-  boss_frostkoenig.png – BOSS: towering frost king on an ice throne, crown of
-                      icicles, glacial cloak, cold blue glow, regal-cruel (~200x220)
- AKT 6 "Die Unterwelt" (Feuer/Verhaengnis):
-  hoellenhund.png   – three-headed hellhound, cerberus, blazing maw, embers,
-                      black-red fur, smoking drool
-  qualdaemon.png    – muscular torment demon, horns, whip of fire, scarred
-                      red skin, sadistic grin
-  boss_luzifer.png  – BOSS: the devil himself, elegant horned lord in a
-                      black-gold suit, wreathed in flames, throne of skulls,
-                      charismatic & terrifying (~200x220)
-
-====================================================================
- 2) NEUE AKT-HINTERGRUENDE  (VOLLBILD ~1200x800, KEIN Magenta, randlos)
-====================================================================
-Dunkel + leicht unscharf (Text davor lesbar), Vorbild bg_kneipe.
-Ziel: assets/ui/<name>.png  (Code laedt sie automatisch, sonst bg_void).
-
-  bg_sewer.png  – grimy underground sewer: dripping pipes, green murky
-                  water, slime, faint torchlight, claustrophobic (Akt 4)
-  bg_frost.png  – frozen palace hall: blue ice walls, frosted pillars,
-                  icicles, cold moonlight, snow drift (Akt 5)
-  bg_hell.png   – infernal cavern: rivers of lava, jagged black rock,
-                  glowing embers, distant fire, red-orange glow (Akt 6)
+  frostbite.png       – Amulett mit einem klaren blauen EISZAPFEN als
+                        Anhaenger, frostiger Schimmer, kalte Aura
+  branding.png        – gluehendes BRANDEISEN (Stempel) mit orange-rot
+                        gluehender Spitze, rauchend
+  rage_totem.png      – kleines Stammes-TOTEM mit wuetendem Gesicht,
+                        rote Aura, Flammen-/Faust-Motiv
+  focus_lens.png      – elegante LUPE / Monokel-Linse, goldener Rand,
+                        gold-gelber Lichtreflex (Ziel/Fokus)
+  time_glass.png      – SANDUHR mit leuchtendem blauem Sand, goldener
+                        Rahmen, dezent magisch
+  card_master.png     – Faecher aus 3 SPIELKARTEN, golden verziert,
+                        meisterhaft, leichter Glanz
+  lucky_coin.png      – glaenzende GOLDMUENZE mit Kleeblatt-Praegung,
+                        Funkeln, Reichtum
+  thorn_crown.png     – DORNENKRONE aus dunklen Ranken mit spitzen
+                        Dornen, ein paar Bluttropfen
+  scavenger.png       – Aasfresser-Motiv: KRAEHEN-SCHAEDEL oder Knochen
+                        mit gruenlichem Heil-Schimmer
+  berserker_blood.png – Phiole/Flakon mit BLUTROTER Fluessigkeit,
+                        wilder roter Schein, Staerke
+  doom_bell.png       – dunkle SCHICKSALSGLOCKE mit Totenkopf-Gravur,
+                        violett-schwarze Aura, unheilvoll
+  ice_heart.png       – kristallines HERZ AUS EIS, kaltblau, gefrostet,
+                        leicht durchscheinend
 
 ====================================================================
- 3) OPTIONAL – STATUS-EFFEKT-ICONS (32x32, Magenta-HG)
+ 2) OPTIONAL – SLOT-MODUS JOKER-ICONS  (je ~64x64, Magenta-HG)
 ====================================================================
-Aktuell werden Status als Emoji ueber dem Gegner / als Chips gezeigt.
-Eigene Mini-Icons waeren schicker. Ziel: assets/status/<name>.png
-  frost.png (Schneeflocke), stun.png (Sterne/Schwindel), doom.png
-  (Sanduhr-Totenkopf), marked.png (Zielkreuz/Blut), vulnerable.png
-  (zerbrochenes Herz), rage.png (Flammen-Faust), focus.png (Auge/Visier)
+Nur Kosmetik – im Slot-Modus werden Joker aktuell als Emoji gezeigt,
+das ist voellig ok. Bei Lust auf Politur -> assets/jokers/<id>.png
+(ids: clover_luck, gold_vein, twins, variety, reaper, fireworks,
+diamond_hand, chicken_farm, high_roller, crown_jewel). Stil wie die
+Relikt-Icons, kleines Kartenmotiv mit dem jeweiligen Symbol.
 
 --------------------------------------------------------------------
-PRIORITAET: 1) neue Gegner-Sprites  2) Akt-Hintergruende  3) Status-Icons
+PRIORITAET: 1) v1.12-Relikt-Icons (einzige echte Luecke)
+            2) optionale Joker-Icons (Politur)
 --------------------------------------------------------------------
 
-BEREITS EINGEBAUT (Referenz): alle Gegner bis v1.10, Akt-BGs 1-3 + void,
-Klassen-Portraits, alle Relikt-Icons bis v1.10, Karten-Effekt-Icons,
-Slot-Cabinet, Casino-Event. (v1.12 Relikt-Icons fehlen noch -> Emoji-
-Fallback ist ok, optional spaeter nachreichen.)
+BEREITS EINGEBAUT (Referenz, NICHT mehr noetig): alle Gegner-Sprites
+inkl. v1.12 (Kanalisation/Frostpalast/Unterwelt + Bosse), alle 6 Akt-
+Hintergruende + void, alle Status-Effekt-Icons (frost/stun/doom/marked/
+vulnerable/rage/focus/poison/burn/regen/block/strength/weak), Klassen-
+Portraits, Relikt-Icons bis v1.10, Karten-Effekt-Icons, Slot-Cabinet,
+Casino-Event, Logo/Icon.

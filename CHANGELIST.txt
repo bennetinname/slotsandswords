@@ -1,6 +1,32 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.15.0 – 2026-06-15]  SCHWIERIGKEIT, BALANCE & UI-POLISH
+----------------------------------------------------------
+BALANCE / SCHWIERIGKEIT (Spiel war zu leicht – Stärke-Schneeball):
+* Gegner-HP skaliert jetzt STEILER (+leicht überlinear) – keine 1-Shots
+  mehr in späten Etagen; Kämpfe dauern länger und verlangen Entscheidungen.
+* Skalierende RÜSTUNG: Gegner bekommen ab der Tiefe flache Schadens-
+  reduktion pro Treffer – bremst reines Stärke-Stacking & Multi-Hit.
+* Gegner-BLOCK skaliert mit (vorher immer der Anfangswert ~6): Verteidigen
+  gibt jetzt Block passend zum (tiefenabhängigen) Schaden.
+* Wut (Stärke pro Runde) ist auf 8 gedeckelt – stoppt den unendlichen
+  Stärke-Runaway (Ursache der +150-Stärke-1-Shots).
+
+UI-FIXES:
+* Relikte laufen nicht mehr aus dem Bild: Mehrspalten-Layout (bis 3 Spalten,
+  bleibt links vom Avatar), bei Überlauf "+N"-Kachel.
+* Spieler-Status-Chips überlappen nicht mehr mit Gold/Energie – sie brechen
+  jetzt innerhalb der linken Zone in mehrere Zeilen um.
+* Relikt-Hovertext liegt jetzt ÜBER den Karten (zuletzt gezeichnet).
+* Gehoverte/ausgewählte Handkarte wird deutlich größer (1,4x) – besser lesbar.
+
+ASSETS:
+* Frostpalast-Hintergrund: eingemalter Zierrahmen + runde Ecken weggeschnitten
+  -> füllt jetzt randlos den Bildschirm.
+* assets_prompt.txt aufgeräumt: nur noch fehlende Assets (12 v1.12-Relikt-Icons
+  + optionale Joker-Icons) plus Styleguide; alles Vorhandene entfernt.
+
 [v1.14.0 – 2026-06-14]  NEUER SPIELMODUS: SLOT-MODUS (BALATRO-STYLE)
 -------------------------------------------------------------------
 Ein komplett eigenes Spiel im Hauptmenü unter "🎰 Slot-Modus":

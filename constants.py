@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.14.0"
+GAME_VERSION = "1.15.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.15.0", "Schwerer & runder: Gegner skalieren (HP/Block/Ruestung), UI-Fixes (Relikte, Status, Karten)"),
     ("1.14.0", "NEUER SPIELMODUS: Slot-Modus (Balatro-Style) - bau deinen Automaten, knack die Ziele!"),
     ("1.13.0", "Musik pro Akt, Schwierigkeitsgrade, Schnell-Modus, Autosave, 8 neue Erfolge"),
     ("1.12.0", "RIESEN-UPDATE 2: 22 Karten, 12 Relikte, 9 Gegner, 3 Akte, 6 Status + Auto-Update"),

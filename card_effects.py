@@ -535,7 +535,7 @@ class CardEffectResolver:
 
         elif effect == "bloodrage":
             actual = enemy.take_damage(card.damage + player.strength)
-            player.rage += 1
+            player.rage = min(8, player.rage + 1)   # Wut gedeckelt (Anti-Runaway)
             logs.append(f"🩸 {card.name}: {actual} Schaden, +1 Wut (Stärke pro Runde)!")
 
         elif effect == "judgement":
@@ -566,7 +566,7 @@ class CardEffectResolver:
             logs.append(f"🛡️ {card.name}: +{block_amount} Block, +{healed} HP!")
 
         elif effect == "rage_power":
-            player.rage += 2
+            player.rage = min(8, player.rage + 2)
             logs.append(f"😤 {card.name}: +2 Wut! (Stärke wächst jede Runde)")
 
         elif effect == "focus_power":

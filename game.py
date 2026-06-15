@@ -846,14 +846,23 @@ class Game:
                 cands = [e for e in ENEMY_TYPES if e.get("tier", 1) <= 2 and not e.get("is_boss")]
             enemy_def = random.choice(cands)
 
-        # Gegner skaliert mit der Tiefe (über Akte hinweg) – etwas sanfter
+        # Gegner skaliert mit der Tiefe (über Akte hinweg).
         enemy_def = copy.deepcopy(enemy_def)
-        # Bosse skalieren deutlich flacher (waren in Akt 1 unfair)
-        per = 0.06 if node_type == "boss" else 0.11
-        scale = 1.0 + (self.floor_num - 1) * per
-        enemy_def["hp"] = int(enemy_def["hp"] * scale)
+        f = self.floor_num
+        # HP skaliert STEILER als der Schaden: lange Kämpfe statt 1-Shots.
+        # Zusätzlich ein leicht überlinearer Term, damit Spät-Etagen nicht
+        # vom Stärke-Schneeball trivialisiert werden.
+        hp_per = 0.10 if node_type == "boss" else 0.17
+        hp_scale = 1.0 + (f - 1) * hp_per + ((f - 1) ** 2) * 0.0025
+        dmg_per = 0.06 if node_type == "boss" else 0.10
+        dmg_scale = 1.0 + (f - 1) * dmg_per
+        enemy_def["hp"] = int(enemy_def["hp"] * hp_scale)
         enemy_def["max_hp"] = enemy_def["hp"]
-        enemy_def["damage"] = int(enemy_def["damage"] * scale)
+        enemy_def["damage"] = int(enemy_def["damage"] * dmg_scale)
+        # Skalierende RÜSTUNG (flache Reduktion pro Treffer) – bremst reines
+        # Stärke-Stacking & Multi-Hit-Karten, je tiefer desto mehr.
+        armor_bonus = f // 8 + (3 if node_type == "boss" else 0)
+        enemy_def["armor"] = enemy_def.get("armor", 0) + armor_bonus
 
         # Schwierigkeitsgrad (Optionen): skaliert Gegner-HP/-Schaden
         try:
@@ -2579,8 +2588,9 @@ class Game:
             offset = int((1.5 - timer) * 60)
             self.ui.draw_damage_number(text, x, y, color, offset)
 
-        # Buff-Tooltip ganz zuletzt (über Avataren etc.)
+        # Buff-/Relikt-Tooltips ganz zuletzt (über Karten & Avataren, TODO #6)
         self.ui.draw_pending_buff_tooltip()
+        self.ui.draw_pending_relic_tooltip()
 
     def _draw_player_turn_ui(self):
         """UI für Spieler-Karten-Phase"""

@@ -271,69 +271,56 @@ class UIRenderer:
         self._text(f"❤ {player.hp}/{player.max_hp}", self.font_small, WHITE,
                    bx + 10, by + 2, shadow=True)
 
-        # Buff-Chips (mit Hover-Erklärung) unter der HP
+        # Buff-Chips (mit Hover-Erklärung) unter der HP.
+        # Umbruch innerhalb der LINKEN Zone, damit sie NIE Energie/Gold (x≈240)
+        # überlappen (TODO #5). Mehrere Zeilen wachsen nach unten.
         self._buff_tip = None
         mx, my = pygame.mouse.get_pos()
         hot = []
-        col_x = bx
-        cy = by + bh + 4
+        right_limit = 232
+        row_step = self.font_tiny.get_height() + 14
+        state = {"x": bx, "y": by + bh + 4}
+
+        def place(text, text_col, fill, desc):
+            tw = self.font_tiny.size(text)[0] + 20    # pad_x*2
+            if state["x"] + tw > right_limit and state["x"] > bx:
+                state["x"] = bx
+                state["y"] += row_step
+            w, ch = self._chip(text, self.font_tiny, state["x"], state["y"],
+                               text_col=text_col, fill=fill)
+            hot.append((pygame.Rect(state["x"], state["y"], w, ch), desc))
+            state["x"] += w + 6
+
         if player.block > 0:
-            w, ch = self._chip(f"🛡 {player.block}", self.font_tiny, col_x, cy,
-                               text_col=CYAN, fill=(*BLUE_DARK, 150))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        "🛡 Block: absorbiert eingehenden Schaden. Bleibt bestehen, bis er aufgebraucht ist."))
-            col_x += w + 6
+            place(f"🛡 {player.block}", CYAN, (*BLUE_DARK, 150),
+                  "🛡 Block: absorbiert eingehenden Schaden. Bleibt bestehen, bis er aufgebraucht ist.")
         if player.strength != 0:
-            # Negative Stärke (z.B. durch Verspotten) rot anzeigen
             neg = player.strength < 0
-            w, ch = self._chip(f"💪 {player.strength:+d}", self.font_tiny, col_x, cy,
-                               text_col=(HP_RED if neg else ORANGE),
-                               fill=((60, 12, 12, 160) if neg else (60, 35, 10, 160)))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"💪 Stärke: {player.strength:+d} Schaden auf JEDEN deiner Angriffe (dauerhaft). "
-                        + ("Verspotten hat dich geschwächt!" if neg else "")))
-            col_x += w + 6
+            place(f"💪 {player.strength:+d}", (HP_RED if neg else ORANGE),
+                  ((60, 12, 12, 160) if neg else (60, 35, 10, 160)),
+                  f"💪 Stärke: {player.strength:+d} Schaden auf JEDEN deiner Angriffe (dauerhaft). "
+                  + ("Verspotten hat dich geschwächt!" if neg else ""))
         if player.burn > 0:
-            w, ch = self._chip(f"🔥 {player.burn}", self.font_tiny, col_x, cy,
-                               text_col=ORANGE, fill=(60, 25, 10, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"🔥 Brennen: du verlierst {player.burn} HP zu Beginn der nächsten Runde (sinkt um 1)."))
-            col_x += w + 6
+            place(f"🔥 {player.burn}", ORANGE, (60, 25, 10, 160),
+                  f"🔥 Brennen: du verlierst {player.burn} HP zu Beginn der nächsten Runde (sinkt um 1).")
         if player.poison > 0:
-            w, ch = self._chip(f"☠️ {player.poison}", self.font_tiny, col_x, cy,
-                               text_col=GREEN, fill=(15, 50, 20, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"☠️ Gift: {player.poison} HP Schaden zu Rundenbeginn, ignoriert Block (sinkt um 1)."))
-            col_x += w + 6
+            place(f"☠️ {player.poison}", GREEN, (15, 50, 20, 160),
+                  f"☠️ Gift: {player.poison} HP Schaden zu Rundenbeginn, ignoriert Block (sinkt um 1).")
         if player.regen > 0:
-            w, ch = self._chip(f"🌿 {player.regen}", self.font_tiny, col_x, cy,
-                               text_col=GREEN, fill=(15, 50, 30, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"🌿 Regeneration: heilt {player.regen} HP zu Rundenbeginn (sinkt um 1)."))
-            col_x += w + 6
+            place(f"🌿 {player.regen}", GREEN, (15, 50, 30, 160),
+                  f"🌿 Regeneration: heilt {player.regen} HP zu Rundenbeginn (sinkt um 1).")
         if player.thorns > 0:
-            w, ch = self._chip(f"🌵 {player.thorns}", self.font_tiny, col_x, cy,
-                               text_col=ORANGE, fill=(50, 40, 10, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"🌵 Dornen: reflektiert {player.thorns} Schaden bei jedem Gegnertreffer (ganzer Kampf)."))
-            col_x += w + 6
+            place(f"🌵 {player.thorns}", ORANGE, (50, 40, 10, 160),
+                  f"🌵 Dornen: reflektiert {player.thorns} Schaden bei jedem Gegnertreffer (ganzer Kampf).")
         if getattr(player, "rage", 0) > 0:
-            w, ch = self._chip(f"😤 {player.rage}", self.font_tiny, col_x, cy,
-                               text_col=RED, fill=(60, 15, 15, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"😤 Wut: +{player.rage} Stärke zu Beginn JEDER Runde (ganzer Kampf)."))
-            col_x += w + 6
+            place(f"😤 {player.rage}", RED, (60, 15, 15, 160),
+                  f"😤 Wut: +{player.rage} Stärke zu Beginn JEDER Runde (ganzer Kampf).")
         if getattr(player, "focus", 0) > 0:
-            w, ch = self._chip(f"🎯 {player.focus}", self.font_tiny, col_x, cy,
-                               text_col=ACCENT, fill=(60, 45, 10, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"🎯 Fokus: deine nächste Angriffskarte macht +{player.focus} Schaden."))
-            col_x += w + 6
+            place(f"🎯 {player.focus}", ACCENT, (60, 45, 10, 160),
+                  f"🎯 Fokus: deine nächste Angriffskarte macht +{player.focus} Schaden.")
         if getattr(player, "vulnerable", 0) > 0:
-            w, ch = self._chip(f"💔 {player.vulnerable}", self.font_tiny, col_x, cy,
-                               text_col=HP_RED, fill=(60, 12, 12, 160))
-            hot.append((pygame.Rect(col_x, cy, w, ch),
-                        f"💔 Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden)."))
+            place(f"💔 {player.vulnerable}", HP_RED, (60, 12, 12, 160),
+                  f"💔 Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden).")
 
         # Energie & Gold (Mitte-links)
         ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
@@ -468,16 +455,28 @@ class UIRenderer:
     # ═══════════════════════════════════════════════
 
     def draw_relic_bar(self, player, x, y):
-        """Vertikale Reliktleiste mit Hover-Tooltip"""
+        """Relikt-Leiste: füllt Spalten von oben nach unten, dann weitere Spalten
+        nach rechts (max. 3, bleibt links vom Avatar). Bei Überlauf '+N'.
+        Tooltip wird NICHT hier gezeichnet, sondern verzögert (über den Karten)."""
+        self._relic_tip = None
         if not player.relics:
             return
         mx, my = pygame.mouse.get_pos()
-        chip = 34
-        gap = 6
+        chip, gap = 32, 6
+        step = chip + gap
+        bottom = 612                       # nicht in die Hand-Karten laufen
+        max_cols = 3
+        rows = max(1, (bottom - y) // step)
+        capacity = rows * max_cols
+        relics = player.relics
+        overflow = len(relics) - capacity
+        shown = relics[:capacity - 1] if overflow > 0 else relics
         hovered = None
-        for i, relic in enumerate(player.relics):
-            ry = y + i * (chip + gap)
-            rect = pygame.Rect(x, ry, chip, chip)
+        for i, relic in enumerate(shown):
+            col, row = divmod(i, rows)
+            rx = x + col * step
+            ry = y + row * step
+            rect = pygame.Rect(rx, ry, chip, chip)
             hot = rect.collidepoint(mx, my)
             col_bg = (50, 40, 20) if hot else (34, 28, 50)
             border = ACCENT if hot else PANEL_LINE
@@ -485,16 +484,34 @@ class UIRenderer:
             pygame.draw.rect(self.screen, border, rect, 2, border_radius=9)
             spr = assets.fit("relics", relic.get("id"), chip - 6, chip - 6)
             if spr:
-                self.screen.blit(spr, (x + chip // 2 - spr.get_width() // 2,
+                self.screen.blit(spr, (rx + chip // 2 - spr.get_width() // 2,
                                        ry + chip // 2 - spr.get_height() // 2))
             else:
                 em = self.font_medium.render(relic["emoji"], True, WHITE)
-                self.screen.blit(em, (x + chip // 2 - em.get_width() // 2,
+                self.screen.blit(em, (rx + chip // 2 - em.get_width() // 2,
                                       ry + chip // 2 - em.get_height() // 2))
             if hot:
                 hovered = relic
+        if overflow > 0:
+            # '+N'-Kachel als letztes Feld
+            i = len(shown)
+            col, row = divmod(i, rows)
+            rx, ry = x + col * step, y + row * step
+            rect = pygame.Rect(rx, ry, chip, chip)
+            pygame.draw.rect(self.screen, (44, 36, 60), rect, border_radius=9)
+            pygame.draw.rect(self.screen, PANEL_LINE, rect, 2, border_radius=9)
+            self._text(f"+{overflow + 1}", self.font_tiny, ACCENT_SOFT,
+                       rx + chip // 2, ry + chip // 2 - 7, center=True)
         if hovered:
-            self._relic_tooltip(hovered, x + chip + 10, my)
+            # Position merken; tatsächlich gezeichnet wird in
+            # draw_pending_relic_tooltip() NACH den Karten (TODO #6).
+            self._relic_tip = (hovered, x + max_cols * step + 6, my)
+
+    def draw_pending_relic_tooltip(self):
+        """Zeichnet den Relikt-Tooltip zuletzt, damit er über den Karten liegt."""
+        tip = getattr(self, "_relic_tip", None)
+        if tip:
+            self._relic_tooltip(*tip)
 
     def _relic_tooltip(self, relic, x, y):
         title = f"{relic['emoji']} {relic['name']}"
@@ -702,9 +719,20 @@ class UIRenderer:
             rects[i] = pygame.Rect(cx, card_y, card_w, card_h)
         for i in order:
             card = hand[i]
-            lift = 28 if hovered_idx == i else (34 if selected_card == card else 0)
+            active = (hovered_idx == i) or (selected_card == card)
             cx = start_x + i * (card_w + gap)
-            rect = pygame.Rect(cx, card_y - lift, card_w, card_h)
+            if active:
+                # Aktive Karte deutlich vergrößern (besser lesbar, TODO #7).
+                # Inhalt skaliert automatisch mit der Höhe (scale = h/178).
+                f = 1.4
+                w2, h2 = int(card_w * f), int(card_h * f)
+                lift = 30
+                rx = cx + card_w // 2 - w2 // 2
+                rx = max(6, min(self.w - w2 - 6, rx))        # im Bild halten
+                ry = card_y + card_h - h2 - lift
+                rect = pygame.Rect(rx, ry, w2, h2)
+            else:
+                rect = pygame.Rect(cx, card_y, card_w, card_h)
             rects[i] = rect
             self._draw_card(card, rect, selected=(selected_card == card),
                             hovered=(hovered_idx == i))

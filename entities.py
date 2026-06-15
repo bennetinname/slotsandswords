@@ -383,6 +383,11 @@ class Enemy:
         self.intent_value = self.damage
         self._randomize_intent()
     
+    def _block_value(self):
+        """Block-Wert beim Verteidigen – skaliert mit dem (tiefenabhängigen)
+        Schaden, damit später nicht mehr der Anfangs-Block kommt (TODO #3)."""
+        return max(8, int(self.damage * 0.85))
+
     def _randomize_intent(self):
         """Bestimmt die nächste Aktion des Gegners"""
         roll = random.random()
@@ -396,7 +401,7 @@ class Enemy:
                 self.intent_value = int(self.damage * 1.5)
             elif roll < 0.74:
                 self.intent = "defend"
-                self.intent_value = 8
+                self.intent_value = self._block_value()
             else:
                 self.intent = "taunt"
                 self.intent_value = 0
@@ -429,7 +434,7 @@ class Enemy:
                 self.intent_value = int(self.damage * 1.6)
             elif roll < 0.8:
                 self.intent = "defend"
-                self.intent_value = 6
+                self.intent_value = self._block_value()
             else:
                 self.intent = "taunt"
                 self.intent_value = 0
@@ -439,7 +444,7 @@ class Enemy:
                 self.intent_value = self.damage
             elif roll < 0.80:
                 self.intent = "defend"
-                self.intent_value = 6
+                self.intent_value = self._block_value()
             elif roll < 0.92:
                 self.intent = "taunt"
                 self.intent_value = 0
