@@ -617,7 +617,7 @@ class Game:
                     return
             
             # "Slot drehen"-Button (= Runde beenden) – mittig über dem Log
-            end_btn = pygame.Rect(SCREEN_W//2 - 95, 266, 190, 46)
+            end_btn = pygame.Rect(SCREEN_W//2 - 95, 240, 190, 46)
             if end_btn.collidepoint(pos):
                 self._start_slot_phase()
                 return
@@ -2610,7 +2610,7 @@ class Game:
         
         # "Slot drehen"-Button (= Runde beenden) – mittig über dem Kampflog
         btn_w, btn_h = 190, 46
-        self.ui.draw_button("🎰 Slot drehen", SCREEN_W//2 - btn_w//2, 266, btn_w, btn_h,
+        self.ui.draw_button("🎰 Slot drehen", SCREEN_W//2 - btn_w//2, 240, btn_w, btn_h,
                            color=GOLD, pulsing=True)
 
         # Energie-Anzeige
