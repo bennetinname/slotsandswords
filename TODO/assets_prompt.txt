@@ -106,9 +106,22 @@ Ziel: assets/ui/<name>.png
   (class_alchemist) – hooded alchemist with goggles, holding a bubbling
                       green potion, vials on a bandolier, sickly glow
 
+====================================================================
+ 4) NEUE SLOT-SYMBOLE v1.16  (~64x64, Magenta-HG)
+====================================================================
+Stil wie die bestehenden Slot-Symbole (assets/slots/skull.png etc.):
+einzelnes, sattes Icon, klare Silhouette, leichter Glanz. Ziel:
+assets/slots/<name>.png  (sonst Emoji-Fallback, funktioniert auch).
+  (wild)   – golden "WILD" slot emblem / shiny 7 or joker star, premium
+  (bell)   – classic shiny golden slot bell, small highlight
+  (gem)    – sparkling cut gemstone / diamond ring, blue-white shine
+  (trap)   – nasty steel bear-trap, jagged teeth (NEGATIV)
+  (pit)    – dark hole / pitfall in the ground, ominous (NEGATIV)
+  (curse)  – glowing evil-eye / hex amulet, purple-black aura (NEGATIV)
+
 --------------------------------------------------------------------
 PRIORITAET: 1) Bosse (v.a. boss_jackpotautomat)  2) Akt-Hintergruende
-            3) normale Gegner  4) Klassen-Portraits
+            3) normale Gegner  4) Klassen-Portraits  5) Slot-Symbole
 --------------------------------------------------------------------
 
 BEREITS EINGEBAUT (Referenz, NICHT noetig): alle Gegner/Bosse + Akt-BGs
