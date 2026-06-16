@@ -18,6 +18,9 @@ slotmode.json
 # Test-Screenshots
 _shot_*.png
 
+# Interne Planung / Notizen / Asset-Prompts (bleiben lokal, nicht auf GitHub)
+TODO/
+
 # Editor / OS
 .vscode/
 .idea/
