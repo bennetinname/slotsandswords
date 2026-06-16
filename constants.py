@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.15.0"
+GAME_VERSION = "1.16.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.16.0", "RIESEN-UPDATE: 5 Akte, 2 Klassen, Slot-Boss, Stärke-Rework, böse Slots, neue Leiste"),
     ("1.15.0", "Schwerer & runder: Gegner skalieren (HP/Block/Ruestung), UI-Fixes (Relikte, Status, Karten)"),
     ("1.14.0", "NEUER SPIELMODUS: Slot-Modus (Balatro-Style) - bau deinen Automaten, knack die Ziele!"),
     ("1.13.0", "Musik pro Akt, Schwierigkeitsgrade, Schnell-Modus, Autosave, 8 neue Erfolge"),
@@ -101,6 +102,9 @@ PLAYER_ENERGY_PER_TURN = 3
 # Wie viele Karten man pro Runde NACHZIEHT (behält ungespielte Karten)
 PLAYER_DRAW_PER_TURN = 3
 PLAYER_MAX_HAND = 7   # Obergrenze, damit man nicht unendlich hortet
+# Hand-RNG: pro Zug eine ZUFÄLLIGE Ziel-Handgröße (mehr Varianz, Glück zählt)
+HAND_RNG_MIN = 3
+HAND_RNG_MAX = 7
 
 # Highscore-Datei
 HIGHSCORE_FILE = "highscores.json"
@@ -148,7 +152,17 @@ SLOT_SYMBOLS = [
     {"emoji": "🐍", "name": "SNAKE",    "weight": 6},   # Gift / riskant
     {"emoji": "🌙", "name": "MOON",     "weight": 5},   # Heilung skaliert mit fehlendem HP
     {"emoji": "🤡", "name": "CLOWN",    "weight": 5},   # Chaos, eindeutig nervig
+    # ─── v1.16: mehr Symbole + NEGATIV-Symbole (Slots können dich bestrafen) ───
+    {"emoji": "🎰", "name": "WILD",     "weight": 3},   # Joker: zählt als jedes Symbol (selten)
+    {"emoji": "🔔", "name": "BELL",     "weight": 8},   # Allrounder: etwas Gold + Heilung
+    {"emoji": "💍", "name": "GEM",      "weight": 4},   # Edelstein: Gold
+    {"emoji": "🪤", "name": "TRAP",     "weight": 7},   # NEGATIV: Selbstschaden
+    {"emoji": "🕳️",  "name": "PIT",      "weight": 6},   # NEGATIV: Gold-/Energieverlust
+    {"emoji": "🧿", "name": "CURSE",    "weight": 6},   # NEGATIV: Block weg / verwundbar
 ]
+
+# Negativ-Symbole (für UI-Hinweise / Logik)
+SLOT_NEGATIVE = {"TRAP", "PIT", "CURSE"}
 
 # Gegner-Typen
 ENEMY_TYPES = [
@@ -478,6 +492,96 @@ ENEMY_TYPES = [
      "damage": 16, "armor": 3, "gold_reward": (70, 110), "color": RED_DARK,
      "tooltip": "BOSS: Der Herr der Unterwelt. Sein Feuer wird jede Runde heißer.",
      "tier": 3, "is_boss": True, "mechanic": "infernal"},
+
+    # ═══ v1.16: AKT 7 – Geister-Saloon ═══
+    {"name": "Revolver-Skelett", "asset": "revolverskelett", "hp": 34, "max_hp": 34,
+     "damage": 7, "armor": 1, "gold_reward": (12, 20), "color": (200, 190, 160),
+     "tooltip": "Schießt aus zwei Läufen – oder verzieht im Suff.",
+     "tier": 2, "mechanic": "reckless"},
+    {"name": "Pokergeist", "asset": "pokergeist", "hp": 44, "max_hp": 44,
+     "damage": 9, "armor": 1, "gold_reward": (16, 26), "color": (120, 200, 180),
+     "tooltip": "Zockt um deinen Beutel. Bluten musst DU – und zahlen.",
+     "tier": 2, "mechanic": "gold_thief"},
+    {"name": "Whiskey-Schemen", "asset": "whiskeyschemen", "hp": 30, "max_hp": 30,
+     "damage": 6, "armor": 0, "gold_reward": (10, 16), "color": (190, 150, 90),
+     "tooltip": "Torkelt durch den Saloon. Völlig unberechenbar.",
+     "tier": 1, "mechanic": "gambler_foe"},
+    {"name": "DOC KNOCHENHAND", "asset": "boss_docknochenhand", "hp": 115, "max_hp": 115,
+     "damage": 13, "armor": 2, "gold_reward": (45, 70), "color": (210, 200, 170),
+     "tooltip": "BOSS: Schneller Revolverheld. Heilt sich am Whiskey.",
+     "tier": 3, "is_boss": True, "mechanic": "siphon"},
+
+    # ═══ v1.16: AKT 8 – Spiegelhalle ═══
+    {"name": "Spiegelscherbe", "asset": "spiegelscherbe", "hp": 42, "max_hp": 42,
+     "damage": 8, "armor": 2, "gold_reward": (14, 22), "color": (180, 190, 220),
+     "tooltip": "Scharfkantig. Ein Teil deiner Schläge geht durch deinen Block.",
+     "tier": 2, "mechanic": "pierce"},
+    {"name": "Trugbild", "asset": "trugbild", "hp": 24, "max_hp": 24,
+     "damage": 5, "armor": 0, "gold_reward": (8, 14), "color": (160, 150, 210),
+     "tooltip": "Nur eine Illusion. Aber sie kommt selten allein.",
+     "tier": 1, "mechanic": "gambler_foe"},
+    {"name": "Zerrbild", "asset": "zerrbild", "hp": 46, "max_hp": 46,
+     "damage": 9, "armor": 1, "gold_reward": (16, 26), "color": (200, 160, 220),
+     "tooltip": "Verzerrt dein Glück. Frisst deine Glücksrunden.",
+     "tier": 2, "mechanic": "luck_eater"},
+    {"name": "DEIN SPIEGEL-ICH", "asset": "boss_spiegelich", "hp": 125, "max_hp": 125,
+     "damage": 12, "armor": 2, "gold_reward": (48, 75), "color": (190, 190, 235),
+     "tooltip": "BOSS: Schlägt umso härter, je mächtiger DU bist.",
+     "tier": 3, "is_boss": True, "mechanic": "mirror_boss"},
+
+    # ═══ v1.16: AKT 9 – Hochroller-Salon ═══
+    {"name": "Goldwächter", "asset": "goldwaechter", "hp": 62, "max_hp": 62,
+     "damage": 8, "armor": 6, "gold_reward": (18, 30), "color": (220, 180, 70),
+     "tooltip": "Schwer gepanzert. Bewacht den Reichtum des Hauses.",
+     "tier": 2},
+    {"name": "VIP-Dämon", "asset": "vipdaemon", "hp": 52, "max_hp": 52,
+     "damage": 12, "armor": 2, "gold_reward": (18, 30), "color": (200, 60, 120),
+     "tooltip": "Setzt hohe Einsätze. Schlägt entsprechend wuchtig zu.",
+     "tier": 2, "mechanic": "reckless"},
+    {"name": "Salon-Croupier", "asset": "saloncroupier", "hp": 48, "max_hp": 48,
+     "damage": 9, "armor": 1, "gold_reward": (16, 26), "color": (210, 90, 150),
+     "tooltip": "Manipuliert deinen Automaten – ein Dreh weniger.",
+     "tier": 2, "mechanic": "slot_jammer"},
+    {"name": "DER HAUSHERR", "asset": "boss_hausherr", "hp": 135, "max_hp": 135,
+     "damage": 13, "armor": 3, "gold_reward": (55, 85), "color": (230, 200, 90),
+     "tooltip": "BOSS: Je mehr Gold du hast, desto härter kassiert das Haus.",
+     "tier": 3, "is_boss": True, "mechanic": "house_edge"},
+
+    # ═══ v1.16: AKT 10 – Maschinenraum (Slot-Boss) ═══
+    {"name": "Zahnrad-Golem", "asset": "zahnradgolem", "hp": 66, "max_hp": 66,
+     "damage": 9, "armor": 7, "gold_reward": (18, 30), "color": (170, 150, 120),
+     "tooltip": "Ein Koloss aus Zahnrädern. Kaum zu durchdringen.",
+     "tier": 2},
+    {"name": "Wartungs-Automat", "asset": "wartungsautomat", "hp": 50, "max_hp": 50,
+     "damage": 8, "armor": 2, "gold_reward": (16, 26), "color": (140, 170, 190),
+     "tooltip": "Repariert sich selbst, wenn er dich trifft.",
+     "tier": 2, "mechanic": "siphon"},
+    {"name": "Dampf-Schläger", "asset": "dampfschlaeger", "hp": 48, "max_hp": 48,
+     "damage": 13, "armor": 1, "gold_reward": (16, 26), "color": (150, 140, 130),
+     "tooltip": "Dampfbetrieben. Holt zu schweren Schlägen aus.",
+     "tier": 2, "mechanic": "reckless"},
+    {"name": "DER JACKPOT-AUTOMAT", "asset": "boss_jackpotautomat", "hp": 140, "max_hp": 140,
+     "damage": 12, "armor": 3, "gold_reward": (55, 85), "color": (240, 180, 50),
+     "tooltip": "BOSS: Dreht jede Runde seinen eigenen Slot. Was kommt, passiert.",
+     "tier": 3, "is_boss": True, "mechanic": "slot_boss"},
+
+    # ═══ v1.16: AKT 11 – Die Leere (Finale) ═══
+    {"name": "Leeren-Wandler", "asset": "leerenwandler", "hp": 56, "max_hp": 56,
+     "damage": 11, "armor": 2, "gold_reward": (20, 32), "color": (120, 90, 180),
+     "tooltip": "Verschlingt deinen Block, als wäre er nie da gewesen.",
+     "tier": 3, "mechanic": "block_eater"},
+    {"name": "Sternenfresser", "asset": "sternenfresser", "hp": 72, "max_hp": 72,
+     "damage": 14, "armor": 2, "gold_reward": (22, 34), "color": (80, 120, 200),
+     "tooltip": "Frisst Sterne. Wird im Kampf immer bedrohlicher.",
+     "tier": 3, "mechanic": "infest"},
+    {"name": "Echo des Nichts", "asset": "echodesnichts", "hp": 58, "max_hp": 58,
+     "damage": 12, "armor": 1, "gold_reward": (20, 32), "color": (150, 130, 210),
+     "tooltip": "Ein Hall aus dem Leeren – lässt dich erstarren.",
+     "tier": 3, "mechanic": "chill"},
+    {"name": "DER CROUPIER DES NICHTS", "asset": "boss_croupiernichts", "hp": 155, "max_hp": 155,
+     "damage": 15, "armor": 3, "gold_reward": (70, 110), "color": (110, 80, 200),
+     "tooltip": "BOSS: Überlebt den Tod einmal. Verteilt das Schicksal.",
+     "tier": 3, "is_boss": True, "mechanic": "reaper"},
 ]
 
 # Karten-Pool
@@ -1347,8 +1451,9 @@ CLASS_DEFINITIONS = [
         "emoji": "🛡️",
         "color": BLUE,
         "desc": "Block & Stärke. Hält viel aus, schlägt stetig zu.",
-        "perk": "Start mit Relikt 'Eiserner Wille' (+12 Block/Kampf).",
+        "perk": "Wächter: +3 Block zu jedem Rundenstart. Start-Relikt 'Eiserner Wille'.",
         "relic": "start_block",
+        "buff": "guardian",
         "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
                  "Schwertstreich", "Schwertstreich",
                  "Schild", "Schild", "Schild",
@@ -1360,8 +1465,9 @@ CLASS_DEFINITIONS = [
         "emoji": "🎰",
         "color": GOLD,
         "desc": "Slots & Glück. Lebt vom Risiko und den großen Drehern.",
-        "perk": "Start mit Relikt 'Glücksbringer' (+1 Slot-Dreh/Runde).",
+        "perk": "Falschspieler: erste Karte pro Runde kostet 1 weniger. Start-Relikt 'Glücksbringer'.",
         "relic": "bonus_spin",
+        "buff": "cardsharp",
         "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
                  "Schild", "Schild",
                  "Coin Flip", "Coin Flip", "Greed",
@@ -1373,12 +1479,41 @@ CLASS_DEFINITIONS = [
         "emoji": "🧪",
         "color": GREEN,
         "desc": "Gift & Verfall. Lässt Gegner langsam dahinsiechen.",
-        "perk": "Start mit Relikt 'Giftring' (+1 auf alle Gift-Effekte).",
+        "perk": "Fluchweberin: am Rundenstart fressen sich Gift/Brennen/Frost am Gegner +1 tiefer. Start-Relikt 'Giftring'.",
         "relic": "poison_boost",
+        "buff": "hexweave",
         "deck": ["Schneller Stich", "Schneller Stich",
                  "Schild", "Schild",
                  "Giftklinge", "Giftklinge", "Giftklinge",
                  "Aderlass", "Heilkraut", "Toxische Wolke"],
+    },
+    {
+        "id": "croupiere",
+        "name": "Die Croupière",
+        "emoji": "🃏",
+        "color": (210, 90, 150),
+        "desc": "Slot-Meisterin. Manipuliert Glück und Walzen zu ihren Gunsten.",
+        "perk": "Hausvorteil: startet jeden Kampf mit 1 Glücksrunde (bessere Slot-Chancen). Start-Relikt 'Glückskleeblatt'.",
+        "relic": "four_leaf",
+        "buff": "house_edge",
+        "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
+                 "Schild", "Schild",
+                 "Glückssträhne", "Double Spin", "Coin Flip",
+                 "Greed", "Wildes Glück"],
+    },
+    {
+        "id": "alchemist",
+        "name": "Der Alchemist",
+        "emoji": "⚗️",
+        "color": (90, 190, 110),
+        "desc": "Giftmischer. Braut tödliche Tinkturen und Dämpfe.",
+        "perk": "Giftmischer: am Rundenstart +2 Gift auf vergiftete Gegner. Start-Relikt 'Giftring'.",
+        "relic": "poison_boost",
+        "buff": "alchemy",
+        "deck": ["Schneller Stich", "Schneller Stich",
+                 "Schild", "Schild",
+                 "Giftklinge", "Giftklinge", "Giftklinge",
+                 "Toxische Wolke", "Giftschwade", "Heilkraut"],
     },
 ]
 

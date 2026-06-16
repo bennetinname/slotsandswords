@@ -254,102 +254,193 @@ class UIRenderer:
     # STATUSLEISTE
     # ═══════════════════════════════════════════════
 
+    # Status -> (Sprite-Name in assets/status, Emoji-Fallback)
+    _STATUS_ART = {
+        "block": ("block", "🛡"), "strength": ("strength", "💪"),
+        "burn": ("burn", "🔥"), "poison": ("poison", "☠️"),
+        "regen": ("regen", "🌿"), "thorns": (None, "🌵"),
+        "rage": ("rage", "😤"), "focus": ("focus", "🎯"),
+        "vulnerable": ("vulnerable", "💔"), "weak": ("weak", "😵"),
+        "frost": ("frost", "❄️"), "marked": ("marked", "🩸"),
+        "stun": ("stun", "💫"), "doom": ("doom", "💀"),
+    }
+
+    def _sb_chip_w(self, key, label):
+        has_icon = self._STATUS_ART.get(key, (None, None))[0] or self._STATUS_ART.get(key, (None, None))[1]
+        lw = self.font_tiny.size(label)[0] if label else 0
+        return 14 + (18 if has_icon else 0) + (3 if (has_icon and lw) else 0) + lw
+
+    def _sb_chip(self, x, y, key, label, color, fill):
+        sprite, emoji = self._STATUS_ART.get(key, (None, "?"))
+        w = self._sb_chip_w(key, label)
+        h = self.font_tiny.get_height() + 8
+        chip = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.rect(chip, fill, (0, 0, w, h), border_radius=h // 2)
+        pygame.draw.rect(chip, (*color, 110), (0, 0, w, h), 1, border_radius=h // 2)
+        self.screen.blit(chip, (x, y))
+        cx = x + 7
+        icon = assets.scaled("status", sprite, 16, 16) if sprite else None
+        if icon:
+            self.screen.blit(icon, (cx, y + h // 2 - 8)); cx += 21
+        elif emoji:
+            self._text(emoji, self.font_tiny, WHITE, cx, y + 4); cx += 21
+        if label:
+            self._text(label, self.font_tiny, color, cx, y + 4)
+        return w, h
+
+    def _sb_strip(self, items, xl, xr, ytop, align, hot, row_h=23):
+        """Status-Chips in der Zone [xl,xr] umbrechen (links- oder rechtsbündig)."""
+        measured = [(self._sb_chip_w(k, lbl), k, lbl, col, fill, desc)
+                    for (k, lbl, col, fill, desc) in items]
+        maxw = xr - xl
+        rows, cur, curw = [], [], 0
+        for m in measured:
+            if cur and curw + m[0] + 5 > maxw:
+                rows.append((cur, curw - 5)); cur, curw = [], 0
+            cur.append(m); curw += m[0] + 5
+        if cur:
+            rows.append((cur, curw - 5))
+        y = ytop
+        for row, rw in rows:
+            x = xl if align == "left" else max(xl, xr - rw)
+            for w, k, lbl, col, fill, desc in row:
+                self._sb_chip(x, y, k, lbl, col, fill)
+                hot.append((pygame.Rect(x, y, w, h := self.font_tiny.get_height() + 8), desc))
+                x += w + 5
+            y += row_h
+
     def draw_status_bar(self, player, enemy, floor_num, turn_num):
-        """Oben: Spieler-Status, Etage, Runde — als moderne Leiste"""
-        bar_h = 70
-        # Hintergrundleiste
+        """Obere Leiste (zweistöckig): Ressourcen oben, Status-Zeilen unten.
+        Status-Zonen sind begrenzt & brechen um -> laufen nie über (TODO #13)."""
+        bar_h = 106
         strip = pygame.Surface((self.w, bar_h), pygame.SRCALPHA)
-        pygame.draw.rect(strip, (*DARKER_BG, 235), (0, 0, self.w, bar_h))
-        self.screen.blit(strip, (0, 4))
-        pygame.draw.line(self.screen, _darken(ACCENT, 0.4), (0, 4 + bar_h), (self.w, 4 + bar_h), 2)
+        pygame.draw.rect(strip, (*DARKER_BG, 240), (0, 0, self.w, bar_h))
+        self.screen.blit(strip, (0, 0))
+        pygame.draw.line(self.screen, _darken(ACCENT, 0.45), (0, bar_h), (self.w, bar_h), 2)
+        pygame.draw.line(self.screen, (*ACCENT, 60), (0, 1), (self.w, 1), 1)
 
-        # HP-Bar
-        hp_ratio = player.hp / player.max_hp
-        hp_color = HP_GREEN if hp_ratio > 0.5 else (ORANGE if hp_ratio > 0.25 else HP_RED)
-        bx, by, bw, bh = 14, 14, 210, 20
-        self._bar(bx, by, bw, bh, hp_ratio, hp_color, radius=10)
-        self._text(f"❤ {player.hp}/{player.max_hp}", self.font_small, WHITE,
-                   bx + 10, by + 2, shadow=True)
-
-        # Buff-Chips (mit Hover-Erklärung) unter der HP.
-        # Umbruch innerhalb der LINKEN Zone, damit sie NIE Energie/Gold (x≈240)
-        # überlappen (TODO #5). Mehrere Zeilen wachsen nach unten.
         self._buff_tip = None
         mx, my = pygame.mouse.get_pos()
         hot = []
-        right_limit = 232
-        row_step = self.font_tiny.get_height() + 14
-        state = {"x": bx, "y": by + bh + 4}
 
-        def place(text, text_col, fill, desc):
-            tw = self.font_tiny.size(text)[0] + 20    # pad_x*2
-            if state["x"] + tw > right_limit and state["x"] > bx:
-                state["x"] = bx
-                state["y"] += row_step
-            w, ch = self._chip(text, self.font_tiny, state["x"], state["y"],
-                               text_col=text_col, fill=fill)
-            hot.append((pygame.Rect(state["x"], state["y"], w, ch), desc))
-            state["x"] += w + 6
+        # ── Tier 1: HP / Energie / Gold (links) ──
+        hp_ratio = player.hp / max(1, player.max_hp)
+        hp_color = HP_GREEN if hp_ratio > 0.5 else (ORANGE if hp_ratio > 0.25 else HP_RED)
+        bx, by, bw, bh = 14, 12, 210, 20
+        self._bar(bx, by, bw, bh, hp_ratio, hp_color, radius=10)
+        self._text(f"❤ {player.hp}/{player.max_hp}", self.font_small, WHITE,
+                   bx + 10, by + 2, shadow=True)
+        ex = bx + bw + 12
+        ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium,
+                            ex, 11, text_col=CYAN, fill=(20, 50, 70, 180))
+        hot.append((pygame.Rect(ex, 11, ew, eh),
+                    "⚡ Energie: zahlt das Spielen von Karten. Füllt sich jede Runde auf."))
+        gx = ex + ew + 8
+        gw, gh = self._chip(f"💰 {player.gold}", self.font_medium, gx, 11,
+                            text_col=ACCENT, fill=(60, 45, 10, 180))
+        hot.append((pygame.Rect(gx, 11, gw, gh),
+                    "💰 Gold: Währung für Shop, Glücksspiel und manche Karten."))
 
+        # ── Tier 1: Etage/Runde (Mitte) ──
+        center_txt = f"ETAGE {floor_num}  ·  RUNDE {turn_num}"
+        tw = self.font_title.size(center_txt)[0]
+        pill = pygame.Surface((tw + 32, 32), pygame.SRCALPHA)
+        pygame.draw.rect(pill, (*PANEL_FILL, 235), (0, 0, tw + 32, 32), border_radius=16)
+        pygame.draw.rect(pill, _darken(ACCENT, 0.3), (0, 0, tw + 32, 32), 1, border_radius=16)
+        self.screen.blit(pill, (self.w // 2 - (tw + 32) // 2, 9))
+        self._text(center_txt, self.font_title, ACCENT, self.w // 2, 13, center=True)
+
+        # ── Tier 1: Gegner-Name + HP (rechts) ──
+        ebw = 270
+        ebx = self.w - 16 - ebw
+        if enemy and enemy.is_alive():
+            if enemy.is_boss:
+                ncol = (255, 90, 90); prefix = "👑 "
+            elif enemy.is_elite:
+                ncol = ACCENT_SOFT; prefix = "⭐ "
+            else:
+                ncol = _lighten(enemy.color, 0.4); prefix = ""
+            self._text(prefix + enemy.name, self.font_small, ncol, self.w - 16, 4,
+                       right=True, shadow=True)
+            self._bar(ebx, 24, ebw, 18, enemy.hp / max(1, enemy.max_hp), HP_RED, radius=8)
+            self._text(f"{enemy.hp}/{enemy.max_hp}", self.font_tiny, WHITE,
+                       ebx + ebw // 2, 25, center=True)
+
+        # ── Tier 2: Spieler-Status (linke Zone, umbrechend) ──
+        pit = []
         if player.block > 0:
-            place(f"🛡 {player.block}", CYAN, (*BLUE_DARK, 150),
-                  "🛡 Block: absorbiert eingehenden Schaden. Bleibt bestehen, bis er aufgebraucht ist.")
+            pit.append(("block", str(player.block), CYAN, (*BLUE_DARK, 160),
+                        "Block: absorbiert eingehenden Schaden. Bleibt, bis er aufgebraucht ist."))
         if player.strength != 0:
             neg = player.strength < 0
-            place(f"💪 {player.strength:+d}", (HP_RED if neg else ORANGE),
-                  ((60, 12, 12, 160) if neg else (60, 35, 10, 160)),
-                  f"💪 Stärke: {player.strength:+d} Schaden auf JEDEN deiner Angriffe (dauerhaft). "
-                  + ("Verspotten hat dich geschwächt!" if neg else ""))
+            pit.append(("strength", f"{player.strength:+d}", (HP_RED if neg else ORANGE),
+                        ((60, 12, 12, 170) if neg else (60, 35, 10, 170)),
+                        f"Stärke: {player.strength:+d} Schaden auf jeden Angriff."
+                        + (" Verspotten hat dich geschwächt!" if neg else "")))
         if player.burn > 0:
-            place(f"🔥 {player.burn}", ORANGE, (60, 25, 10, 160),
-                  f"🔥 Brennen: du verlierst {player.burn} HP zu Beginn der nächsten Runde (sinkt um 1).")
+            pit.append(("burn", str(player.burn), ORANGE, (60, 25, 10, 170),
+                        f"Brennen: −{player.burn} HP zu Rundenbeginn (sinkt um 1)."))
         if player.poison > 0:
-            place(f"☠️ {player.poison}", GREEN, (15, 50, 20, 160),
-                  f"☠️ Gift: {player.poison} HP Schaden zu Rundenbeginn, ignoriert Block (sinkt um 1).")
+            pit.append(("poison", str(player.poison), GREEN, (15, 50, 20, 170),
+                        f"Gift: −{player.poison} HP zu Rundenbeginn, ignoriert Block (sinkt um 1)."))
         if player.regen > 0:
-            place(f"🌿 {player.regen}", GREEN, (15, 50, 30, 160),
-                  f"🌿 Regeneration: heilt {player.regen} HP zu Rundenbeginn (sinkt um 1).")
+            pit.append(("regen", str(player.regen), GREEN, (15, 50, 30, 170),
+                        f"Regeneration: +{player.regen} HP zu Rundenbeginn (sinkt um 1)."))
         if player.thorns > 0:
-            place(f"🌵 {player.thorns}", ORANGE, (50, 40, 10, 160),
-                  f"🌵 Dornen: reflektiert {player.thorns} Schaden bei jedem Gegnertreffer (ganzer Kampf).")
+            pit.append(("thorns", str(player.thorns), ORANGE, (50, 40, 10, 170),
+                        f"Dornen: reflektiert {player.thorns} Schaden je Gegnertreffer."))
         if getattr(player, "rage", 0) > 0:
-            place(f"😤 {player.rage}", RED, (60, 15, 15, 160),
-                  f"😤 Wut: +{player.rage} Stärke zu Beginn JEDER Runde (ganzer Kampf).")
+            pit.append(("rage", str(player.rage), RED, (60, 15, 15, 170),
+                        f"Wut: +{player.rage} Stärke zu Beginn jeder Runde."))
         if getattr(player, "focus", 0) > 0:
-            place(f"🎯 {player.focus}", ACCENT, (60, 45, 10, 160),
-                  f"🎯 Fokus: deine nächste Angriffskarte macht +{player.focus} Schaden.")
+            pit.append(("focus", str(player.focus), ACCENT, (60, 45, 10, 170),
+                        f"Fokus: deine nächste Angriffskarte macht +{player.focus} Schaden."))
         if getattr(player, "vulnerable", 0) > 0:
-            place(f"💔 {player.vulnerable}", HP_RED, (60, 12, 12, 160),
-                  f"💔 Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden).")
+            pit.append(("vulnerable", str(player.vulnerable), HP_RED, (60, 12, 12, 170),
+                        f"Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden)."))
+        self._sb_strip(pit, 14, self.w // 2 - 160, 44, "left", hot)
 
-        # Energie & Gold (Mitte-links)
-        ew, eh = self._chip(f"⚡ {player.energy}/{player.max_energy}", self.font_medium, 240, 12,
-                            text_col=CYAN, fill=(20, 50, 70, 170))
-        hot.append((pygame.Rect(240, 12, ew, eh),
-                    "⚡ Energie: zahlt das Spielen von Karten. Füllt sich jede Runde wieder auf."))
-        gw, gh = self._chip(f"💰 {player.gold}", self.font_medium, 240, 42,
-                            text_col=ACCENT, fill=(60, 45, 10, 170))
-        hot.append((pygame.Rect(240, 42, gw, gh),
-                    "💰 Gold: Währung für Shop, Glücksrad und manche Karten."))
+        # ── Tier 2: Gegner-Status + Absicht (rechte Zone, rechtsbündig) ──
+        if enemy and enemy.is_alive():
+            eit = []
+            if getattr(enemy, "block", 0) > 0:
+                eit.append(("block", str(enemy.block), CYAN, (*BLUE_DARK, 160),
+                            "Block: absorbiert deinen Schaden."))
+            if enemy.burn > 0:
+                eit.append(("burn", str(enemy.burn), ORANGE, (60, 25, 10, 170),
+                            f"Brennen: −{enemy.burn} HP/Runde."))
+            if enemy.poison > 0:
+                eit.append(("poison", str(enemy.poison), GREEN, (15, 50, 20, 170),
+                            f"Gift: −{enemy.poison} HP/Runde, ignoriert Block."))
+            if enemy.vulnerable > 0:
+                eit.append(("vulnerable", str(enemy.vulnerable), RED, (60, 12, 12, 170),
+                            f"Verwundbar: nimmt +50% Schaden ({enemy.vulnerable} Runden)."))
+            if enemy.weakened > 0:
+                eit.append(("weak", str(enemy.weakened), PURPLE, (40, 20, 55, 170),
+                            f"Geschwächt: macht weniger Schaden ({enemy.weakened} Runden)."))
+            if getattr(enemy, "frost", 0) > 0:
+                eit.append(("frost", str(enemy.frost), CYAN, (15, 45, 55, 170),
+                            f"Frost: halber Angriffsschaden ({enemy.frost} Runden)."))
+            if getattr(enemy, "marked", 0) > 0:
+                eit.append(("marked", str(enemy.marked), RED, (55, 15, 15, 170),
+                            f"Markiert: nimmt +{enemy.marked} Schaden pro Treffer."))
+            if getattr(enemy, "stunned", 0) > 0:
+                eit.append(("stun", "", WHITE, (45, 45, 50, 170),
+                            "Betäubt: überspringt seinen nächsten Zug."))
+            if getattr(enemy, "doom", 0) > 0:
+                eit.append(("doom", str(enemy.doom), CURSE_COL, (40, 15, 50, 170),
+                            f"Verhängnis: in {enemy.doom} Runden ein massiver Selbstschlag."))
+            self._sb_strip(eit, self.w // 2 + 160, self.w - 16, 44, "right", hot)
+            # Absicht als kleine, rechtsbündige Zeile ganz unten
+            intent = enemy.get_intent_text()
+            arm = f"🛡{enemy.armor}  " if enemy.armor else ""
+            self._text(arm + intent, self.font_tiny, INK_DIM, self.w - 16, 88,
+                       right=True)
 
         for rect, desc in hot:
             if rect.collidepoint(mx, my):
                 self._buff_tip = (desc, rect.x, rect.bottom + 6)
                 break
-
-        # Etage / Runde (Mitte) als Pille
-        center_txt = f"ETAGE {floor_num}  ·  RUNDE {turn_num}"
-        tw = self.font_title.size(center_txt)[0]
-        px = self.w // 2 - tw // 2 - 16
-        pill = pygame.Surface((tw + 32, 34), pygame.SRCALPHA)
-        pygame.draw.rect(pill, (*PANEL_FILL, 230), (0, 0, tw + 32, 34), border_radius=17)
-        pygame.draw.rect(pill, _darken(ACCENT, 0.3), (0, 0, tw + 32, 34), 1, border_radius=17)
-        self.screen.blit(pill, (px, 14))
-        self._text(center_txt, self.font_title, ACCENT, self.w // 2, 18, center=True)
-
-        # Gegner-Status rechts
-        if enemy and enemy.is_alive():
-            self._draw_enemy_status(enemy, self.w - 296, 8)
 
     def draw_pending_buff_tooltip(self):
         """Zeichnet den (in draw_status_bar erkannten) Buff-Tooltip – zuletzt, über allem."""
@@ -365,44 +456,11 @@ class UIRenderer:
         for i, l in enumerate(lines):
             self._text(l, self.font_tiny, INK, x + 11, y + 8 + i * 16)
 
-    def _draw_enemy_status(self, enemy, x, y):
-        """Gegner-Status-Block oben rechts"""
-        max_w = self.w - x - 10
-        if enemy.is_boss:
-            pulse = int(25 * abs(math.sin(self._anim_t * 2)))
-            c = (200 + min(55, pulse), 60, 60)
-        elif enemy.is_elite:
-            c = ACCENT_SOFT
-        else:
-            c = _lighten(enemy.color, 0.4)
-
-        prefix = "👑 " if enemy.is_boss else ""
-        name_str = prefix + enemy.name
-        name_txt = self.font_small.render(name_str, True, c)
-        while name_txt.get_width() > max_w and len(name_str) > len(prefix) + 4:
-            name_str = name_str[:-1]
-            name_txt = self.font_small.render(name_str + "…", True, c)
-        self.screen.blit(name_txt, (x, y))
-
-        # HP-Bar
-        bar_w = min(280, max_w)
-        self._bar(x, y + 22, bar_w, 15, enemy.hp / enemy.max_hp, HP_RED, radius=7)
-        hp_txt = self.font_tiny.render(f"{enemy.hp}/{enemy.max_hp}", True, WHITE)
-        self.screen.blit(hp_txt, (x + bar_w // 2 - hp_txt.get_width() // 2, y + 23))
-
-        blk = f"  ⛊{enemy.block}" if getattr(enemy, "block", 0) > 0 else ""
-        info = f"🛡 {enemy.armor}{blk}   ·   {enemy.get_intent_text()}"
-        intent_txt = self.font_tiny.render(info, True, INK_DIM)
-        while intent_txt.get_width() > max_w and len(info) > 6:
-            info = info[:-1]
-            intent_txt = self.font_tiny.render(info + "…", True, INK_DIM)
-        self.screen.blit(intent_txt, (x, y + 40))
-
     def draw_damage_preview(self, enemy, dmg):
         """Zeigt den voraussichtlichen Schaden als helles Geist-Segment auf der Gegner-HP-Leiste"""
-        x = self.w - 296
-        bx, by, bh = x, 30, 15
-        bw = min(280, self.w - x - 10)
+        x = self.w - 286
+        bx, by, bh = x, 24, 18
+        bw = 270
         mx = max(1, enemy.max_hp)
         now = enemy.hp / mx
         after = max(0, enemy.hp - dmg) / mx
@@ -417,7 +475,7 @@ class UIRenderer:
 
     def draw_player_hp_preview(self, player, heal, incoming):
         """Vorschau auf der eigenen HP-Leiste: Heilung (grün vor) + Schaden (rot hinten)."""
-        bx, by, bw, bh = 14, 14, 210, 20
+        bx, by, bw, bh = 14, 12, 210, 20
         mx = max(1, player.max_hp)
         hp = player.hp
 
@@ -627,22 +685,24 @@ class UIRenderer:
         self.screen.blit(plate, (body_x - (nw + 24) // 2, y + height - 18))
         self._text(name, nf, ncol, body_x, y + height - 14, center=True)
 
-        # Status-Icons über dem Kopf (zwei Reihen, damit es nicht zu breit wird)
-        conds = [
-            (enemy.burn > 0,       f"🔥{enemy.burn}",      ORANGE),
-            (enemy.poison > 0,     f"☠️{enemy.poison}",     GREEN),
-            (enemy.vulnerable > 0, f"🎯{enemy.vulnerable}", RED),
-            (enemy.weakened > 0,   f"😵{enemy.weakened}",   PURPLE),
-            (getattr(enemy, "frost", 0) > 0,   f"❄️{enemy.frost}",   CYAN),
-            (getattr(enemy, "marked", 0) > 0,  f"🩸{enemy.marked}",  RED_DARK),
-            (getattr(enemy, "stunned", 0) > 0, "💫",                 WHITE),
-            (getattr(enemy, "doom", 0) > 0,    f"💀{enemy.doom}",    CURSE_COL),
-        ]
-        active = [(t, c) for ok, t, c in conds if ok]
-        for i, (txt, col) in enumerate(active):
-            row = i // 4
-            sx = body_x - 50 + (i % 4) * 36
-            self._text(txt, self.font_small, col, sx, body_y - 84 - row * 22, shadow=True)
+        # (Gegner-Status-Chips stehen jetzt in der oberen Leiste, mit Hover-Erklärung.)
+
+        # Slot-Boss: zuletzt gedrehte Symbole über dem Boss anzeigen (kleiner Automat)
+        last = getattr(enemy, "last_slot", None)
+        if last:
+            import entities as _ent
+            cw, n = 46, len(last)
+            pw = n * cw + 16
+            pcx = body_x - pw // 2
+            pcy = body_y - 118
+            panel = pygame.Surface((pw, 54), pygame.SRCALPHA)
+            pygame.draw.rect(panel, (30, 22, 10, 230), (0, 0, pw, 54), border_radius=10)
+            pygame.draw.rect(panel, GOLD, (0, 0, pw, 54), 2, border_radius=10)
+            self.screen.blit(panel, (pcx, pcy))
+            for i, sym in enumerate(last):
+                em = _ent.SLOT_BOSS_EMOJI.get(sym, "?")
+                self._text(em, self.font_large, WHITE, pcx + 8 + i * cw + cw // 2,
+                           pcy + 8, center=True)
 
         # Block-Schild (gut sichtbar, damit klar ist warum Schaden absorbiert wird)
         if getattr(enemy, "block", 0) > 0:
@@ -862,8 +922,19 @@ class UIRenderer:
     # ═══════════════════════════════════════════════
 
     def draw_combat_log(self, log_entries, x, y, w, h, scroll=0):
-        self._panel((x, y, w, h), radius=12)
-        max_lines = (h - 24) // 15
+        # Casino-Look: dunkler Filz-Korpus + Messing-Doppelrahmen + Gold-Header
+        felt = self._panel_surface(w, h, 12, (26, 34, 28), (14, 20, 16),
+                                   GOLD_DARK, 2)
+        self.screen.blit(felt, (x, y))
+        pygame.draw.rect(self.screen, (*GOLD, 60), (x + 3, y + 3, w - 6, h - 6),
+                         1, border_radius=10)
+        # Gold-Header-Band
+        head = pygame.Surface((w - 8, 22), pygame.SRCALPHA)
+        pygame.draw.rect(head, (*GOLD_DARK, 235), (0, 0, w - 8, 22),
+                         border_top_left_radius=9, border_top_right_radius=9)
+        self.screen.blit(head, (x + 4, y + 4))
+
+        max_lines = (h - 32) // 15
         total = len(log_entries)
         end = max(max_lines, total - scroll)
         entries = log_entries[max(0, end - max_lines):end]
@@ -871,18 +942,16 @@ class UIRenderer:
         old_clip = self.screen.get_clip()
         self.screen.set_clip(pygame.Rect(x, y, w, h))
 
-        hdr = "KAMPFLOG  ·  Mausrad scrollt" if total > max_lines else "KAMPFLOG"
-        self._text(hdr, self.font_tiny, _darken(ACCENT, 0.1), x + 12, y + 6)
-        pygame.draw.line(self.screen, (*PANEL_LINE, 120), (x + 10, y + 22), (x + w - 10, y + 22))
+        hdr = "📜 KAMPFLOG  ·  Mausrad scrollt" if total > max_lines else "📜 KAMPFLOG"
+        self._text(hdr, self.font_tiny, (30, 22, 6), x + 12, y + 7)
+        if scroll > 0:
+            self._text("▲ älter", self.font_tiny, (60, 44, 10), x + w - 58, y + 7)
 
         for i, entry in enumerate(entries):
             newest = (i == len(entries) - 1) and scroll == 0
             ratio = (i + 1) / len(entries) if entries else 1
-            color = CYAN if newest else _lerp_color(INK_FAINT, INK, ratio)
-            self._text(entry, self.font_tiny, color, x + 12, y + 28 + i * 15)
-
-        if scroll > 0:
-            self._text("▲ älter", self.font_tiny, ACCENT, x + w - 60, y + 6)
+            color = GOLD if newest else _lerp_color(INK_FAINT, INK, ratio)
+            self._text(entry, self.font_tiny, color, x + 12, y + 32 + i * 15)
         self.screen.set_clip(old_clip)
 
     # ═══════════════════════════════════════════════
@@ -918,6 +987,34 @@ class UIRenderer:
         tsurf = self.font_medium.render(text, True, text_color)
         self.screen.blit(tsurf, (x + w // 2 - tsurf.get_width() // 2,
                                  y - lift + h // 2 - tsurf.get_height() // 2))
+        return rect
+
+    def draw_slot_button(self, x, y, w, h, pulsing=True):
+        """Thematischer 'Slot drehen'-Knopf im Casino-Cabinet-Look."""
+        rect = pygame.Rect(x, y, w, h)
+        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        lift = 2 if hovered else 0
+        # Glühen
+        p = abs(math.sin(self._anim_t * 3)) if pulsing else 1.0
+        ga = int((60 if hovered else 0) + 80 * p)
+        if ga > 0:
+            glow = pygame.Surface((w + 22, h + 22), pygame.SRCALPHA)
+            pygame.draw.rect(glow, (255, 200, 70, ga), (0, 0, w + 22, h + 22), border_radius=18)
+            self.screen.blit(glow, (x - 11, y - 11 - lift))
+        self._shadow((x, y - lift, w, h), radius=13, spread=8, alpha=140, dy=6)
+        # Cabinet: dunkelroter Rahmen + Gold-Korpus
+        yy = y - lift
+        pygame.draw.rect(self.screen, (90, 20, 24), (x, yy, w, h), border_radius=13)
+        body = self._panel_surface(w - 8, h - 8, 10, (255, 224, 120), (210, 150, 30),
+                                   (255, 240, 180), 2)
+        self.screen.blit(body, (x + 4, yy + 4))
+        # kleines Reel-Fenster links
+        rfx, rfy, rfw, rfh = x + 12, yy + h // 2 - 10, 20, 20
+        pygame.draw.rect(self.screen, (40, 28, 12), (rfx, rfy, rfw, rfh), border_radius=4)
+        self._text("🎰", self.font_small, WHITE, rfx + rfw // 2, rfy + 1, center=True)
+        # Text
+        self._text("SLOT DREHEN", self.font_title, (70, 30, 6), x + w // 2 + 8,
+                   yy + h // 2 - 11, center=True, shadow=False)
         return rect
 
     # ═══════════════════════════════════════════════
@@ -1642,7 +1739,7 @@ class UIRenderer:
     # SHOP
     # ═══════════════════════════════════════════════
 
-    def draw_shop(self, items, player, message="", purchased=None, gamble_bet=25):
+    def draw_shop(self, items, player, message="", purchased=None, gamble_bet=25, reroll_cost=0):
         purchased = purchased or set()
         self.draw_background()
         merch = assets.by_height("ui", "merchant", 116)
@@ -1653,6 +1750,13 @@ class UIRenderer:
                    self.font_small, INK_DIM, self.w // 2, 74, center=True)
         self._chip(f"💰 Dein Gold: {player.gold}", self.font_title, self.w // 2 - 90, 100,
                    text_col=ACCENT, fill=(60, 45, 12, 200))
+        # Reroll-Button (Items neu mischen) – rechts neben dem Gold
+        reroll_rect = pygame.Rect(self.w // 2 + 150, 100, 170, 34)
+        can_reroll = reroll_cost > 0 and player.gold >= reroll_cost
+        self.draw_button(f"🔄 Neu mischen ({reroll_cost}💰)", reroll_rect.x, reroll_rect.y,
+                         reroll_rect.w, reroll_rect.h,
+                         color=BLUE if can_reroll else GREY_DARK, text_color=WHITE,
+                         disabled=not can_reroll)
 
         item_rects = []
         item_w, item_h = 196, 156
@@ -1728,7 +1832,7 @@ class UIRenderer:
         leave_rect = pygame.Rect(self.w // 2 - 150, self.h - 72, 300, 50)
         self.draw_button("Weiter zur nächsten Etage", leave_rect.x, leave_rect.y,
                          leave_rect.w, leave_rect.h, color=GREEN, text_color=BLACK, pulsing=True)
-        return item_rects, gamble_rect, leave_rect
+        return item_rects, gamble_rect, leave_rect, reroll_rect
 
     def draw_card_grid(self, player, title, accent, only_upgradeable=False, scroll=0):
         """Karten-Auswahlraster (Verbrennen oder Aufwerten). Gibt [(rect, card)] zurück.
@@ -1801,7 +1905,9 @@ class UIRenderer:
 
         mouse = pygame.mouse.get_pos()
         n = len(classes)
-        cw, ch, gap = 320, 480, 30
+        gap = 18
+        ch = 480
+        cw = min(300, (self.w - 60 - (n - 1) * gap) // max(1, n))  # passt auch für 5 Klassen
         total = n * cw + (n - 1) * gap
         sx0 = self.w // 2 - total // 2
         sy = 150

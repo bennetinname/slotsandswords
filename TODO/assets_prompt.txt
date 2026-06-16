@@ -1,14 +1,16 @@
 ====================================================================
- SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.15.0)
+ SLOTS & SWORDS  –  ASSET-PROMPTS (offene Assets, Stand v1.16.0)
 ====================================================================
-Bild-Prompts fuer alles, wofuer noch Grafik fehlt. Hier stehen NUR noch
-nicht vorhandene Assets. Aufbau: [STYLE] + [SUBJECT] + [TECH]. STYLE/TECH
-einmal unten, pro Bild nur den SUBJECT-Teil tauschen. Gleichen Seed + ganzen
-Block zusammen generieren -> konsistenter Stil.
+Bild-Prompts fuer alles, wofuer noch Grafik fehlt. Aufbau:
+[STYLE] + [SUBJECT] + [TECH]. STYLE/TECH einmal unten, pro Bild nur den
+SUBJECT-Teil tauschen. Gleichen Seed + ganzen Block zusammen generieren
+-> konsistenter Stil. Bis die Bilder da sind nutzt das Spiel den
+Procedural-Fallback (farbige Platzhalter), nichts bricht.
 
 EINBINDEN: Sprites auf MAGENTA-Hintergrund (#FF00FF), klar abgegrenzt,
 Abstand lassen (ein grosses Sheet ist ok). Claude schneidet per
 Connected-Components, keyt Magenta transparent, trimmt und legt sie ab.
+AUSNAHME Hintergruende: VOLLBILD ~1200x800, KEIN Magenta, randlos, dunkel.
 
 --------------------------------------------------------------------
 [STYLE]
@@ -23,16 +25,93 @@ crisp pixels, nearest-neighbor, no anti-aliasing on outer edge,
 export PNG with alpha, generate at 4x then downscale to target size.
 
 ====================================================================
- AKTUELL OFFEN: (nichts)
+ 1) NEUE GEGNER v1.16  (~140x180, Bosse ~200x220, Magenta-HG)
 ====================================================================
-Alle aktuell im Spiel genutzten Inhalte haben eigene Sprites. Wenn neuer
-Content dazukommt, hier die noetigen Prompts ergaenzen.
+Ziel: assets/enemies/<datei>.png  (Dateiname = unten in Klammern)
+
+ AKT 7 "Der Geister-Saloon" (Wild-West-Untote):
+  (revolverskelett)   – skeletal gunslinger, two revolvers, tattered
+                        cowboy hat & poncho, glowing eye sockets
+  (pokergeist)        – ghostly card-shark, translucent, holding a fan of
+                        cards, sly grin, gold coins floating
+  (whiskeyschemen)    – drunken spirit wisp clutching a whiskey bottle,
+                        wobbly, hiccuping, amber glow
+  (boss_docknochenhand) – BOSS: undead bounty-hunter sheriff, long duster
+                        coat, star badge, twin guns, skull face (~200x220)
+
+ AKT 8 "Die Spiegelhalle" (Illusion/Doppelgaenger, silber-violett):
+  (spiegelscherbe)    – animated jagged mirror shard with a sharp face
+                        reflected in it, silver-blue, razor edges
+  (trugbild)          – faint translucent humanoid illusion, flickering,
+                        barely-there outline, purple shimmer
+  (zerrbild)          – warped funhouse-mirror reflection of a gambler,
+                        stretched & distorted, eerie
+  (boss_spiegelich)   – BOSS: a dark mirror-double of the hero, same
+                        silhouette but shadowy/silver, cracked-glass aura (~200x220)
+
+ AKT 9 "Der Hochroller-Salon" (Gier/VIP, gold):
+  (goldwaechter)      – heavily armored golden guardian, ornate plate,
+                        slow & bulky, gem-studded shield
+  (vipdaemon)         – sleek high-roller demon in a gold tuxedo, horns,
+                        cigar, fistful of chips, arrogant
+  (saloncroupier)     – elite croupier demon, golden waistcoat, rake &
+                        roulette ball, sinister smile
+  (boss_hausherr)     – BOSS: the casino kingpin / "Der Hausherr", fat
+                        opulent demon-lord on a throne of gold, rings,
+                        cigar, crown (~200x220)
+
+ AKT 10 "Der Maschinenraum" (Uhrwerk, stahl-orange):
+  (zahnradgolem)      – massive golem built from brass gears & cogs,
+                        steam vents, glowing core
+  (wartungsautomat)   – clunky maintenance robot with welding arm &
+                        repair tools, oil-stained, single lens eye
+  (dampfschlaeger)    – steam-powered brute automaton, huge piston arms,
+                        pressure gauges, hissing steam
+  (boss_jackpotautomat) – BOSS: a living slot machine cabinet, three reel
+                        eyes, gaping coin-slot mouth, brass & gold, lever
+                        arm, menacing, neon trim (~200x220)
+
+ AKT 11 "Die Leere" (kosmisch/eldritch, void-violett/cyan):
+  (leerenwandler)     – void wanderer, cloaked shadow with starry black
+                        body, cold cyan glow, hollow
+  (sternenfresser)    – star-eater maw, cosmic creature swallowing tiny
+                        stars, swirling galaxy belly
+  (echodesnichts)     – echo of nothingness, faint ghostly ripple in
+                        space, violet voidlight, half-there
+  (boss_croupiernichts) – BOSS: "Der Croupier des Nichts", cosmic dealer
+                        in a starfield cloak, dealing cards made of void,
+                        skull-of-galaxies face, fate aura (~200x220)
+
+====================================================================
+ 2) NEUE AKT-HINTERGRUENDE  (VOLLBILD ~1200x800, KEIN Magenta, randlos)
+====================================================================
+Dunkel + leicht unscharf (Text davor lesbar), Vorbild bg_kneipe.
+Ziel: assets/ui/<name>.png  (Die Leere nutzt bereits bg_void.)
+  (bg_saloon)   – grimy undead western saloon: dusty wooden bar, broken
+                  piano, swinging doors, ghost-lit lanterns, tumbleweed
+  (bg_mirror)   – endless hall of dark ornate mirrors, silver-violet
+                  reflections, cracked glass, candlelight
+  (bg_vip)      – opulent high-roller VIP lounge: gold walls, velvet,
+                  chandeliers, roulette tables, decadent & sinister
+  (bg_machine)  – clanking machine room: giant brass gears, steam pipes,
+                  glowing gauges, oily catwalks, orange furnace light
+
+====================================================================
+ 3) NEUE KLASSEN-PORTRAITS  (~96x96 Kopf/Brust, Magenta-HG)
+====================================================================
+Stil wie die bestehenden Klassen-Portraits (class_knight etc.).
+Ziel: assets/ui/<name>.png
+  (class_croupiere) – confident female croupier, dark-pink waistcoat, top
+                      hat, fanning cards, sly wink, casino glam-noir
+  (class_alchemist) – hooded alchemist with goggles, holding a bubbling
+                      green potion, vials on a bandolier, sickly glow
 
 --------------------------------------------------------------------
-BEREITS EINGEBAUT (Referenz, NICHT mehr noetig): alle Gegner-Sprites
-inkl. v1.12 (Kanalisation/Frostpalast/Unterwelt + Bosse), alle 6 Akt-
-Hintergruende + void, alle Status-Effekt-Icons, Klassen-Portraits, ALLE
-Relikt-Icons (inkl. v1.12: frostbite/branding/rage_totem/focus_lens/
-time_glass/card_master/lucky_coin/thorn_crown/scavenger/berserker_blood/
-doom_bell/ice_heart), ALLE Slot-Modus-Joker-Icons (assets/jokers/),
-Karten-Effekt-Icons, Slot-Cabinet, Casino-Event, Logo/Icon.
+PRIORITAET: 1) Bosse (v.a. boss_jackpotautomat)  2) Akt-Hintergruende
+            3) normale Gegner  4) Klassen-Portraits
+--------------------------------------------------------------------
+
+BEREITS EINGEBAUT (Referenz, NICHT noetig): alle Gegner/Bosse + Akt-BGs
+bis v1.12, alle Status-Icons, alle Relikt-Icons inkl. v1.12, Slot-Modus-
+Joker-Icons, Karten-Effekt-Icons, Slot-Cabinet, Klassen-Portraits
+knight/gambler/witch, Logo/Icon.

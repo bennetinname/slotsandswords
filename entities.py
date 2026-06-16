@@ -3,6 +3,10 @@
 import random
 from constants import *
 
+# Emojis für die Symbole des Slot-Bosses (Jackpot-Automat)
+SLOT_BOSS_EMOJI = {"SKULL": "💀", "HEART": "❤️", "TRAP": "🪤", "SHIELD": "🛡️",
+                   "MONEY": "💰", "FIRE": "🔥", "DICE": "🎲"}
+
 
 class Card:
     """Eine Karte im Deck des Spielers"""
@@ -140,7 +144,8 @@ class Player:
         self.poison = 0        # Gift: Schaden pro Runde, ignoriert Block (sinkt um 1)
         self.regen = 0         # Regeneration: heilt pro Runde (sinkt um 1)
         self.thorns = 0        # Dornen: reflektiert Schaden bei Gegnertreffer (ganzer Kampf)
-        self.strength = 0      # Schadensbonus
+        self.strength = 0      # Schadensbonus DIESEN Kampf (resettet je Kampf)
+        self.perm_strength = 0 # dauerhafte Stärke-Basis (nur seltene Quellen)
         self.lucky = 0         # Slot-Bonus-Runden
         self.shield_up = False # Doppel-Block diese Runde
         self.reflect = False   # Reflektiert nächsten Schaden
@@ -264,8 +269,12 @@ class Player:
         if self.poison > 0:
             self.take_damage(self.poison, ignore_block=True)
             self.poison -= 1
-        # Nur nachziehen (ungespielte Karten bleiben in der Hand)
-        self.draw_hand()
+        # Nachziehen bis zu einer ZUFÄLLIGEN Ziel-Handgröße (Hand-RNG):
+        # mal eine fette Hand, mal eine magere – ungespielte Karten bleiben.
+        target = random.randint(HAND_RNG_MIN, HAND_RNG_MAX)
+        need = target - len(self.hand)
+        if need > 0:
+            self.draw_hand(need)
     
     def take_damage(self, amount, ignore_block=False):
         """Nimmt Schaden, reduziert durch Block"""
@@ -360,6 +369,8 @@ class Enemy:
         self._undying_used = False
         self.jam_next = False        # manipuliert nächste Slot-Runde des Spielers
         self.turn_count = 0
+        self.last_slot = None        # Slot-Boss: zuletzt gedrehte Symbole (für UI)
+        self.last_slot_timer = 0.0
 
         # Status
         self.burn = 0
@@ -385,6 +396,10 @@ class Enemy:
     def _randomize_intent(self):
         """Bestimmt die nächste Aktion des Gegners"""
         roll = random.random()
+        if self.mechanic == "slot_boss":
+            self.intent = "spin"           # dreht seinen eigenen Automaten
+            self.intent_value = 0
+            return
         if self.is_boss:
             # Bosse: gefährlich, aber mit Verschnaufpausen (fairer)
             if roll < 0.45:
@@ -472,6 +487,7 @@ class Enemy:
             "heavy_attack": f"💢 {self.intent_value} Schaden (stark!)",
             "defend":       f"🛡️ {self.intent_value} Block",
             "taunt":        "😤 Verspottet dich (−2 Stärke!)",
+            "spin":         "🎰 Dreht seinen Automaten…",
         }
         return icons.get(self.intent, "?")
     
@@ -534,6 +550,19 @@ class Enemy:
             result.append(f"💫 {self.name} ist betäubt und kann nicht handeln!")
             self._randomize_intent()
             return result
+
+        # Slot-Boss: dreht seinen EIGENEN Automaten statt normalem Zug
+        if self.mechanic == "slot_boss":
+            result.extend(self._slot_boss_turn(player))
+            self._randomize_intent()
+            return result
+
+        # Leeren-Wandler: frisst deinen Block VOR dem Schlag
+        if (self.mechanic == "block_eater" and self.intent in ("attack", "heavy_attack")
+                and player.block > 0):
+            eaten = player.block
+            player.block = 0
+            result.append(f"🕳️ {self.name} verschlingt deinen Block ({eaten})!")
 
         def _atk_dmg(v):
             if self.weakened > 0:
@@ -717,8 +746,68 @@ class Enemy:
                 extra = player.take_damage(max(1, self.damage // 2))
                 out.append(f"🎡 Schicksalsrad: DOPPELSCHLAG! ({extra} Extra-Schaden)")
 
+        elif m == "mirror_boss" and attacked:
+            # Spiegel-Ich: Bonus-Schaden skaliert mit DEINER Macht
+            bonus = player.strength + player.block // 3 + len(player.relics)
+            if bonus > 0:
+                extra = player.take_damage(bonus)
+                out.append(f"🪞 {self.name} spiegelt deine Macht! (+{extra} Schaden)")
+
         return out
-    
+
+    # ─── Slot-Boss: dreht seinen eigenen 3-Walzen-Automaten ───
+    SLOT_BOSS_FACES = ["SKULL", "SKULL", "HEART", "TRAP", "SHIELD", "MONEY", "FIRE", "DICE"]
+
+    def _slot_boss_turn(self, player):
+        """Der Jackpot-Automat dreht; das Ergebnis bestimmt die Aktion.
+        Die gewürfelten Symbole landen in self.last_slot (für die UI-Anzeige)."""
+        names = [random.choice(self.SLOT_BOSS_FACES) for _ in range(3)]
+        self.last_slot = names
+        self.last_slot_timer = 2.2
+        out = [f"🎰 {self.name} dreht: {' '.join(SLOT_BOSS_EMOJI.get(n, '?') for n in names)}"]
+        triple = len(set(names)) == 1
+        dmg = self.damage
+        if triple:
+            sym = names[0]
+            if sym == "SKULL":
+                hit = player.take_damage(int(dmg * 2.4))
+                out.append(f"💀💀💀 VOLLTREFFER! {hit} Schaden!")
+            elif sym == "HEART":
+                h = self.heal(int(self.max_hp * 0.25))
+                out.append(f"❤️❤️❤️ Der Automat heilt sich um {h}!")
+            elif sym == "TRAP":
+                self.hp = max(0, self.hp - int(self.max_hp * 0.12))
+                out.append("🪤🪤🪤 FEHLZÜNDUNG! Der Automat schädigt sich selbst!")
+            elif sym == "SHIELD":
+                self.block += dmg * 2
+                out.append(f"🛡️🛡️🛡️ Bunker-Modus! (+{dmg*2} Block)")
+            elif sym == "MONEY":
+                stolen = min(player.gold, 30)
+                player.gold -= stolen
+                hit = player.take_damage(dmg)
+                out.append(f"💰💰💰 ABZOCKE! −{stolen} Gold und {hit} Schaden!")
+            else:
+                hit = player.take_damage(int(dmg * 1.8)); player.burn += 3
+                out.append(f"🔥🔥🔥 ÜBERHITZUNG! {hit} Schaden + 3 Brennen!")
+            return out
+        # Kein Drilling: jedes Symbol wirkt einzeln (mild)
+        for sym in names:
+            if sym == "SKULL":
+                player.take_damage(max(1, dmg // 2))
+            elif sym == "FIRE":
+                player.take_damage(max(1, dmg // 3)); player.burn += 1
+            elif sym == "HEART":
+                self.heal(8)
+            elif sym == "SHIELD":
+                self.block += dmg // 2
+            elif sym == "MONEY":
+                s = min(player.gold, 8); player.gold -= s
+            elif sym == "TRAP":
+                self.hp = max(0, self.hp - 4)
+            # DICE: nichts (Glück gehabt)
+        out.append("Die Walzen rattern – gemischtes Ergebnis.")
+        return out
+
     def get_gold_reward(self):
         return random.randint(*self.gold_reward)
     

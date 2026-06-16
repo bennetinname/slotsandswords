@@ -5,21 +5,27 @@ TODO / IDEEN – Slots & Swords
 
 OFFEN
 --------------------------------------------------------------------
-(aktuell nichts Dringendes – siehe „Ideen" weiter unten in der Historie/
-CHANGELIST.txt für größere Brocken wie weitere Klassen, Boss-Themen-Musik,
-Multiplikator-System, mehr Slot-Joker etc.)
+- Gegner-Sprites / Akt-Hintergründe / Klassen-Portraits für v1.16-Content
+  generieren (Prompts stehen in assets_prompt.txt) – aktuell Procedural-Fallback.
+- Balance-Feinschliff aus echtem Spielen (Gegner-Skalierung spät, Slot-
+  Negativ-Häufigkeit, neue Bosse).
+- Zweiter Modus „Sei das Haus" (Konzept besprochen) als möglicher großer Brocken.
 
 
-ERLEDIGT in v1.15.0 (Details in CHANGELIST.txt)
+ERLEDIGT in v1.16.0 (Details in CHANGELIST.txt)
 --------------------------------------------------------------------
-- [x] Spiel schwerer: Gegner-HP skaliert steiler (keine 1-Shots mehr).
-- [x] Anspruchsvollere Mechanik: skalierende Gegner-RÜSTUNG bremst
-      Stärke-Stacking/Multi-Hit.
-- [x] Gegner-Block/Schild skaliert mit der Tiefe (nicht mehr Anfangswert).
-- [x] Stärke-Bug: Wut-Runaway gedeckelt (max 8) -> keine +150-Stärke mehr.
-- [x] Viele Relikte: Mehrspalten-Layout (bleibt links vom Avatar) + "+N".
-- [x] Status-Effekte überlappen nicht mehr mit dem Gold (Umbruch links).
-- [x] Relikt-Hovertext liegt jetzt im Vordergrund (über den Karten).
-- [x] Ausgewählte/gehoverte Karte größer (1,4x) – besser lesbar.
-- [x] Asset-Prompts aufgeräumt: nur noch fehlende Assets + Styleguide.
-- [x] Frostpalast-Hintergrund: Rahmen weggeschnitten, füllt randlos.
+- [x] Mehr Gold-Sinks (Reroll, Relikt-Händler, Mega-Jackpot, skalierende Preise).
+- [x] Stärke gefixt: jetzt PRO KAMPF, kein Schneeball mehr; Stärke-Karten
+      geben Kampf-Stärke, nur seltene Quellen permanent.
+- [x] Gegner-Buffs/Debuffs klar sichtbar + Hover-Erklärung (neue Leiste).
+- [x] Game schwerer & glücksabhängiger (Stärke-Nerf + böse Slots + Hand-RNG).
+- [x] Viel mehr Slot-Symbole inkl. Negativ-Symbole; Slots können den Spieler
+      bestrafen; Stärke entschärft.
+- [x] 5 neue Akte (7–11) mit 20 Gegnern + 5 Bossen + Asset-Prompts.
+- [x] Zufällige Handkartenzahl pro Zug (3–7).
+- [x] Slot-Boss „Der Jackpot-Automat" dreht selbst, mit sichtbarer Anzeige.
+- [x] Klassen-Buffs für alle 5 Klassen (statt nur Relikte).
+- [x] 2 neue Klassen (Croupière, Alchemist) + Asset-Prompts.
+- [x] Stärke-Karten geben Stärke nur noch für den Kampf (nicht permanent).
+- [x] Kampflog + Spin-Button ins Theme (prozedural, Casino-Look).
+- [x] Obere Leiste grundlegend neu (zweistöckig, begrenzte Status-Zonen).

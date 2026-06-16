@@ -226,7 +226,7 @@ class CardEffectResolver:
         
         elif effect == "train":
             player.strength += 2
-            logs.append("🏋️ KRAFTTRAINING: +2 Stärke dauerhaft!")
+            logs.append("🏋️ KRAFTTRAINING: +2 Stärke (diesen Kampf)!")
         
         elif effect == "loaded_dice":
             player.lucky += 2

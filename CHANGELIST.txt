@@ -1,6 +1,52 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.16.0 – 2026-06-16]  RIESEN-UPDATE 3: AKTE, KLASSEN, SLOT-BOSS & BALANCE
+--------------------------------------------------------------------------
+BALANCE / SCHWIERIGKEIT:
+* STÄRKE-REWORK: Stärke ist jetzt PRO KAMPF und wird zu Kampfbeginn auf die
+  permanente Basis zurückgesetzt – kein +150-Stärke-Schneeball mehr über
+  Kämpfe hinweg. Nur noch seltene Quellen (Krafttrank, Trainings-Event,
+  Tages-Bonus) geben DAUERHAFTE Stärke. Wut/Fokus/Verwundbar resetten auch.
+* HAND-RNG: pro Zug eine zufällige Ziel-Handgröße (3–7) – mehr Varianz, Glück
+  zählt. Die großen Bursts kommen jetzt aus dem Slot, nicht aus Dauerstärke.
+* BÖSE SLOTS: neue Negativ-Symbole 🪤 Falle (Selbstschaden), 🕳️ Pechloch
+  (−Gold/−Energie), 🧿 Fluch (Block weg/verwundbar) – einzeln spürbar,
+  gehäuft brutal. Plus 🎰 Wild (zählt als jedes Symbol), 🔔 Glocke, 💍 Edelstein.
+
+GOLD-SINKS:
+* Shop-Preise steigen mit der Tiefe. Reroll-Button (mischt die Items gegen
+  Gold neu, wird teurer). Relikt-Händler (kaufbares Relikt – großer Sink).
+  Glücksspiel um einen sehr seltenen Mega-Jackpot (15×) erweitert.
+
+NEUER CONTENT:
+* 5 NEUE AKTE (7–11): Geister-Saloon, Spiegelhalle, Hochroller-Salon,
+  Maschinenraum, Die Leere – mit 20 neuen Gegnern + 5 Bossen.
+* Neue Mechaniken: Spiegel-Boss (Schaden skaliert mit DEINER Macht),
+  Leeren-Wandler (frisst deinen Block), und der SLOT-BOSS:
+  »DER JACKPOT-AUTOMAT« dreht in seinem Zug seinen eigenen 3-Walzen-Slot
+  (sichtbar über dem Boss), das Ergebnis bestimmt die Aktion (Drilling 💀=
+  Volltreffer, ❤️=heilt, 🪤=Fehlzündung, 🛡=Bunker, 💰=Abzocke, 🔥=Überhitzung).
+* 2 NEUE KLASSEN: 🃏 Croupière (Slot/Glück) und ⚗️ Alchemist (Gift) – je
+  eigenes Deck & Start-Relikt.
+* KLASSENBUFFS für alle 5: Ritter +3 Block/Runde · Hochstapler erste Karte
+  −1 Kosten · Hexe Flüche fressen sich pro Runde tiefer · Croupière startet
+  mit +1 Glücksrunde · Alchemist +2 Gift/Runde auf vergiftete Gegner.
+
+UI:
+* Obere Leiste komplett neu (zweistöckig): Ressourcen oben, Status-Zeilen
+  unten in begrenzten Zonen (laufen nie mehr über). Gegner-Buffs/Debuffs
+  sind jetzt klar sichtbar mit Hover-Erklärung.
+* Kampflog im Filz-/Messing-Look, eigener Casino-„Slot drehen"-Button.
+* Klassenauswahl zeigt alle 5 Klassen sauber (adaptive Kartenbreite).
+
+ASSETS:
+* Asset-Prompts für die neuen Sprites geschrieben (20 Gegner, 4 Akt-BGs,
+  2 Klassen-Portraits) – bis dahin Procedural-Fallback.
+
+Saves bleiben gültig (neue Felder additiv/defensiv, perm_strength erbt den
+alten Stärke-Wert).
+
 [v1.15.0 – 2026-06-15]  SCHWIERIGKEIT, BALANCE & UI-POLISH
 ----------------------------------------------------------
 BALANCE / SCHWIERIGKEIT (Spiel war zu leicht – Stärke-Schneeball):

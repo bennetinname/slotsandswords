@@ -212,22 +212,37 @@ class SlotMachine:
         self.glow_timer = max(0, self.glow_timer - 0.016)
         return False
     
+    @staticmethod
+    def _resolve_wild(names):
+        """WILD zählt als jedes Symbol: ersetzt jedes WILD durch das häufigste
+        echte Symbol (maximiert Paare/Drillinge). Alle WILD -> Jackpot (DIAMOND)."""
+        if "WILD" not in names:
+            return names
+        from collections import Counter
+        non = [n for n in names if n != "WILD"]
+        if not non:
+            return ["DIAMOND", "DIAMOND", "DIAMOND"]
+        most = Counter(non).most_common(1)[0][0]
+        return [most if n == "WILD" else n for n in names]
+
     def evaluate(self, player, enemy):
         """Wertet Slot-Ergebnisse aus, gibt Liste von Effekt-Strings zurück"""
         if not self.results:
             return []
-        
+
         effects = []
-        names = [r["name"] for r in self.results]
-        
+        names = self._resolve_wild([r["name"] for r in self.results])
+        if names != [r["name"] for r in self.results]:
+            effects.append("🎰 WILD verwandelt sich!")
+
         # Dreier-Kombos (erste prüfen)
         if len(set(names)) == 1:
             sym = names[0]
             effects.extend(self._triple_combo(sym, player, enemy))
         else:
-            # Einzel-Effekte jedes Symbols
-            for sym_data in self.results:
-                eff = self._single_effect(sym_data["name"], player, enemy)
+            # Einzel-Effekte jedes Symbols (aufgelöste Namen, WILD bereits ersetzt)
+            for nm in names:
+                eff = self._single_effect(nm, player, enemy)
                 if eff:
                     effects.append(eff)
             
@@ -281,7 +296,7 @@ class SlotMachine:
             effects.extend(self._chaos_effect(player, enemy, multiplier=3))
         elif sym == "STAR":
             player.strength += 3
-            effects.append("⭐⭐⭐ STERNENPOWER! +3 Stärke permanent!")
+            effects.append("⭐⭐⭐ STERNENPOWER! +3 Stärke (diesen Kampf)!")
         elif sym == "BOMB":
             dmg = 40
             self_dmg = 10
@@ -336,6 +351,25 @@ class SlotMachine:
         elif sym == "CLOWN":
             effects.append("🤡🤡🤡 ZIRKUS! Pure Anarchie folgt:")
             effects.extend(self._chaos_effect(player, enemy, multiplier=2))
+        elif sym == "BELL":
+            player.add_gold(18); healed = player.heal_hp(15)
+            effects.append(f"🔔🔔🔔 GLOCKENSPIEL! +18 Gold, +{healed} HP!")
+        elif sym == "GEM":
+            player.add_gold(60)
+            effects.append("💍💍💍 EDELSTEIN-JACKPOT! +60 Gold!")
+        elif sym == "TRAP":
+            dmg = 28
+            player.take_damage(dmg, ignore_block=True)
+            effects.append(f"🪤🪤🪤 TODESFALLE! {dmg} Selbstschaden – aua!")
+        elif sym == "PIT":
+            lost = min(player.gold, 40)
+            player.gold -= lost
+            player.energy = max(0, player.energy - 1)
+            effects.append(f"🕳️🕳️🕳️ ABGRUND! −{lost} Gold und −1 Energie!")
+        elif sym == "CURSE":
+            player.block = 0
+            player.vulnerable += 3
+            effects.append("🧿🧿🧿 DREIFACHER FLUCH! Block weg, +3 Verwundbar!")
         else:
             effects.append(f"TRIPLE {sym}! Etwas Seltsames passiert...")
         return effects
@@ -440,8 +474,33 @@ class SlotMachine:
         elif sym == "CLOWN":
             effs = self._chaos_effect(player, enemy)
             return "🤡 " + (effs[0] if effs else "Clown stolpert weg.")
+        elif sym == "BELL":
+            player.add_gold(random.randint(3, 7))
+            player.heal_hp(random.randint(3, 6))
+            return "🔔 Glocke: etwas Gold & Heilung"
+        elif sym == "GEM":
+            player.add_gold(random.randint(12, 22))
+            return "💍 Edelstein: Gold"
+        # ─── NEGATIV-Symbole: einzeln spürbar ───
+        elif sym == "TRAP":
+            dmg = random.randint(6, 11)
+            player.take_damage(dmg, ignore_block=True)
+            return f"🪤 Falle! {dmg} Selbstschaden"
+        elif sym == "PIT":
+            if player.gold >= 5 and random.random() < 0.6:
+                lost = min(player.gold, random.randint(8, 16))
+                player.gold -= lost
+                return f"🕳️ Pechloch: −{lost} Gold"
+            player.energy = max(0, player.energy - 1)
+            return "🕳️ Pechloch: −1 Energie"
+        elif sym == "CURSE":
+            if player.block > 0:
+                player.block = player.block // 2
+                return "🧿 Fluch: halber Block"
+            player.vulnerable += 1
+            return "🧿 Fluch: +1 Verwundbar"
         return None
-    
+
     def _pair_bonus(self, sym, player, enemy):
         """Paar-Bonus (schwächer als Triple)"""
         if sym == "SKULL":
@@ -491,6 +550,26 @@ class SlotMachine:
             return "🍺🍺 Paar: Gegner geschwächt!"
         elif sym == "CHICKEN":
             return self._chicken_effect(player, enemy)
+        elif sym == "BELL":
+            player.add_gold(10); player.heal_hp(8)
+            return "🔔🔔 Paar: +10 Gold, +8 HP!"
+        elif sym == "GEM":
+            player.add_gold(35)
+            return "💍💍 Paar: +35 Gold!"
+        # ─── NEGATIV-Paare: deutlich übler als einzeln ───
+        elif sym == "TRAP":
+            dmg = random.randint(16, 24)
+            player.take_damage(dmg, ignore_block=True)
+            return f"🪤🪤 DOPPELFALLE! {dmg} Selbstschaden!"
+        elif sym == "PIT":
+            lost = min(player.gold, random.randint(20, 35))
+            player.gold -= lost
+            player.energy = max(0, player.energy - 1)
+            return f"🕳️🕳️ TIEFER FALL! −{lost} Gold, −1 Energie!"
+        elif sym == "CURSE":
+            player.block = 0
+            player.vulnerable += 2
+            return "🧿🧿 DOPPELFLUCH! Block weg, +2 Verwundbar!"
         return None
 
     # ── Cross-Symbol-Synergien: bestimmte Symbol-PAARE verschiedener Sorten
@@ -609,7 +688,7 @@ class SlotMachine:
                 effects.append(f"🎲 SELBSTSCHADEN: -{dmg} HP. Tut leid.")
             elif roll < 0.89:
                 player.strength += 2
-                effects.append("🎲 +2 STÄRKE! Dauerhaft!")
+                effects.append("🎲 +2 Stärke (diesen Kampf)!")
             elif roll < 0.94:
                 enemy.burn += 3
                 effects.append("🎲 GEGNER BRENNT! 3 Runden!")

@@ -79,6 +79,27 @@ ACT_THEMES = [
         "Höllenhund", "Qualdämon", "Wütender Koch", "Vampir-Croupier",
         "Schattenkrähe", "Gruftwächter",
     ], ["LUZIFER", "DER SENSENMANN"]),
+    # ─── v1.16: neue Akte 7–11 ───
+    ("Der Geister-Saloon", (210, 180, 120), "bg_saloon", [
+        "Revolver-Skelett", "Pokergeist", "Whiskey-Schemen",
+        "Schattenkrähe", "Roulette-Geist",
+    ], "DOC KNOCHENHAND"),
+    ("Die Spiegelhalle", (180, 185, 225), "bg_mirror", [
+        "Spiegelscherbe", "Trugbild", "Zerrbild",
+        "Verfluchter Spiegel", "Geisterbraut",
+    ], "DEIN SPIEGEL-ICH"),
+    ("Der Hochroller-Salon", (230, 195, 80), "bg_vip", [
+        "Goldwächter", "VIP-Dämon", "Salon-Croupier",
+        "Münzgolem", "Vampir-Croupier",
+    ], "DER HAUSHERR"),
+    ("Der Maschinenraum", (200, 160, 90), "bg_machine", [
+        "Zahnrad-Golem", "Wartungs-Automat", "Dampf-Schläger",
+        "Münzgolem", "Slot-Maschinendämon",
+    ], "DER JACKPOT-AUTOMAT"),
+    ("Die Leere", (140, 110, 210), "bg_void", [
+        "Leeren-Wandler", "Sternenfresser", "Echo des Nichts",
+        "Schattenkrähe", "Gruftwächter",
+    ], ["DER CROUPIER DES NICHTS", "DER SENSENMANN"]),
 ]
 
 
@@ -617,7 +638,7 @@ class Game:
                     return
             
             # "Slot drehen"-Button (= Runde beenden) – mittig über dem Log
-            end_btn = pygame.Rect(SCREEN_W//2 - 95, 240, 190, 46)
+            end_btn = pygame.Rect(SCREEN_W//2 - 105, 240, 210, 48)
             if end_btn.collidepoint(pos):
                 self._start_slot_phase()
                 return
@@ -713,7 +734,12 @@ class Game:
         if self.shop_gamble_rect and self.shop_gamble_rect.collidepoint(pos):
             self._gamble()
             return
-        
+
+        # Items neu mischen (Reroll)
+        if getattr(self, "shop_reroll_rect", None) and self.shop_reroll_rect.collidepoint(pos):
+            self._reroll_shop()
+            return
+
         # Verlassen
         if self.shop_leave_rect and self.shop_leave_rect.collidepoint(pos):
             self._leave_shop()
@@ -807,7 +833,7 @@ class Game:
         if "start_gold" in m:
             self.player.gold = m["start_gold"]
         if "start_strength" in m:
-            self.player.strength += m["start_strength"]
+            self.player.perm_strength += m["start_strength"]
         if "heal_mult" in m:
             self.player.heal_mult = m["heal_mult"]
 
@@ -989,6 +1015,12 @@ class Game:
         self.player.regen = 0
         self.player.thorns = 0
         self.player.dodge = False
+        # Stärke ist jetzt PRO KAMPF: zu Kampfbeginn auf die permanente
+        # Basis zurücksetzen (kein Stärke-Schneeball über Kämpfe hinweg).
+        self.player.strength = getattr(self.player, "perm_strength", 0)
+        self.player.rage = 0
+        self.player.focus = 0
+        self.player.vulnerable = 0
         self.player.next_free_card = self.player.has_relic("first_free")
         self.player.draw_initial_hand()
         self.damage_numbers = []
@@ -998,7 +1030,36 @@ class Game:
 
         # ─── Relik-Effekte zu Kampfbeginn ───
         self._apply_combat_start_relics()
-    
+        # ─── Klassenbuff (Kampfbeginn) ───
+        self._first_card_used = False
+        if self._class_buff() == "house_edge":
+            self.player.lucky += 1
+            self._log("🃏 Hausvorteil: +1 Glücksrunde!")
+        self._apply_class_turn_buff()
+
+    def _class_buff(self):
+        """Aktiver Klassenbuff (id) oder None."""
+        cd = getattr(self.player, "class_def", None)
+        return cd.get("buff") if cd else None
+
+    def _apply_class_turn_buff(self):
+        """Klassen-Passive zu jedem Rundenstart."""
+        buff = self._class_buff()
+        e = self.enemy
+        if buff == "guardian":
+            self.player.block += 3
+        elif buff == "hexweave" and e:
+            # Flüche fressen sich tiefer: +1 auf vorhandene Debuffs am Gegner
+            grew = False
+            for attr in ("poison", "burn", "frost"):
+                if getattr(e, attr, 0) > 0:
+                    setattr(e, attr, getattr(e, attr) + 1); grew = True
+            if grew:
+                self._log("🕸️ Fluchweberin: deine Flüche fressen sich tiefer (+1)!")
+        elif buff == "alchemy" and e and e.poison > 0:
+            e.poison += 2
+            self._log("⚗️ Giftmischer: +2 Gift auf den Gegner!")
+
     def _start_new_turn(self):
         """Neue Spieler-Runde"""
         self.turn_num += 1
@@ -1027,6 +1088,9 @@ class Game:
         # Falsches Ass: erste Karte der Runde gratis
         if self.player.has_relic("first_free"):
             self.player.next_free_card = True
+        # ─── Klassenbuffs (Rundenstart) ───
+        self._first_card_used = False
+        self._apply_class_turn_buff()
         self.slot_effects_shown = []
         self._reset_combo()
         self.state = STATE_PLAYER_TURN
@@ -1140,6 +1204,10 @@ class Game:
     def _try_play_card(self, card):
         free = self.player.next_free_card
         cost = 0 if free else card.cost
+        # Hochstapler 'Falschspieler': erste Karte pro Runde kostet 1 weniger
+        if (not free and not getattr(self, "_first_card_used", True)
+                and self._class_buff() == "cardsharp"):
+            cost = max(0, cost - 1)
         if cost > self.player.energy:
             self._log(f"❌ Nicht genug Energie für '{card.name}'! ({card.cost} nötig)")
             audio.play("error", 0.6)
@@ -1150,6 +1218,7 @@ class Game:
 
         audio.play("card", 0.7)
         self.player.energy -= cost
+        self._first_card_used = True   # Falschspieler-Rabatt verbraucht
         self.player.hand.remove(card)
         # Exhaust-Karten verschwinden für immer (nicht in den Abwurfstapel)
         if not card.exhaust:
@@ -1496,7 +1565,13 @@ class Game:
         """Führt Gegner-Angriff aus"""
         hp_before = self.player.hp
         dodged = self.player.dodge and self.enemy.intent in ("attack", "heavy_attack")
+        slot_boss_spin = (self.enemy.intent == "spin")
         logs = self.enemy.execute_turn(self.player)
+        if slot_boss_spin:
+            # Jackpot-Automat dreht -> Slot-Sound, Drilling = Jackpot + Shake
+            triple = self.enemy.last_slot and len(set(self.enemy.last_slot)) == 1
+            audio.play("jackpot" if triple else "reel", 0.85)
+            self._do_shake(14 if triple else 6)
         for log in logs:
             self._log(log)
 
@@ -1718,7 +1793,7 @@ class Game:
         elif eff == "max_hp":
             p.max_hp += val; p.hp += val; msg = f"+{val} Max HP!"
         elif eff == "strength":
-            p.strength += val; msg = f"+{val} Stärke dauerhaft!"
+            p.perm_strength += val; p.strength += val; msg = f"+{val} Stärke DAUERHAFT!"
         elif eff == "energy":
             p.max_energy += 1; msg = "+1 Max Energie!"
         elif eff == "spins":
@@ -1836,12 +1911,50 @@ class Game:
         self.shop_purchased = set()   # bereits gekaufte Item-IDs (pro Shop-Besuch)
         self.shop_gamble_count = 0    # Glücksrad-Einsatz beim Betreten zurücksetzen
 
-        # Schmiede ist immer verfügbar + 4 zufällige feste Items
-        forge = {"id": "upgrade_card", "name": "Schmiede", "emoji": "⚒️", "cost": 50,
+        # Preise steigen mit der Tiefe (Gold-Sink, TODO #1)
+        self._shop_price_mult = 1.0 + (self.floor_num - 1) * 0.05
+
+        def sc(c):
+            return int(round(c * self._shop_price_mult))
+
+        forge = {"id": "upgrade_card", "name": "Schmiede", "emoji": "⚒️", "cost": sc(50),
                  "desc": "Werte eine Karte dauerhaft auf (+50% Werte)."}
-        available = SHOP_FIXED_ITEMS[:]
-        random.shuffle(available)
-        self.shop_items = [forge] + available[:4]
+        items = [forge]
+        # Relikt-Händler: ein kaufbares Relikt (großer Gold-Sink)
+        self._shop_relic = self._pick_shop_relic()
+        if self._shop_relic:
+            r = self._shop_relic
+            items.append({"id": "buy_relic", "name": f"Relikt: {r['name']}",
+                          "emoji": r.get("emoji", "💠"), "cost": sc(110),
+                          "desc": r.get("desc", "Ein mächtiges Relikt.")})
+        pool = [dict(it, cost=sc(it["cost"])) for it in SHOP_FIXED_ITEMS]
+        random.shuffle(pool)
+        items += pool[: max(0, 5 - len(items))]
+        self.shop_items = items
+        self.shop_reroll_cost = sc(15)
+
+    def _pick_shop_relic(self):
+        """Wählt ein kaufbares Relikt für den Relikt-Händler (oder None)."""
+        owned = {r["id"] for r in self.player.relics}
+        avail = [r for r in RELIC_DEFINITIONS if r["id"] not in owned
+                 and achievements.content_unlocked("relic", r["name"])]
+        return random.choice(avail) if avail else None
+
+    def _reroll_shop(self):
+        """Mischt die zufälligen Shop-Items neu (kostet Gold, wird teurer)."""
+        cost = self.shop_reroll_cost
+        if self.player.gold < cost:
+            self._shop_message("❌ Nicht genug Gold zum Neumischen!"); audio.play("error", 0.6)
+            return
+        self.player.spend_gold(cost)
+        pm = getattr(self, "_shop_price_mult", 1.0)
+        sc = lambda c: int(round(c * pm))
+        keep = [it for it in self.shop_items if it["id"] in ("upgrade_card", "buy_relic")]
+        pool = [dict(it, cost=sc(it["cost"])) for it in SHOP_FIXED_ITEMS]
+        random.shuffle(pool)
+        self.shop_items = keep + pool[: max(0, 5 - len(keep))]
+        self.shop_reroll_cost = cost + sc(10)
+        audio.play("gold")
     
     def _shop_message(self, text):
         self.shop_message = text
@@ -1887,6 +2000,19 @@ class Game:
             self.shop_pending_cost = cost
             return
 
+        # Relikt-Händler: gekauftes Relikt direkt vergeben
+        if item_id == "buy_relic":
+            self.player.spend_gold(cost)
+            r = getattr(self, "_shop_relic", None)
+            if r:
+                self.player.add_relic(r)
+                if len(self.player.relics) >= 5:
+                    self._award("relic_5")
+                audio.play("relic")
+                self._shop_message(f"💠 {r['name']} gekauft!")
+            self.shop_purchased.add(item_id)
+            return
+
         # Sonst direkt anwenden
         self.player.spend_gold(cost)
         self._apply_shop_item(item_id)
@@ -1906,8 +2032,8 @@ class Game:
             p.hp += 15
             self._shop_message("💪 +15 Max HP!")
         elif item_id == "strength":
-            p.strength += 2
-            self._shop_message("⚡ +2 Stärke!")
+            p.perm_strength += 2; p.strength += 2
+            self._shop_message("⚡ +2 Stärke DAUERHAFT!")
         elif item_id == "max_energy":
             p.max_energy += 1
             self._shop_message("🔋 +1 Max Energie!")
@@ -1993,13 +2119,17 @@ class Game:
             self.player.add_gold(win)
             self._shop_message(f"🎰 GROSSER GEWINN! +{win} Gold (3×)!")
         else:
-            win = bet * 8
+            mega = roll >= 0.995          # sehr seltener Mega-Jackpot
+            mult = 15 if mega else 8
+            win = bet * mult
             self.player.add_gold(win)
-            self._shop_message(f"🎰💰 JACKPOT!!! +{win} Gold (8×)!!!")
+            label = "MEGA-JACKPOT" if mega else "JACKPOT"
+            self._shop_message(f"🎰💰 {label}!!! +{win} Gold ({mult}×)!!!")
             self._award("gamble_jackpot")
             audio.play("jackpot")
             self._spawn_particles(self.shop_gamble_rect.centerx if self.shop_gamble_rect else 300,
-                                  430, (255, 210, 80), count=26, speed=220, size=4)
+                                  430, (255, 210, 80), count=26 + (20 if mega else 0),
+                                  speed=220, size=4)
     
     def _leave_shop(self):
         """Verlässt den Shop, zurück zur Karte"""
@@ -2051,7 +2181,8 @@ class Game:
         return {
             "max_hp": p.max_hp, "hp": p.hp, "gold": p.gold, "block": p.block,
             "energy": p.energy, "max_energy": p.max_energy,
-            "burn": p.burn, "strength": p.strength, "lucky": p.lucky,
+            "burn": p.burn, "strength": p.strength, "perm_strength": p.perm_strength,
+            "lucky": p.lucky,
             "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
             "vulnerable": p.vulnerable, "rage": p.rage, "focus": p.focus,
             "class_id": p.class_id, "phoenix_used": p.phoenix_used,
@@ -2077,6 +2208,7 @@ class Game:
         p.gold = d.get("gold", p.gold); p.block = d.get("block", 0)
         p.energy = d.get("energy", p.energy); p.max_energy = d.get("max_energy", p.max_energy)
         p.burn = d.get("burn", 0); p.strength = d.get("strength", 0); p.lucky = d.get("lucky", 0)
+        p.perm_strength = d.get("perm_strength", d.get("strength", 0))
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
         p.vulnerable = d.get("vulnerable", 0); p.rage = d.get("rage", 0); p.focus = d.get("focus", 0)
         p.class_id = d.get("class_id")
@@ -2538,7 +2670,7 @@ class Game:
         self.ui.draw_player_side(self.player, 84, 96, 290, 274)
 
         # Reliktleiste ganz links (links neben dem Avatar)
-        self.ui.draw_relic_bar(self.player, 8, 96)
+        self.ui.draw_relic_bar(self.player, 8, 112)
 
         # Gegner RECHTS (unter der Gegner-HP)
         if self.enemy:
@@ -2609,9 +2741,8 @@ class Game:
         )
         
         # "Slot drehen"-Button (= Runde beenden) – mittig über dem Kampflog
-        btn_w, btn_h = 190, 46
-        self.ui.draw_button("🎰 Slot drehen", SCREEN_W//2 - btn_w//2, 240, btn_w, btn_h,
-                           color=GOLD, pulsing=True)
+        btn_w, btn_h = 210, 48
+        self.ui.draw_slot_button(SCREEN_W//2 - btn_w//2, 240, btn_w, btn_h, pulsing=True)
 
         # Energie-Anzeige
         energy_dots = ""
@@ -2701,10 +2832,11 @@ class Game:
 
     def _draw_shop(self):
         """Shop-Bildschirm (Overlays werden global gezeichnet)"""
-        (self.shop_item_rects, self.shop_gamble_rect,
-         self.shop_leave_rect) = self.ui.draw_shop(
+        (self.shop_item_rects, self.shop_gamble_rect, self.shop_leave_rect,
+         self.shop_reroll_rect) = self.ui.draw_shop(
             self.shop_items, self.player, self.shop_message, self.shop_purchased,
-            gamble_bet=self._gamble_bet())
+            gamble_bet=self._gamble_bet(),
+            reroll_cost=getattr(self, "shop_reroll_cost", 0))
 
     def _draw_scores(self):
         """Highscore-Bildschirm"""
