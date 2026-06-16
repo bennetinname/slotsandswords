@@ -935,9 +935,17 @@ class UIRenderer:
         self.screen.blit(head, (x + 4, y + 4))
 
         max_lines = (h - 32) // 15
-        total = len(log_entries)
+        newest_idx = len(log_entries) - 1
+        # Lange Einträge umbrechen (mit Rand), statt überlaufen zu lassen.
+        text_w = w - 26
+        wrapped = []   # (zeile, gehört-zum-neuesten-eintrag)
+        for ei, entry in enumerate(log_entries):
+            parts = self._wrap_text(entry, self.font_tiny, text_w) or [""]
+            for p in parts:
+                wrapped.append((p, ei == newest_idx))
+        total = len(wrapped)
         end = max(max_lines, total - scroll)
-        entries = log_entries[max(0, end - max_lines):end]
+        view = wrapped[max(0, end - max_lines):end]
 
         old_clip = self.screen.get_clip()
         self.screen.set_clip(pygame.Rect(x, y, w, h))
@@ -947,11 +955,11 @@ class UIRenderer:
         if scroll > 0:
             self._text("▲ älter", self.font_tiny, (60, 44, 10), x + w - 58, y + 7)
 
-        for i, entry in enumerate(entries):
-            newest = (i == len(entries) - 1) and scroll == 0
-            ratio = (i + 1) / len(entries) if entries else 1
-            color = GOLD if newest else _lerp_color(INK_FAINT, INK, ratio)
-            self._text(entry, self.font_tiny, color, x + 12, y + 32 + i * 15)
+        nv = len(view)
+        for i, (line, is_newest) in enumerate(view):
+            newest = is_newest and scroll == 0
+            color = GOLD if newest else _lerp_color(INK_FAINT, INK, (i + 1) / max(1, nv))
+            self._text(line, self.font_tiny, color, x + 12, y + 32 + i * 15)
         self.screen.set_clip(old_clip)
 
     # ═══════════════════════════════════════════════
