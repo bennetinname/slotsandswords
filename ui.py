@@ -1905,51 +1905,68 @@ class UIRenderer:
 
         mouse = pygame.mouse.get_pos()
         n = len(classes)
-        gap = 18
-        ch = 480
-        cw = min(300, (self.w - 60 - (n - 1) * gap) // max(1, n))  # passt auch für 5 Klassen
+        gap = 20
+        ch = 290                       # kompakte Karten – Details kommen beim Hovern
+        cw = min(240, (self.w - 60 - (n - 1) * gap) // max(1, n))
         total = n * cw + (n - 1) * gap
         sx0 = self.w // 2 - total // 2
         sy = 150
         rects = []
+        hovered = None
         for i, c in enumerate(classes):
             x = sx0 + i * (cw + gap)
             rect = pygame.Rect(x, sy, cw, ch)
             hov = rect.collidepoint(mouse)
             accent = c.get("color", ACCENT)
-            self._panel((x, sy, cw, ch), radius=16,
+            if hov:
+                hovered = (c, x, accent)
+            self._panel((x, sy - (6 if hov else 0), cw, ch), radius=16,
                         border=accent if hov else _darken(accent, 0.3),
                         border_w=3 if hov else 2)
+            oy = sy - (6 if hov else 0)
             # Portrait-Sprite (Fallback: Emoji)
-            portrait = assets.by_height("ui", f"class_{c['id']}", 96)
+            portrait = assets.by_height("ui", f"class_{c['id']}", 110)
             if portrait:
-                self.screen.blit(portrait, (x + cw // 2 - portrait.get_width() // 2, sy + 6))
+                self.screen.blit(portrait, (x + cw // 2 - portrait.get_width() // 2, oy + 14))
             else:
-                self._text(c["emoji"], self.font_huge, accent, x + cw // 2, sy + 22, center=True)
+                self._text(c["emoji"], self.font_huge, accent, x + cw // 2, oy + 40, center=True)
             self._text(c["name"], self.font_h1, _lighten(accent, 0.2),
-                       x + cw // 2, sy + 104, center=True, shadow=True)
-            pygame.draw.line(self.screen, _darken(accent, 0.3),
-                             (x + 24, sy + 142), (x + cw - 24, sy + 142))
-            # Beschreibung
-            for li, line in enumerate(self._wrap_text(c["desc"], self.font_small, cw - 40)):
-                self._text(line, self.font_small, INK, x + 24, sy + 150 + li * 22)
-            # Perk
-            for li, line in enumerate(self._wrap_text("⭐ " + c["perk"], self.font_tiny, cw - 40)):
-                self._text(line, self.font_tiny, ACCENT_SOFT, x + 24, sy + 206 + li * 18)
-            # Startdeck-Zusammensetzung (kompakt)
-            from collections import Counter
-            self._text("Startdeck:", self.font_tiny, INK_DIM, x + 24, sy + 266)
-            counts = Counter(c["deck"])
-            yy = sy + 286
-            for name, cnt in counts.items():
-                label = f"{cnt}× {name}" if cnt > 1 else name
-                self._text("•  " + label, self.font_tiny, INK, x + 28, yy)
-                yy += 18
+                       x + cw // 2, oy + 132, center=True, shadow=True)
+            # Kurz-Beschreibung (1–2 Zeilen)
+            for li, line in enumerate(self._wrap_text(c["desc"], self.font_tiny, cw - 28)[:2]):
+                self._text(line, self.font_tiny, INK_DIM, x + cw // 2, oy + 174 + li * 16, center=True)
             # Button
-            btn = pygame.Rect(x + 40, sy + ch - 52, cw - 80, 40)
-            self.draw_button("Diese Klasse", btn.x, btn.y, btn.w, btn.h,
+            btn = pygame.Rect(x + 26, oy + ch - 50, cw - 52, 38)
+            self.draw_button("Wählen", btn.x, btn.y, btn.w, btn.h,
                              color=accent, text_color=BLACK, pulsing=hov)
             rects.append(rect)
+
+        # ── Detail-Panel beim Hovern (volle Infos) ──
+        py = sy + ch + 22
+        pw, ph = 760, 196
+        px = self.w // 2 - pw // 2
+        if hovered:
+            c, _cx, accent = hovered
+            self._panel((px, py, pw, ph), radius=16, border=accent, border_w=2)
+            self._text(f"{c['emoji']}  {c['name']}", self.font_title, _lighten(accent, 0.2),
+                       px + 24, py + 14, shadow=True)
+            for li, line in enumerate(self._wrap_text(c["desc"], self.font_small, pw - 48)):
+                self._text(line, self.font_small, INK, px + 24, py + 48 + li * 20)
+            for li, line in enumerate(self._wrap_text("⭐ " + c["perk"], self.font_small, pw - 48)):
+                self._text(line, self.font_small, ACCENT_SOFT, px + 24, py + 90 + li * 20)
+            # Startdeck (in Spalten)
+            from collections import Counter
+            self._text("🃏 Startdeck:", self.font_small, INK_DIM, px + 24, py + ph - 56)
+            items = [f"{cnt}× {name}" if cnt > 1 else name
+                     for name, cnt in Counter(c["deck"]).items()]
+            per_col = (len(items) + 2) // 3
+            for idx, label in enumerate(items):
+                col, row = idx // per_col, idx % per_col
+                self._text("•  " + label, self.font_tiny, INK,
+                           px + 150 + col * 210, py + ph - 56 + row * 16)
+        else:
+            self._text("Fahre über eine Klasse für alle Details.", self.font_small,
+                       INK_FAINT, self.w // 2, py + ph // 2 - 10, center=True)
 
         back = pygame.Rect(self.w // 2 - 100, self.h - 56, 200, 40)
         self.draw_button("Zurück", back.x, back.y, back.w, back.h,
