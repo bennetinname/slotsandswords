@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.18.0"
+GAME_VERSION = "1.19.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.19.0", "Klassen entdoppelt: Croupière = Walzen-Kontrolle + Multiplikator, Alchemist = Elementar-Burst. Fix: kein Überleben mehr mit 0 HP."),
     ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer. HINWEIS: Nach einem Update schließt sich das Spiel - bitte SELBST neu starten (öffnet nicht automatisch)."),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
@@ -184,12 +185,18 @@ _LUCK_SLOT_FX = {"rig_next", "smuggle_wild", "double_next", "force_jackpot",
                  "roulette", "gambling"}
 _GOLD_FX = {"gold_flow", "gold_strike", "invest", "midas", "greed", "bribe",
             "pillage", "gold_rush", "coin_rain", "tax_evasion", "all_in"}
+_MULT_FX = {"mult_small", "mult_big", "mult_hit", "mult_finale"}
+# Detonations-/Burst-Effekte (Alchemist verbraucht Status für Sofortschaden)
+_DETONATE_FX = {"poison_detonate", "frost_shatter", "burn_double", "ice_break"}
 CLASS_FAVORED = {
     "knight":    _BLOCK_STR_FX,
+    # Hochstapler: reines Risiko/Glück + Gold (keine planbare Slot-Manipulation)
     "gambler":   _LUCK_SLOT_FX | _GOLD_FX,
     "witch":     _POISON_FX,
-    "croupiere": _LUCK_SLOT_FX,
-    "alchemist": _POISON_FX | _BURN_FROST_FX,
+    # Croupière: Walzen-Manipulation + Multiplikator (Kontroll-Build)
+    "croupiere": _LUCK_SLOT_FX | _MULT_FX,
+    # Alchemist: Brennen/Frost + Detonation (Burst), nicht reines Dauer-Gift
+    "alchemist": _BURN_FROST_FX | _DETONATE_FX,
 }
 
 # Negativ-Symbole (für UI-Hinweise / Logik)
@@ -1628,14 +1635,14 @@ CLASS_DEFINITIONS = [
         "name": "Der Hochstapler",
         "emoji": "🎰",
         "color": GOLD,
-        "desc": "Slots & Glück. Lebt vom Risiko und den großen Drehern.",
+        "desc": "Risiko pur. Lebt von großen Wetten – Triumph oder Totalschaden.",
         "perk": "Falschspieler: erste Karte pro Runde kostet 1 weniger. Start-Relikt 'Glücksbringer'.",
         "relic": "bonus_spin",
         "buff": "cardsharp",
         "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
                  "Schild", "Schild",
-                 "Coin Flip", "Coin Flip", "Greed",
-                 "Glückssträhne", "Double Spin"],
+                 "Coin Flip", "Coin Flip", "Gambling Addiction",
+                 "Greed", "Glücksstoß"],
     },
     {
         "id": "witch",
@@ -1656,28 +1663,28 @@ CLASS_DEFINITIONS = [
         "name": "Die Croupière",
         "emoji": "🃏",
         "color": (210, 90, 150),
-        "desc": "Slot-Meisterin. Manipuliert Glück und Walzen zu ihren Gunsten.",
-        "perk": "Hausvorteil: startet jeden Kampf mit 1 Glücksrunde (bessere Slot-Chancen). Start-Relikt 'Glückskleeblatt'.",
-        "relic": "four_leaf",
-        "buff": "house_edge",
-        "deck": ["Schneller Stich", "Schneller Stich", "Schneller Stich",
+        "desc": "Kontrolle & Multiplikator. Zinkt die Walzen und baut auf den großen Schlag.",
+        "perk": "Hausvorteil: startet jeden Kampf mit Multiplikator ×1.5. Start-Relikt 'Walzen-Joker'.",
+        "relic": "reel_joker",
+        "buff": "croupier_mult",
+        "deck": ["Schneller Stich", "Schneller Stich",
                  "Schild", "Schild",
-                 "Glückssträhne", "Double Spin", "Coin Flip",
-                 "Greed", "Wildes Glück"],
+                 "Zinken", "Wild-Schmuggel", "Doppelter Einsatz",
+                 "Momentum", "Verstärker", "Finale"],
     },
     {
         "id": "alchemist",
         "name": "Der Alchemist",
         "emoji": "⚗️",
         "color": (90, 190, 110),
-        "desc": "Giftmischer. Braut tödliche Tinkturen und Dämpfe.",
-        "perk": "Giftmischer: am Rundenstart +2 Gift auf vergiftete Gegner. Start-Relikt 'Giftring'.",
-        "relic": "poison_boost",
-        "buff": "alchemy",
+        "desc": "Elementar-Burst. Baut Brennen, Frost & Gift auf – und zündet alles.",
+        "perk": "Katalysator: Detonations-Karten (Verfall entfesseln, Splitterfrost) machen +50% Schaden. Start-Relikt 'Ewige Glut'.",
+        "relic": "ember_relic",
+        "buff": "catalyst",
         "deck": ["Schneller Stich", "Schneller Stich",
                  "Schild", "Schild",
-                 "Giftklinge", "Giftklinge", "Giftklinge",
-                 "Toxische Wolke", "Giftschwade", "Heilkraut"],
+                 "Zündfunke", "Brandbeschleuniger", "Eishauch",
+                 "Splitterfrost", "Giftklinge", "Verfall entfesseln"],
     },
 ]
 

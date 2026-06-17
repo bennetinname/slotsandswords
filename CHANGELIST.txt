@@ -1,6 +1,32 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.19.0 – 2026-06-17]  KLASSEN ENTDOPPELT + BUGFIX
+---------------------------------------------------
+BUGFIX:
+* Man konnte mit 0 HP weiterspielen, wenn der tödliche Schaden vom eigenen
+  Gift/Brennen (Rundenstart) oder von Slot-Selbstschaden (Bombe/Falle) kam –
+  der Tod wurde erst im nächsten Gegnerzug geprüft. Jetzt gibt es eine
+  zentrale Tod-Prüfung an ALLEN Schadensquellen -> sofort Game Over.
+
+KLASSEN ENTDOPPELT (vorher faktisch 2× Gift, 2× Luck):
+* DIE CROUPIÈRE ist jetzt die KONTROLL-/MULTIPLIKATOR-Klasse statt eine
+  zweite Glücks-Klasse: zinkt die Walzen (Zinken, Wild-Schmuggel, Doppelter
+  Einsatz) und baut den Multiplikator auf (Momentum, Verstärker, Finale).
+  Perk „Hausvorteil": startet jeden Kampf mit Multiplikator ×1.5.
+  Start-Relikt jetzt „Walzen-Joker".
+* DER ALCHEMIST ist jetzt die ELEMENTAR-BURST-Klasse statt eine zweite
+  Gift-Klasse: baut Brennen/Frost/Gift auf und ZÜNDET es (Zündfunke,
+  Brandbeschleuniger, Eishauch, Splitterfrost, Verfall entfesseln).
+  Perk „Katalysator": Detonations-Karten (Verfall entfesseln, Splitterfrost)
+  machen +50% Schaden. Start-Relikt jetzt „Ewige Glut".
+* DER HOCHSTAPLER ist jetzt klar die RISIKO-Klasse (Coin Flip, Gambling
+  Addiction, Glücksstoß) – die planbare Walzen-Manipulation gehört der
+  Croupière. Die Hexe bleibt die Dauer-Gift-Klasse, der Ritter der Tank.
+* Klassen-Belohnungs-Gewichtung (CLASS_FAVORED) entsprechend angepasst.
+* Klassen-IDs unverändert -> alte Spielstände bleiben gültig.
+
+
 [v1.18.0 – 2026-06-17]  SLOT-MODUS NEU GEDACHT: „DAS LOCH"
 ----------------------------------------------------------
 Der Slot-Modus wurde zu einem ausgereiften Slot-Roguelike umgebaut –

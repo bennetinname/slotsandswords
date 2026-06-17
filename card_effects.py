@@ -631,9 +631,11 @@ class CardEffectResolver:
             logs.append(f"🐍 {card.name}: {actual} Schaden (= aktuelles Gift)!")
         elif effect == "poison_detonate":
             p = enemy.poison
-            actual = enemy.take_damage(p * 2 + player.strength)
+            cat = 1.5 if (getattr(player, "class_def", None) or {}).get("buff") == "catalyst" else 1.0
+            actual = enemy.take_damage(int((p * 2 + player.strength) * cat))
             enemy.poison = 0
-            logs.append(f"💥 {card.name}: VERFALL! {actual} Schaden, Gift verbraucht!")
+            extra = " (Katalysator +50%)" if cat > 1 else ""
+            logs.append(f"💥 {card.name}: VERFALL! {actual} Schaden, Gift verbraucht!{extra}")
         elif effect == "venom_frost":
             actual = enemy.take_damage(card.damage + player.strength)
             bonus = 1 if player.has_relic("poison_boost") else 0
@@ -673,10 +675,12 @@ class CardEffectResolver:
             logs.append(f"🧊 {card.name}: {actual} Schaden"
                         + (" (×2 gegen Frost!)" if enemy.frost > 0 else "") + "!")
         elif effect == "frost_shatter":
-            dmg = card.damage + player.strength + enemy.frost * 3
+            cat = 1.5 if (getattr(player, "class_def", None) or {}).get("buff") == "catalyst" else 1.0
+            dmg = int((card.damage + player.strength + enemy.frost * 3) * cat)
             actual = enemy.take_damage(dmg)
             enemy.frost = 0
-            logs.append(f"💎 {card.name}: {actual} Schaden, Frost zersplittert!")
+            extra = " (Katalysator +50%)" if cat > 1 else ""
+            logs.append(f"💎 {card.name}: {actual} Schaden, Frost zersplittert!{extra}")
         elif effect == "frost_nova":
             enemy.frost += 2; enemy.vulnerable += 2
             logs.append(f"🌨️ {card.name}: +2 Frost, +2 Verwundbar!")

@@ -1105,9 +1105,9 @@ class Game:
         self._apply_combat_start_relics()
         # ─── Klassenbuff (Kampfbeginn) ───
         self._first_card_used = False
-        if self._class_buff() == "house_edge":
-            self.player.lucky += 1
-            self._log("🃏 Hausvorteil: +1 Glücksrunde!")
+        if self._class_buff() == "croupier_mult":
+            self.player.mult = max(getattr(self.player, "mult", 1.0), 1.5)
+            self._log("🃏 Hausvorteil: Start-Multiplikator ×1.5!")
         self._apply_class_turn_buff()
 
     def _class_buff(self):
@@ -1129,9 +1129,8 @@ class Game:
                     setattr(e, attr, getattr(e, attr) + 1); grew = True
             if grew:
                 self._log("🕸️ Fluchweberin: deine Flüche fressen sich tiefer (+1)!")
-        elif buff == "alchemy" and e and e.poison > 0:
-            e.poison += 2
-            self._log("⚗️ Giftmischer: +2 Gift auf den Gegner!")
+        # (Alchemist: Katalysator wirkt direkt auf Detonations-Karten,
+        #  siehe card_effects.py – kein Rundenstart-Effekt nötig.)
 
     def _start_new_turn(self):
         """Neue Spieler-Runde"""
