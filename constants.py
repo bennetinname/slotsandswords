@@ -8,7 +8,7 @@ SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
-    ("1.19.0", "Klassen entdoppelt: Croupière = Walzen-Kontrolle + Multiplikator, Alchemist = Elementar-Burst. Fix: kein Überleben mehr mit 0 HP."),
+    ("1.19.0", "Klassen entdoppelt (Croupière=Mult, Alchemist=Burst) + 25 neue Karten für alle Archetypen. Fix: kein Überleben mehr mit 0 HP."),
     ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer. HINWEIS: Nach einem Update schließt sich das Spiel - bitte SELBST neu starten (öffnet nicht automatisch)."),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
@@ -1446,6 +1446,66 @@ CARD_DEFINITIONS = [
      "tooltip": "Dein nächster Dreh zählt DOPPELT.", "rarity": "uncommon", "effect": "double_next"},
     {"name": "Jackpot erzwingen", "type": "special", "cost": 3, "damage": 0, "color": GOLD,
      "tooltip": "Dein nächster Dreh ist ein garantierter DRILLING!", "rarity": "rare", "effect": "force_jackpot"},
+
+    # ══════════ v1.19: MEHR KARTEN PRO ARCHETYP ══════════
+    # ── Gift ──
+    {"name": "Giftnova", "type": "special", "cost": 2, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "+8 Gift auf einen Schlag. Eine Welle des Verfalls.", "rarity": "uncommon", "effect": "poison_nova"},
+    {"name": "Fäulnisstoß", "type": "attack", "cost": 1, "damage": 5, "color": GREEN,
+     "tooltip": "5 Schaden, +1 pro Gift-Stack am Gegner. Skaliert mit Gift.", "rarity": "common", "effect": "rot_strike"},
+    {"name": "Giftspritzer", "type": "attack", "cost": 1, "damage": 3, "color": GREEN,
+     "tooltip": "3 Schaden, +4 Gift. Günstiger Gift-Enabler.", "rarity": "common", "effect": "poison_seed"},
+    {"name": "Verseuchen", "type": "special", "cost": 1, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "+3 Gift, +3 extra wenn schon vergiftet.", "rarity": "common", "effect": "plague_cloud"},
+    {"name": "Doppelgift", "type": "special", "cost": 2, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "Verdopple das Gift am Gegner.", "rarity": "uncommon", "effect": "poison_double"},
+    # ── Brennen ──
+    {"name": "Inferno", "type": "special", "cost": 2, "damage": 0, "color": ORANGE,
+     "tooltip": "+6 Brennen. Es lodert.", "rarity": "uncommon", "effect": "inferno"},
+    {"name": "Glutstoß", "type": "attack", "cost": 1, "damage": 5, "color": ORANGE,
+     "tooltip": "5 Schaden, +1 pro Brennen-Stack. Skaliert mit Feuer.", "rarity": "common", "effect": "ember_strike"},
+    {"name": "Brandmal", "type": "attack", "cost": 1, "damage": 6, "color": ORANGE,
+     "tooltip": "6 Schaden, +4 Brennen.", "rarity": "common", "effect": "ignite"},
+    {"name": "Brandstoß", "type": "special", "cost": 1, "damage": 0, "color": ORANGE,
+     "tooltip": "+3 Brennen, sofort Brennschaden ausgelöst.", "rarity": "common", "effect": "accelerant"},
+    # ── Frost ──
+    {"name": "Tiefkühlung", "type": "special", "cost": 2, "damage": 0, "color": CYAN,
+     "tooltip": "+4 Frost, +2 Verwundbar.", "rarity": "uncommon", "effect": "deep_freeze"},
+    {"name": "Eiszapfen", "type": "attack", "cost": 1, "damage": 4, "color": CYAN,
+     "tooltip": "4 Schaden, +2 pro Frost-Stack (ohne Frost zu verbrauchen).", "rarity": "common", "effect": "icicle"},
+    {"name": "Frostbiss", "type": "attack", "cost": 1, "damage": 5, "color": CYAN,
+     "tooltip": "5 Schaden, +3 Frost.", "rarity": "common", "effect": "frost_breath"},
+    {"name": "Eissplitter", "type": "attack", "cost": 2, "damage": 8, "color": CYAN,
+     "tooltip": "8 Schaden +3 pro Frost-Stack, verbraucht Frost.", "rarity": "uncommon", "effect": "frost_shatter"},
+    # ── Block / Dornen ──
+    {"name": "Bollwerk", "type": "defense", "cost": 2, "damage": 0, "block": 12, "color": BLUE,
+     "tooltip": "+12 Block, +3 Dornen.", "rarity": "uncommon", "effect": "bulwark"},
+    {"name": "Wall", "type": "defense", "cost": 2, "damage": 0, "block": 14, "color": BLUE,
+     "tooltip": "+14 Block – bleibt diese und nächste Runde.", "rarity": "uncommon", "effect": "rampart"},
+    {"name": "Wuchtschild", "type": "attack", "cost": 1, "damage": 0, "color": BLUE,
+     "tooltip": "Schaden = dein aktueller Block.", "rarity": "common", "effect": "bodyslam"},
+    {"name": "Dornenwall", "type": "defense", "cost": 1, "damage": 0, "block": 8, "color": BLUE,
+     "tooltip": "+8 Block, +Dornen.", "rarity": "common", "effect": "thorn_cloak"},
+    # ── Stärke / Multi ──
+    {"name": "Raserei", "type": "attack", "cost": 1, "damage": 4, "color": RED,
+     "tooltip": "+2 Stärke, dann 4 (+Stärke) Schaden.", "rarity": "common", "effect": "frenzy"},
+    {"name": "Anspannung", "type": "special", "cost": 1, "damage": 0, "color": RED,
+     "tooltip": "+Stärke für diesen Kampf.", "rarity": "common", "effect": "tense"},
+    {"name": "Klingenhagel", "type": "attack", "cost": 2, "damage": 5, "color": RED,
+     "tooltip": "Mehrere Treffer hintereinander.", "rarity": "uncommon", "effect": "multi3"},
+    # ── Multiplikator ──
+    {"name": "Überladung", "type": "special", "cost": 1, "damage": 0, "color": PURPLE,
+     "tooltip": "Multiplikator +0.5.", "rarity": "uncommon", "effect": "overcharge"},
+    {"name": "Momentum", "type": "special", "cost": 0, "damage": 0, "color": PURPLE,
+     "tooltip": "Kleiner Multiplikator-Aufbau.", "rarity": "common", "effect": "mult_small"},
+    # ── Gold ──
+    {"name": "Geldsegen", "type": "special", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "+Gold, skaliert mit Stärke.", "rarity": "common", "effect": "windfall"},
+    # ── Glück / Slot ──
+    {"name": "Glücksstoß", "type": "attack", "cost": 1, "damage": 6, "color": GOLD,
+     "tooltip": "Schaden skaliert mit deinem Glück.", "rarity": "common", "effect": "luck_strike"},
+    {"name": "Hochstapeln", "type": "special", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "Mehr Glücksrunden.", "rarity": "common", "effect": "stack_luck"},
 ]
 
 # ═══════════════════════════════════════════════

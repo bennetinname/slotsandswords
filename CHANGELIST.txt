@@ -26,6 +26,21 @@ KLASSEN ENTDOPPELT (vorher faktisch 2× Gift, 2× Luck):
 * Klassen-Belohnungs-Gewichtung (CLASS_FAVORED) entsprechend angepasst.
 * Klassen-IDs unverändert -> alte Spielstände bleiben gültig.
 
+25 NEUE KARTEN für mehr Build-Tiefe (jeder Archetyp hat mehr Optionen):
+* Gift: Giftnova (+8 Gift), Fäulnisstoß (Schaden skaliert mit Gift),
+  Giftspritzer, Verseuchen, Doppelgift.
+* Brennen: Inferno (+6 Brennen), Glutstoß (skaliert mit Brennen), Brandmal,
+  Brandstoß.
+* Frost: Tiefkühlung (+4 Frost/+2 Verwundbar), Eiszapfen (skaliert mit Frost,
+  ohne Verbrauch), Frostbiss, Eissplitter.
+* Block/Dornen: Bollwerk (+Block & Dornen), Wall (Block bleibt 2 Runden),
+  Wuchtschild (Schaden = Block), Dornenwall.
+* Stärke/Multi: Raserei (+Stärke dann Schlag), Anspannung, Klingenhagel.
+* Multiplikator: Überladung (+0.5 Mult), Momentum.
+* Gold: Geldsegen. Glück/Slot: Glücksstoß, Hochstapeln.
+* 4 neue skalierende Effekte (Fäulnis/Glut/Eiszapfen/Wuchtschild) belohnen
+  reine Archetyp-Builds.
+
 
 [v1.18.0 – 2026-06-17]  SLOT-MODUS NEU GEDACHT: „DAS LOCH"
 ----------------------------------------------------------

@@ -788,6 +788,44 @@ class CardEffectResolver:
             player.next_spin_triple = True
             logs.append(f"🎰 {card.name}: nächster Dreh = garantierter DRILLING!")
 
+        # ══════════ v1.19: weitere Archetyp-Karten ══════════
+        elif effect == "poison_nova":
+            bonus = 2 if player.has_relic("poison_boost") else 0
+            enemy.poison += 8 + bonus
+            logs.append(f"☠️ {card.name}: +{8+bonus} Gift! Eine Welle des Verfalls.")
+        elif effect == "rot_strike":
+            actual = enemy.take_damage(card.damage + player.strength + enemy.poison)
+            logs.append(f"🦠 {card.name}: {actual} Schaden (+1 je Gift-Stack)!")
+        elif effect == "inferno":
+            enemy.burn += 6
+            logs.append(f"🔥 {card.name}: +6 Brennen! Es lodert.")
+        elif effect == "ember_strike":
+            actual = enemy.take_damage(card.damage + player.strength + enemy.burn)
+            logs.append(f"🔥 {card.name}: {actual} Schaden (+1 je Brennen-Stack)!")
+        elif effect == "deep_freeze":
+            enemy.frost += 4; enemy.vulnerable += 2
+            logs.append(f"❄️ {card.name}: +4 Frost, +2 Verwundbar!")
+        elif effect == "icicle":
+            actual = enemy.take_damage(card.damage + player.strength + enemy.frost * 2)
+            logs.append(f"🧊 {card.name}: {actual} Schaden (+2 je Frost-Stack)!")
+        elif effect == "bulwark":
+            player.block += card.block; player.thorns += 3
+            logs.append(f"🛡️ {card.name}: +{card.block} Block, +3 Dornen!")
+        elif effect == "rampart":
+            player.block += card.block; player.keep_block_next = True
+            logs.append(f"🧱 {card.name}: +{card.block} Block – bleibt nächste Runde!")
+        elif effect == "frenzy":
+            player.strength += 2
+            actual = enemy.take_damage(card.damage + player.strength)
+            logs.append(f"⚔️ {card.name}: +2 Stärke, dann {actual} Schaden!")
+        elif effect == "overcharge":
+            player.mult = round(getattr(player, "mult", 1.0) + 0.5, 2)
+            logs.append(f"✖️ {card.name}: Multiplikator +0.5 (jetzt ×{player.mult:g})!")
+        elif effect == "windfall":
+            g = 12 + 2 * player.strength
+            player.add_gold(g)
+            logs.append(f"💰 {card.name}: +{g} Gold!")
+
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")
 

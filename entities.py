@@ -133,6 +133,13 @@ class Card:
         "luck_strike": "luck_clover", "stack_luck": "luck_clover",
         "rig_next": "luck_clover", "smuggle_wild": "luck_clover",
         "double_next": "gold_coin", "force_jackpot": "luck_clover",
+        # v1.19 neue Archetyp-Karten
+        "poison_nova": "poison_vial", "rot_strike": "poison_vial",
+        "inferno": "fire", "ember_strike": "fire",
+        "deep_freeze": "atk_slash", "icicle": "atk_slash",
+        "bulwark": "defense_shield", "rampart": "defense_shield",
+        "frenzy": "strength_fist", "overcharge": "energy_bolt",
+        "windfall": "gold_coin",
     }
 
     def get_effect_icon(self):
