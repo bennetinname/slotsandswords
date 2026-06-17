@@ -304,24 +304,20 @@ class Game:
             pass
 
     def _update_viewport(self):
-        """Berechnet Skalierung und Offset um self.screen (SCREEN_W×SCREEN_H)
-        mit Letterboxing auf self.display (beliebige Größe) zu blitten."""
+        """Streckt self.screen auf die volle Display-Größe – keine Ränder."""
         dw, dh = self.display.get_size()
-        scale = min(dw / SCREEN_W, dh / SCREEN_H)
-        bw, bh = int(SCREEN_W * scale), int(SCREEN_H * scale)
-        self._vp_scale = scale
-        self._vp_ox = (dw - bw) // 2
-        self._vp_oy = (dh - bh) // 2
-        self._vp_bw = bw
-        self._vp_bh = bh
+        self._vp_bw = dw
+        self._vp_bh = dh
+        self._vp_ox = 0
+        self._vp_oy = 0
+        self._vp_sx = dw / SCREEN_W   # x-Skalierungsfaktor (für Maus-Transform)
+        self._vp_sy = dh / SCREEN_H   # y-Skalierungsfaktor
 
     def _to_logical(self, raw_pos):
         """Wandelt rohe Display-Koordinaten in das 1200×800-Logik-Koordinatensystem."""
-        if not hasattr(self, "_vp_scale") or self._vp_scale == 0:
-            return raw_pos
-        x = (raw_pos[0] - self._vp_ox) / self._vp_scale
-        y = (raw_pos[1] - self._vp_oy) / self._vp_scale
-        return (int(x), int(y))
+        sx = getattr(self, "_vp_sx", 1.0) or 1.0
+        sy = getattr(self, "_vp_sy", 1.0) or 1.0
+        return (int(raw_pos[0] / sx), int(raw_pos[1] / sy))
 
     # ═══════════════════════════════════════════════
     # MAIN LOOP
@@ -342,19 +338,17 @@ class Game:
 
             self._draw()
 
-            # Canvas skaliert + zentriert (Letterboxing) mit Screen-Shake aufs Display
-            if not hasattr(self, "_vp_scale"):
+            # Canvas auf volle Display-Größe strecken (keine Ränder)
+            if not hasattr(self, "_vp_bw"):
                 self._update_viewport()
-            ox, oy = self._vp_ox, self._vp_oy
+            ox = oy = 0
             if self.shake > 0.5:
-                sh = int(self.shake * self._vp_scale)
-                ox += int(random.uniform(-sh, sh))
-                oy += int(random.uniform(-sh, sh))
+                ox = int(random.uniform(-self.shake, self.shake) * getattr(self, "_vp_sx", 1.0))
+                oy = int(random.uniform(-self.shake, self.shake) * getattr(self, "_vp_sy", 1.0))
             if self._vp_bw != SCREEN_W or self._vp_bh != SCREEN_H:
                 scaled = pygame.transform.smoothscale(self.screen, (self._vp_bw, self._vp_bh))
             else:
                 scaled = self.screen
-            self.display.fill(DARKER_BG)
             self.display.blit(scaled, (ox, oy))
             pygame.display.flip()
     
