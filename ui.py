@@ -2108,7 +2108,7 @@ class UIRenderer:
     # SLOT-MODUS (eigenständiges Spiel)
     # ═══════════════════════════════════════════════
 
-    def draw_slotmode(self, run, grid, spinning, cell_rects, spin_btn, cashout_btn,
+    def draw_slotmode(self, run, machine, spinning, spin_btn, cashout_btn,
                       shop_lay, back_rect):
         self.draw_background()
         self._dim(120)
@@ -2146,20 +2146,19 @@ class UIRenderer:
         self._text(f"{run.coins} / {run.quota}", self.font_tiny,
                    BLACK if frac > 0.5 else INK, bar.centerx, bar.y + 1, center=True)
 
-        # Das 3×3-Grid
-        wins = run.last_cells if not spinning else set()
-        for i, rect in enumerate(cell_rects):
-            self._sm_draw_cell(rect, grid[i] if i < len(grid) else "CHERRY",
-                               i in wins, spinning)
-
-        # Charms links, Beutel rechts, Wertung darunter
-        self._slotmode_charms(run, 14, 150)
-        self._slotmode_bag(run, self.w - 210, 150)
-        self._slotmode_breakdown(run, spin_btn.bottom + 12)
-
         # Letzte Meldung (Log) unter der Leiste
         if run.log:
-            self._text(run.log[0], self.font_small, INK_DIM, self.w // 2, 130, center=True)
+            self._text(run.log[0], self.font_small, INK_DIM, self.w // 2, 132, center=True)
+
+        # Der echte 3-Walzen-Automat (Symbol-Sprites)
+        if machine:
+            machine.draw(self.screen, self.font_title, self.font_large,
+                         self.font_small, self.font_tiny)
+
+        # Charms links, Beutel rechts, Wertung darunter
+        self._slotmode_charms(run, 14, 156)
+        self._slotmode_bag(run, self.w - 210, 156)
+        self._slotmode_breakdown(run, spin_btn.bottom + 14)
 
         # Spin-Phase: Buttons
         if not run.in_shop and not run.game_over:
@@ -2169,7 +2168,6 @@ class UIRenderer:
                              text_color=BLACK, pulsing=not spinning)
             self._text("Leertaste = drehen", self.font_tiny, INK_FAINT,
                        spin_btn.centerx, spin_btn.bottom + 4, center=True)
-            # Cash-out nur wenn Miete schon erreicht & Drehs übrig
             if met and run.spins_left > 0 and not spinning:
                 self.draw_button("💵 Miete zahlen", cashout_btn.x, cashout_btn.y,
                                  cashout_btn.w, cashout_btn.h, color=GREEN,
@@ -2179,20 +2177,6 @@ class UIRenderer:
             self._slotmode_shop(run, shop_lay)
         elif run.game_over:
             self._slotmode_gameover(run)
-
-    def _sm_draw_cell(self, rect, name, win, spinning):
-        """Eine Slot-Zelle: Symbol + Rahmen, Gewinnzellen golden hervorgehoben."""
-        if win:
-            top, bot, border, bw = (60, 50, 22), (44, 36, 16), GOLD, 3
-        else:
-            top, bot, border, bw = PANEL_FILL2, PANEL_FILL, PANEL_LINE, 2
-        self._panel((rect.x, rect.y, rect.w, rect.h), radius=12,
-                    top=top, bottom=bot, border=border, border_w=bw, shadow=not spinning)
-        neg = name in ("TRAP", "PIT", "CURSE")
-        emj = slotmode.EMOJI.get(name, "?")
-        surf = self.font_huge.render(emj, True, RED if neg else WHITE)
-        self.screen.blit(surf, (rect.centerx - surf.get_width() // 2,
-                                rect.centery - surf.get_height() // 2))
 
     def _slotmode_charms(self, run, x, y):
         self._panel((x, y, 188, 430), radius=12, border=PURPLE, border_w=2)

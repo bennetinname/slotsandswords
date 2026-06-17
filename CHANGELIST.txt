@@ -3,21 +3,19 @@ CHANGELIST – SLOTS & SWORDS
 
 [v1.18.0 – 2026-06-17]  SLOT-MODUS NEU GEDACHT: „DAS LOCH"
 ----------------------------------------------------------
-Der Slot-Modus wurde komplett neu gebaut – inspiriert von Clover Pit.
-Statt eines simplen 3-Walzen-Drehs ist es jetzt ein klaustrophobisches
-Slot-Roguelike mit echtem Build-Tiefgang.
+Der Slot-Modus wurde zu einem ausgereiften Slot-Roguelike umgebaut –
+weiterhin der KLASSISCHE 3-Walzen-Automat (dieselben Symbol-Sprites wie im
+Kampf), aber mit echtem Build-Tiefgang drumherum.
 
 KERN-LOOP:
-* 3×3-GRID statt 3 Symbole. Du drehst alle 9 Felder.
-* GEWINNLINIEN (Paylines): 3 Reihen + 2 Diagonalen (5 zu Beginn), bis zu
-  8 freischaltbar (3 Spalten im Shop). Paar in Linie = klein, Drilling = fett.
-* 🎰 WILD ersetzt jedes Symbol in einer Linie.
-* MIETE (Quote): Jede Runde musst du dir die Miete aus deinem Münztopf
+* MIETE statt Punkte: Jede Runde musst du dir die Miete aus deinem Münztopf
   zusammendrehen. Schaffst du sie -> Shop. Schaffst du sie nicht -> die Hand
   kommt durch den Schlitz (Game Over). Die Miete wird abgezogen – der Rest
   bleibt zum Einkaufen. Es eskaliert endlos.
 * MÜNZEN sind die einzige Währung: gewinnen, Miete zahlen, einkaufen –
   alles aus demselben Topf. Gibst du zu viel aus, fehlt die Miete!
+* WERTUNG: Paar = solider Gewinn, Drilling = Jackpot (Chips × Mult, Balatro-
+  Stil). 🎰 WILD ersetzt jedes Symbol.
 * „Miete zahlen"-Button: hast du die Quote früh erreicht, kannst du sofort
   abrechnen (der Aasgeier-Charm zahlt sogar für übrige Drehs).
 
@@ -26,14 +24,15 @@ RISIKO & GLÜCK:
 * GLÜCK 🍀: über den Lauf aufgebaut; je höher, desto öfter werden beim
   Dreh Pech-Symbole in neutrale verwandelt. Charms verstärken das.
 
-22 CHARMS (Build-Anker) mit Synergien: Goldader, Joker-Magnet, Dreikrone,
-Vielfalt, Sensenmann, Diamanthand, Hühnerfarm, Hochroller, Glücksbringer,
-Exorzist, Fallensteller, Brücke, Zinskonto, Mondlicht, Bomber, Aasgeier,
+22 CHARMS (Build-Anker) mit Synergien – je mit eigenem Icon: Goldader,
+Joker-Magnet, Dreikrone, Zwillinge, Vielfalt, Sensenmann, Diamanthand,
+Hühnerfarm, Hochroller, Glücksbringer, Exorzist, Fallensteller, Brücke,
+Zinskonto, Mondlicht, Bomber, Edelsteinschleifer, Sternenrufer, Aasgeier,
 Übertakter u.v.m. (max. 6 gleichzeitig).
 
 SHOP „DIE THEKE" + TELEFON:
 * Angebote: Charm, Symbol hinzufügen, Symbol aufwerten, Pech-Symbol
-  ENTFERNEN, neue Gewinnlinie, Joker kaufen. Reroll.
+  ENTFERNEN, +1 Dreh dauerhaft, Joker kaufen. Reroll.
 * 📞 TELEFON klingelt manchmal mit einem Risiko-Deal (Kredit, Reinigung,
   „Alles oder nichts", Verlängerung …) – Gut + Schlecht im Paket.
 

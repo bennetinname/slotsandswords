@@ -1522,39 +1522,18 @@ class Game:
     # ═══════════════════════════════════════════════
 
     # ═══════════════════════════════════════════════
-    # SLOT-MODUS "DAS LOCH" (3×3-Grid + Paylines)
+    # SLOT-MODUS "DAS LOCH" (klassischer 3-Walzen-Automat)
     # ═══════════════════════════════════════════════
 
-    # Symbol-Pool für das Flackern beim Drehen (gewichtet wie der Beutel egal)
     def _start_slotmode(self):
         self.slotrun = slotmode.SlotRun()
+        self.slot_machine = SlotMachine(SCREEN_W // 2 - 170, 188)
         self._sm_spinning = False
-        self._sm_grid = list(self.slotrun.last_grid)     # finale Symbole
-        self._sm_display = list(self.slotrun.last_grid)  # aktuell gezeigte
-        self._sm_anim = 0.0
-        self._sm_stops = [0.0, 0.0, 0.0]
-        self._sm_flick = 0.0
-        self._sm_stopped_cols = 0
+        self._sm_pending = []
         self.state = STATE_SLOTMODE
 
-    @staticmethod
-    def sm_grid_geom():
-        """Geometrie des 3×3-Grids: (origin_x, origin_y, cell, gap)."""
-        cell, gap = 104, 12
-        grid_w = 3 * cell + 2 * gap
-        ox = SCREEN_W // 2 - grid_w // 2
-        oy = 168
-        return ox, oy, cell, gap
-
-    def _sm_cell_rect(self, idx):
-        ox, oy, cell, gap = self.sm_grid_geom()
-        c, rrow = idx % 3, idx // 3
-        return pygame.Rect(ox + c * (cell + gap), oy + rrow * (cell + gap), cell, cell)
-
     def _sm_spin_button(self):
-        ox, oy, cell, gap = self.sm_grid_geom()
-        gh = 3 * cell + 2 * gap
-        return pygame.Rect(SCREEN_W // 2 - 130, oy + gh + 30, 260, 58)
+        return pygame.Rect(SCREEN_W // 2 - 130, 452, 260, 58)
 
     def _sm_cashout_button(self):
         b = self._sm_spin_button()
@@ -1582,22 +1561,18 @@ class Game:
         r = self.slotrun
         if not r or r.game_over or r.in_shop or self._sm_spinning or r.spins_left <= 0:
             return
-        self._sm_grid = r.draw_grid()
-        self._sm_display = list(self._sm_grid)
-        self._sm_anim = 0.0
-        self._sm_flick = 0.0
-        self._sm_stopped_cols = 0
-        # Spalten stoppen nacheinander (skaliert mit Schnell-Modus)
-        sc = self._anim_mul()
-        self._sm_stops = [0.5 * sc, 0.8 * sc, 1.1 * sc]
+        names = r.draw_symbols()
+        self._sm_pending = names
+        targets = [self._sm_by_name.get(n) for n in names]
+        self.slot_machine.spin(time_scale=self._anim_mul(), targets=targets)
         self._sm_spinning = True
         audio.start_spin()
 
     def _sm_resolve(self):
         audio.stop_spin()
         r = self.slotrun
-        total, _lines = r.resolve_spin(self._sm_grid)
-        cx, cy = SCREEN_W // 2, self.sm_grid_geom()[1] + 160
+        total, _lines = r.resolve_spin(self._sm_pending)
+        cx, cy = SCREEN_W // 2, 270
         if r.in_shop:                       # Miete bezahlt -> Shop
             audio.play("jackpot"); audio.play("fanfare")
             self._do_shake(12)
@@ -1607,11 +1582,11 @@ class Game:
         elif r.game_over:
             audio.play("lose"); self._do_shake(16)
         else:
-            audio.play("jackpot" if total >= 60 else "reel", 0.8)
-            self._do_shake(min(14, 2 + total // 20))
+            audio.play("jackpot" if total >= 50 else "reel", 0.8)
+            self._do_shake(min(14, 2 + total // 18))
             if total > 0:
                 self._spawn_particles(cx, cy, (255, 210, 80),
-                                      count=min(24, 4 + total // 8), speed=180, size=4)
+                                      count=min(24, 4 + total // 6), speed=180, size=4)
 
     def _handle_slotmode_click(self, pos):
         r = self.slotrun
@@ -1645,18 +1620,15 @@ class Game:
             return
         if r.coins >= r.quota and r.spins_left > 0 and \
            self._sm_cashout_button().collidepoint(pos):
-            audio.play("gold"); r.cash_out_early(); self._sm_resolve_settle()
+            audio.play("gold")
+            r.cash_out_early()
+            if r.in_shop:
+                audio.play("jackpot"); audio.play("fanfare"); self._do_shake(12)
+                self._spawn_particles(SCREEN_W // 2, 270, (255, 210, 80),
+                                      count=30, speed=220, size=5)
             return
         if self._sm_back_rect().collidepoint(pos):
             audio.click(); self.state = STATE_MENU
-
-    def _sm_resolve_settle(self):
-        """Nach cash_out_early (Miete sofort zahlen) Feedback geben."""
-        r = self.slotrun
-        if r.in_shop:
-            audio.play("jackpot"); audio.play("fanfare"); self._do_shake(12)
-            self._spawn_particles(SCREEN_W // 2, self.sm_grid_geom()[1] + 160,
-                                  (255, 210, 80), count=30, speed=220, size=5)
 
     def _music_for_state(self):
         """Passender Musik-Track je Spielzustand."""
@@ -1741,28 +1713,12 @@ class Game:
                     self.shop_message = ""
 
         elif self.state == STATE_SLOTMODE:
-            if self._sm_spinning:
-                self._sm_anim += dt
-                # Spalten stoppen nacheinander; vor dem Stopp flackern die Zellen
-                done_cols = sum(1 for st in self._sm_stops if self._sm_anim >= st)
-                if done_cols > self._sm_stopped_cols:
-                    self._sm_stopped_cols = done_cols
+            if self._sm_spinning and self.slot_machine:
+                prev = sum(self.slot_machine._reel_done)
+                self.slot_machine.update()
+                if sum(self.slot_machine._reel_done) > prev:
                     audio.play("reel", 0.7)
-                # Flacker-Symbole für noch rollende Spalten
-                self._sm_flick += dt
-                if self._sm_flick >= 0.05:
-                    self._sm_flick = 0.0
-                    bag = list(self.slotrun.bag)
-                    for col in range(3):
-                        if self._sm_anim < self._sm_stops[col]:
-                            for rrow in range(3):
-                                self._sm_display[rrow * 3 + col] = random.choice(bag)
-                        else:
-                            for rrow in range(3):
-                                idx = rrow * 3 + col
-                                self._sm_display[idx] = self._sm_grid[idx]
-                if self._sm_anim >= self._sm_stops[-1]:
-                    self._sm_display = list(self._sm_grid)
+                if not self.slot_machine.spinning:
                     self._sm_spinning = False
                     self._sm_resolve()
     
@@ -2887,8 +2843,7 @@ class Game:
 
         elif self.state == STATE_SLOTMODE:
             self.ui.draw_slotmode(
-                self.slotrun, self._sm_display, self._sm_spinning,
-                [self._sm_cell_rect(i) for i in range(9)],
+                self.slotrun, self.slot_machine, self._sm_spinning,
                 self._sm_spin_button(), self._sm_cashout_button(),
                 self._sm_shop_layout(), self._sm_back_rect())
 
