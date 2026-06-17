@@ -1243,7 +1243,7 @@ class UIRenderer:
             f"🔥 Beste Kombo: x{player.best_combo}" if player.best_combo >= 2 else
             f"🐔 Hühner beschworen: {player.chickens_summoned}",
             f"💰 Gold verdient: {player.gold_earned}",
-            f"⚔ Schaden verursacht: {player.damage_dealt}",
+            f"⚔ Schaden verursacht: {player.damage_dealt}  ·  💥 Größter Treffer: {getattr(player, 'biggest_hit', 0)}",
             f"🎰 Slots gedreht: {player.slots_spun}",
             f"💠 Relikte gesammelt: {len(player.relics)}",
         ]

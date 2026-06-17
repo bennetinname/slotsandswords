@@ -1390,7 +1390,10 @@ class Game:
         self.log_scroll = 0
 
         # Effekt-Feedback (Sound/Partikel/Shake) anhand der Deltas
-        self._fx_enemy_hit(e_hp0 - self.enemy.hp)
+        _hit = e_hp0 - self.enemy.hp
+        if _hit > self.player.biggest_hit:
+            self.player.biggest_hit = _hit
+        self._fx_enemy_hit(_hit)
         self._fx_block(self.player.block - blk0)
         if self.player.hp > p_hp0:
             self._fx_heal(self.player.hp - p_hp0)
@@ -1503,7 +1506,10 @@ class Game:
             self._do_shake(12)
             self._spawn_particles(590, 150, (255, 210, 80), count=30, speed=240, size=5)
             self._spawn_particles(590, 150, (255, 120, 90), count=14, speed=200, size=4)
-        self._fx_enemy_hit(e_hp0 - self.enemy.hp)
+        _hit = e_hp0 - self.enemy.hp
+        if _hit > self.player.biggest_hit:
+            self.player.biggest_hit = _hit
+        self._fx_enemy_hit(_hit)
 
         if self._enemy_is_down():
             # Kurzer Delay, damit man das Slot-Ergebnis noch sehen kann (TODO #6)
@@ -2510,6 +2516,7 @@ class Game:
                 "damage_dealt": p.damage_dealt, "gold_earned": p.gold_earned,
                 "slots_spun": p.slots_spun, "chickens_summoned": p.chickens_summoned,
                 "enemies_defeated": p.enemies_defeated, "best_combo": p.best_combo,
+                "biggest_hit": p.biggest_hit,
             },
         }
 
@@ -2540,6 +2547,7 @@ class Game:
         p.damage_dealt = st.get("damage_dealt", 0)
         p.gold_earned = st.get("gold_earned", 0)
         p.slots_spun = st.get("slots_spun", 0)
+        p.biggest_hit = st.get("biggest_hit", 0)
         p.chickens_summoned = st.get("chickens_summoned", 0)
         p.enemies_defeated = st.get("enemies_defeated", 0)
         p.best_combo = st.get("best_combo", 0)

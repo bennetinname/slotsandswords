@@ -213,6 +213,7 @@ class Player:
         # Statistiken
         self.best_combo = 0
         self.damage_dealt = 0
+        self.biggest_hit = 0
         self.gold_earned = 0
         self.slots_spun = 0
         self.chickens_summoned = 0
