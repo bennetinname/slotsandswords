@@ -8,7 +8,7 @@ SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
-    ("1.19.0", "Klassen entdoppelt + 25 neue Karten + Slot-Modus vertieft (30 Charms mit Raritäten, Boss-Runden, Glücksdreh). Fix: kein Überleben mit 0 HP."),
+    ("1.19.0", "Klassen entdoppelt + 25 Karten + Slot-Modus vertieft + Relikt IMMER aus 3 wählen (auch Events/Schatz) + 6 neue Events. Fix: 0-HP-Bug."),
     ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer. HINWEIS: Nach einem Update schließt sich das Spiel - bitte SELBST neu starten (öffnet nicht automatisch)."),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
@@ -1840,9 +1840,76 @@ EVENT_DEFINITIONS = [
         "emoji": "🧰",
         "text": "Eine verschlossene Truhe. Etwas klappert darin. Risiko?",
         "options": [
-            {"label": "Öffnen",     "desc": "Garantiert ein Relikt", "effect": "relic"},
+            {"label": "Öffnen",     "desc": "Wähle dir ein Relikt aus", "effect": "relic"},
             {"label": "Aufbrechen", "desc": "-8 HP, dafür +40 Gold", "effect": "break_chest", "value": 40},
             {"label": "Stehenlassen","desc": "Sicherheit über alles", "effect": "nothing"},
+        ],
+    },
+    # ── v1.19: neue Events ──
+    {
+        "title": "Die Wahrsagerin",
+        "emoji": "🔮",
+        "text": "Eine Frau mit Goldzähnen mischt einen seltsamen Kartenstapel. "
+                "'Das Schicksal hat Karten für dich, Liebes.'",
+        "options": [
+            {"label": "Karte ziehen", "desc": "Erlerne eine zufällige Karte", "effect": "gain_card"},
+            {"label": "Hand lesen",   "desc": "+3 Glücksrunden & +10 HP", "effect": "lucky_fountain"},
+            {"label": "Skeptisch sein","desc": "+12 Gold und weiter", "effect": "gold", "value": 12},
+        ],
+    },
+    {
+        "title": "Der Priester der Reinheit",
+        "emoji": "🕯️",
+        "text": "Ein blasser Priester betrachtet dein Deck. 'Ich kann dich von "
+                "einer Bürde befreien… wenn du es zulässt.'",
+        "options": [
+            {"label": "Beichten",  "desc": "Entferne einen Fluch aus dem Deck", "effect": "cleanse_curse"},
+            {"label": "Spenden",   "desc": "-25 Gold, +12 Max HP", "effect": "trade_gold_maxhp", "value": 25},
+            {"label": "Weitergehen","desc": "Heile 15 HP", "effect": "heal", "value": 15},
+        ],
+    },
+    {
+        "title": "Der Blutverleiher",
+        "emoji": "🩸",
+        "text": "Ein hagerer Geldverleiher mustert dich. 'Gesundheit ist auch eine "
+                "Währung. Ich zahle gut.'",
+        "options": [
+            {"label": "Blut geben",  "desc": "-8 Max HP, dafür +45 Gold", "effect": "trade_hp_gold", "value": 45},
+            {"label": "Würfeln",     "desc": "50%: +3 Stärke. 50%: -12 HP", "effect": "gamble_strength"},
+            {"label": "Ablehnen",    "desc": "Nichts passiert", "effect": "nothing"},
+        ],
+    },
+    {
+        "title": "Das vergessene Arsenal",
+        "emoji": "⚔️",
+        "text": "Eine verstaubte Waffenkammer. Zwischen rostigem Schrott blinkt "
+                "etwas Brauchbares.",
+        "options": [
+            {"label": "Durchwühlen", "desc": "Wähle dir ein Relikt – kostet 18 Gold", "effect": "relic_for_gold", "value": 18},
+            {"label": "Waffe nehmen","desc": "Erlerne eine zufällige Karte", "effect": "gain_card"},
+            {"label": "Schrott verkaufen","desc": "+25 Gold", "effect": "gold", "value": 25},
+        ],
+    },
+    {
+        "title": "Die Opfergrube",
+        "emoji": "🕳️",
+        "text": "Ein dunkles Loch im Boden. Eine Stimme flüstert von Macht im "
+                "Tausch gegen… etwas.",
+        "options": [
+            {"label": "HP opfern",   "desc": "-10 HP, +2 Stärke dauerhaft", "effect": "sacrifice"},
+            {"label": "Relikt erflehen","desc": "-15 HP, dafür ein Relikt zur Wahl", "effect": "relic_for_hp", "value": 15},
+            {"label": "Fliehen",     "desc": "+8 Gold", "effect": "gold", "value": 8},
+        ],
+    },
+    {
+        "title": "Der Glückstempel",
+        "emoji": "🍀",
+        "text": "Ein kleiner Tempel voller Kleeblätter und Glücksmünzen. Es "
+                "kribbelt im ganzen Raum.",
+        "options": [
+            {"label": "Meditieren",  "desc": "+3 Glücksrunden & +10 HP", "effect": "lucky_fountain"},
+            {"label": "Münze opfern","desc": "Wirf 20 Gold rein für ein Relikt", "effect": "relic_for_gold", "value": 20},
+            {"label": "Energie schöpfen","desc": "+1 Max Energie", "effect": "energy"},
         ],
     },
 ]

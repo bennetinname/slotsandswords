@@ -151,6 +151,8 @@ class Game:
         self.relic_choices = []       # 3 Relikte zur Auswahl (Elite/Boss)
         self.relic_choice_rects = []
         self.hovered_relic_idx = None
+        self._relic_cb = None         # Callback nach Relikt-Wahl (wohin zurück)
+        self._event_relic_pending = 0 # offene Relikt-Auswahlen aus einem Event
 
         # Combo-System
         self.combo_type = None
@@ -867,7 +869,11 @@ class Game:
         else:
             if self.event_continue_rect and self.event_continue_rect.collidepoint(pos):
                 audio.play("click")
-                self._finish_node()
+                if self._event_relic_pending > 0:
+                    self._event_relic_pending -= 1
+                    self._offer_relic(self._after_event_relic, self._finish_node)
+                else:
+                    self._finish_node()
 
     # ═══════════════════════════════════════════════
     # SPIELSTART / NEUSTART
@@ -1009,14 +1015,13 @@ class Game:
         elif t == "rest":
             self.state = STATE_REST
         elif t == "treasure":
-            relic = self._grant_random_relic()
-            if relic:
-                self.map_message = f"💠 Schatz: {relic['emoji']} {relic['name']}!"
-            else:
+            def _treasure_gold():
                 self.player.add_gold(40)
                 self.map_message = "💰 Schatz: +40 Gold (alle Relikte schon da)!"
-            self.map_message_timer = 2.5
-            self._finish_node()
+                self.map_message_timer = 2.5
+                self._finish_node()
+            # Schatz: 3 Relikte zur Wahl; sonst Gold-Fallback
+            self._offer_relic(self._finish_node, _treasure_gold)
 
     def _begin_combat(self, node):
         """Startet einen Kampf an einem Karten-Knoten"""
@@ -1951,7 +1956,49 @@ class Game:
         audio.play("relic")
         self.relic_choices = []
         self.relic_choice_rects = []
-        self.state = STATE_REWARD
+        cb = self._relic_cb
+        self._relic_cb = None
+        if cb:
+            cb()
+        else:
+            self.state = STATE_REWARD
+
+    def _offer_relic(self, done_cb, fallback_cb=None):
+        """Zeigt die 3-aus-Auswahl für JEDE Relikt-Quelle. done_cb läuft nach
+        der Wahl, fallback_cb wenn keine Relikte mehr verfügbar sind.
+        Gibt True zurück, wenn die Auswahl geöffnet wurde."""
+        choices = self._roll_relic_choices(3)
+        if choices:
+            self.relic_choices = choices
+            self.relic_choice_rects = []
+            self.hovered_relic_idx = None
+            self._relic_cb = done_cb
+            self.state = STATE_RELIC_REWARD
+            return True
+        if fallback_cb:
+            fallback_cb()
+        return False
+
+    def _relics_available(self):
+        owned = {r["id"] for r in self.player.relics}
+        return any(r["id"] not in owned and achievements.content_unlocked("relic", r["name"])
+                   for r in RELIC_DEFINITIONS)
+
+    def _queue_event_relic(self):
+        """Merkt vor, dass nach dem Event eine Relikt-Auswahl ansteht.
+        Gibt False zurück, wenn keine Relikte mehr verfügbar sind."""
+        if not self._relics_available():
+            return False
+        self._event_relic_pending += 1
+        return True
+
+    def _after_event_relic(self):
+        """Nach einer Event-Relikt-Wahl: weitere offene Wahlen oder Node beenden."""
+        if self._event_relic_pending > 0:
+            self._event_relic_pending -= 1
+            self._offer_relic(self._after_event_relic, self._finish_node)
+        else:
+            self._finish_node()
 
     def _grant_random_relic(self):
         """Vergibt ein zufälliges noch nicht besessenes Relikt"""
@@ -2026,17 +2073,16 @@ class Game:
         elif eff == "spins":
             p.lucky += val; msg = f"+{val} Glücksrunden!"
         elif eff == "relic":
-            r = self._grant_random_relic()
-            msg = f"Relikt erhalten: {r['emoji']} {r['name']}!" if r else "Du hast schon alle Relikte!"
+            msg = "Wähle dir ein Relikt aus!" if self._queue_event_relic() else "Du hast schon alle Relikte!"
         elif eff == "relic_for_hp":
             p.take_damage(val, ignore_block=True)
-            r = self._grant_random_relic()
-            msg = f"-{val} HP. Relikt: {r['emoji']} {r['name']}!" if r else f"-{val} HP, aber kein Relikt mehr übrig."
+            msg = (f"-{val} HP. Wähle dir ein Relikt aus!" if self._queue_event_relic()
+                   else f"-{val} HP, aber kein Relikt mehr übrig.")
         elif eff == "relic_for_gold":
             if p.gold >= val:
                 p.spend_gold(val)
-                r = self._grant_random_relic()
-                msg = f"-{val} Gold. Relikt: {r['emoji']} {r['name']}!" if r else f"-{val} Gold, aber kein Relikt mehr übrig."
+                msg = (f"-{val} Gold. Wähle dir ein Relikt aus!" if self._queue_event_relic()
+                       else f"-{val} Gold, aber kein Relikt mehr übrig.")
             else:
                 msg = "Nicht genug Gold dafür!"
         elif eff == "sacrifice":
@@ -2074,8 +2120,7 @@ class Game:
         elif eff == "casino_blood_poker":
             p.take_damage(20, ignore_block=True)
             if random.random() < 0.6:
-                r = self._grant_random_relic()
-                msg = (f"−20 HP, aber du gewinnst: {r['emoji']} {r['name']}!" if r
+                msg = (f"−20 HP, du gewinnst – wähle dir ein Relikt!" if self._queue_event_relic()
                        else "−20 HP. Gewonnen – aber alle Relikte hast du schon.")
             else:
                 msg = "−20 HP. Dein Blatt war Müll. Der Tisch schweigt."
@@ -2090,8 +2135,8 @@ class Game:
                     p.add_card_to_deck(cd)
                     msg = f"📦 In der Box: Karte '{cd['name']}'!"
                 elif roll < 0.55:
-                    r = self._grant_random_relic()
-                    msg = f"📦 In der Box: {r['emoji']} {r['name']}!" if r else "📦 Leer. Alle Relikte schon da."
+                    msg = ("📦 In der Box: ein Relikt – wähle aus!" if self._queue_event_relic()
+                           else "📦 Leer. Alle Relikte schon da.")
                 elif roll < 0.80:
                     h = p.heal_hp(25)
                     msg = f"📦 Heiltrank! +{h} HP."
@@ -2109,6 +2154,37 @@ class Game:
         elif eff == "break_chest":
             p.take_damage(8, ignore_block=True); p.add_gold(val)
             msg = f"-8 HP, dafür +{val} Gold!"
+        elif eff == "gain_card":
+            cd = random.choice([c for c in CARD_DEFINITIONS
+                                if c.get("type") != "curse"
+                                and achievements.content_unlocked("card", c["name"])])
+            p.add_card_to_deck(cd)
+            msg = f"Neue Karte erlernt: '{cd['name']}'!"
+        elif eff == "cleanse_curse":
+            removed = self._remove_one_curse()
+            msg = "Ein Fluch wurde aus deinem Deck verbannt!" if removed else "Du hast keine Flüche – du bekommst +20 Gold."
+            if not removed:
+                p.add_gold(20)
+        elif eff == "trade_hp_gold":
+            # Tausche Max-HP gegen Gold (Risiko-Investition)
+            p.max_hp = max(20, p.max_hp - 8)
+            p.hp = min(p.hp, p.max_hp)
+            p.add_gold(val)
+            msg = f"-8 Max HP, dafür +{val} Gold."
+        elif eff == "trade_gold_maxhp":
+            if p.gold >= val:
+                p.spend_gold(val); p.max_hp += 12; p.hp += 12
+                msg = f"-{val} Gold, +12 Max HP!"
+            else:
+                msg = "Nicht genug Gold."
+        elif eff == "gamble_strength":
+            if random.random() < 0.5:
+                p.perm_strength += 3; p.strength += 3; msg = "🎉 +3 Stärke dauerhaft!"
+            else:
+                p.take_damage(12, ignore_block=True); msg = "Daneben! -12 HP."
+        elif eff == "lucky_fountain":
+            p.lucky += 3; h = p.heal_hp(10)
+            msg = f"+3 Glücksrunden und +{h} HP. Erfrischend."
         elif eff == "nothing":
             msg = "Du gehst weiter. Nichts passiert."
         else:
@@ -2123,6 +2199,16 @@ class Game:
         curse = random.choice(CURSE_DEFINITIONS)
         self.player.add_card_to_deck(curse)
         self._log(f"💀 Fluch erhalten: {curse['name']}!")
+
+    def _remove_one_curse(self):
+        """Entfernt eine Fluch-Karte aus Deck/Hand/Ablage. True bei Erfolg."""
+        for pile in (self.player.deck, self.player.discard, self.player.hand):
+            for c in pile:
+                if getattr(c, "type", None) == "curse":
+                    pile.remove(c)
+                    self._log(f"✨ Fluch '{c.name}' entfernt!")
+                    return True
+        return False
 
     # ═══════════════════════════════════════════════
     # SHOP

@@ -53,6 +53,18 @@ SLOT-MODUS „DAS LOCH" VERTIEFT:
 * GLÜCKSDREH: Glück ist jetzt auch eine Ressource – gib 4 Glück aus für
   einen garantiert pechfreien Dreh.
 
+RELIKTE IMMER ZUR WAHL:
+* JEDES Mal, wenn du ein Relikt bekommst – ob aus Elite/Boss, Schatz-Knoten
+  oder einem Event (Truhe, Händler, Casino-Blutpoker, Mystery-Box …) –
+  wählst du jetzt aus 3 Relikten aus (vorher nur bei Elite/Boss). So kannst
+  du deinen Build überall gezielt steuern.
+
+6 NEUE EVENTS (jetzt 14 insgesamt):
+* Die Wahrsagerin, Der Priester der Reinheit (Fluch entfernen!), Der
+  Blutverleiher, Das vergessene Arsenal, Die Opfergrube, Der Glückstempel.
+* Neue Event-Optionen: Karte erlernen, Fluch entfernen, Max-HP gegen Gold
+  (und umgekehrt), Stärke-Wette.
+
 
 [v1.18.0 – 2026-06-17]  SLOT-MODUS NEU GEDACHT: „DAS LOCH"
 ----------------------------------------------------------
