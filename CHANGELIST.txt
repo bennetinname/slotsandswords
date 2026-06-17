@@ -36,6 +36,10 @@ SHOP „DIE THEKE" + TELEFON:
 * 📞 TELEFON klingelt manchmal mit einem Risiko-Deal (Kredit, Reinigung,
   „Alles oder nichts", Verlängerung …) – Gut + Schlecht im Paket.
 
+WICHTIGER HINWEIS ZUM UPDATE:
+* Nach dem Herunterladen eines Updates SCHLIESST sich das Spiel, startet
+  aber NICHT automatisch wieder. Bitte das Spiel danach SELBST neu starten.
+
 ZUSÄTZLICH in v1.18.0:
 * UNVERZERRTE AUFLÖSUNGEN: Die Fenstergrößen sind jetzt im nativen
   Seitenverhältnis 3:2 (900×600, 1200×800, 1500×1000, 1620×1080) – kein
