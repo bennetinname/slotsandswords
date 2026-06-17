@@ -1149,6 +1149,9 @@ class Game:
             self.enemy.jam_next = False
             self._log("🎰 Dein Automat ist blockiert! (−1 Dreh diese Runde)")
         self.player.start_turn()
+        # Eigenes Gift/Brennen kann den Spieler am Rundenstart töten
+        if self._check_player_death():
+            return
         # Wachturm: +6 Block zu Beginn jeder Runde
         if self.player.has_relic("watchtower"):
             self.player.block += 6
@@ -1391,6 +1394,9 @@ class Game:
             self._fx_player_hit(p_hp0 - self.player.hp)  # Selbstschaden (Bombe etc.)
         self._fx_gold(self.player.gold - gold0)
 
+        # Spieler-Tod durch Slot-Selbstschaden (Bombe/Falle) sofort prüfen
+        if self._check_player_death():
+            return
         # Todescheck (berücksichtigt Lich-Undying)
         if self._enemy_is_down():
             self._enemy_defeated()
@@ -1776,15 +1782,24 @@ class Game:
         if self.player.hp == 1:
             self._award("near_death")
 
-        if not self.player.is_alive():
-            self._award("first_death")
-            self.state = STATE_GAME_OVER
-            self._save_highscore()
-            audio.stop_spin()
-            audio.play("lose")
-            self._log("💀 Du bist gestorben. Schade.")
-        else:
+        if not self._check_player_death():
             self._start_new_turn()
+
+    def _check_player_death(self):
+        """Zentrale Tod-Prüfung: löst Game Over aus, sobald HP <= 0 (egal
+        woher der Schaden kam – Gegner, eigenes Gift/Brennen, Slot-Falle).
+        Gibt True zurück, wenn der Spieler tot ist."""
+        if self.state == STATE_GAME_OVER or self.player is None:
+            return self.state == STATE_GAME_OVER
+        if self.player.is_alive():
+            return False
+        self._award("first_death")
+        self.state = STATE_GAME_OVER
+        self._save_highscore()
+        audio.stop_spin()
+        audio.play("lose")
+        self._log("💀 Du bist gestorben. Schade.")
+        return True
     
     # ═══════════════════════════════════════════════
     # SIEG / BELOHNUNG
