@@ -1544,6 +1544,10 @@ class Game:
         b = self._sm_spin_button()
         return pygame.Rect(b.right + 16, b.y + 6, 200, 46)
 
+    def _sm_lucky_button(self):
+        b = self._sm_spin_button()
+        return pygame.Rect(b.x - 216, b.y + 6, 200, 46)
+
     def _sm_back_rect(self):
         return pygame.Rect(16, 16, 150, 38)
 
@@ -1622,6 +1626,9 @@ class Game:
             return
         if self._sm_spin_button().collidepoint(pos):
             self._sm_spin()
+            return
+        if r.can_lucky_spin() and self._sm_lucky_button().collidepoint(pos):
+            audio.play("gold" if r.request_lucky_spin() else "error")
             return
         if r.coins >= r.quota and r.spins_left > 0 and \
            self._sm_cashout_button().collidepoint(pos):
@@ -2859,7 +2866,7 @@ class Game:
             self.ui.draw_slotmode(
                 self.slotrun, self.slot_machine, self._sm_spinning,
                 self._sm_spin_button(), self._sm_cashout_button(),
-                self._sm_shop_layout(), self._sm_back_rect())
+                self._sm_lucky_button(), self._sm_shop_layout(), self._sm_back_rect())
 
         # Globale Overlays (Schmiede/Verbrennen) über dem aktuellen Screen
         if self.shop_remove_mode:

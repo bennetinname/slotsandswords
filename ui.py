@@ -2133,7 +2133,7 @@ class UIRenderer:
     # ═══════════════════════════════════════════════
 
     def draw_slotmode(self, run, machine, spinning, spin_btn, cashout_btn,
-                      shop_lay, back_rect):
+                      lucky_btn, shop_lay, back_rect):
         self.draw_background()
         self._dim(120)
         if run is None:
@@ -2170,8 +2170,15 @@ class UIRenderer:
         self._text(f"{run.coins} / {run.quota}", self.font_tiny,
                    BLACK if frac > 0.5 else INK, bar.centerx, bar.y + 1, center=True)
 
-        # Letzte Meldung (Log) unter der Leiste
-        if run.log:
+        # Boss-Runden-Banner
+        if getattr(run, "boss_mod", None):
+            bw = 660
+            br = pygame.Rect(self.w // 2 - bw // 2, 124, bw, 24)
+            pygame.draw.rect(self.screen, (60, 16, 22), br, border_radius=10)
+            pygame.draw.rect(self.screen, RED, br, 2, border_radius=10)
+            self._text(f"⚠️ BOSS-RUNDE: {run.boss_mod['label']}", self.font_tiny,
+                       _lighten(RED, 0.4), br.centerx, br.y + 5, center=True)
+        elif run.log:
             self._text(run.log[0], self.font_small, INK_DIM, self.w // 2, 132, center=True)
 
         # Der echte 3-Walzen-Automat (Symbol-Sprites)
@@ -2196,6 +2203,16 @@ class UIRenderer:
                 self.draw_button("💵 Miete zahlen", cashout_btn.x, cashout_btn.y,
                                  cashout_btn.w, cashout_btn.h, color=GREEN,
                                  text_color=BLACK, pulsing=True)
+            # Glücksdreh: Glück ausgeben für einen pechfreien Dreh
+            if not spinning and lucky_btn:
+                can = run.can_lucky_spin()
+                cost = getattr(run, "LUCKY_SPIN_COST", 4)
+                lbl = f"🍀 Glücksdreh ({cost})" if can else f"🍀 Glück {run.lucky}/{cost}"
+                if getattr(run, "next_lucky_spin", False):
+                    lbl = "🍀 bereit!"
+                self.draw_button(lbl, lucky_btn.x, lucky_btn.y, lucky_btn.w, lucky_btn.h,
+                                 color=GREEN if can else GREY_DARK,
+                                 text_color=BLACK if can else INK_DIM)
 
         if run.in_shop:
             self._slotmode_shop(run, shop_lay)

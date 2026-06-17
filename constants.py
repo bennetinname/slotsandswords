@@ -8,7 +8,7 @@ SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
-    ("1.19.0", "Klassen entdoppelt (Croupière=Mult, Alchemist=Burst) + 25 neue Karten für alle Archetypen. Fix: kein Überleben mehr mit 0 HP."),
+    ("1.19.0", "Klassen entdoppelt + 25 neue Karten + Slot-Modus vertieft (30 Charms mit Raritäten, Boss-Runden, Glücksdreh). Fix: kein Überleben mit 0 HP."),
     ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer. HINWEIS: Nach einem Update schließt sich das Spiel - bitte SELBST neu starten (öffnet nicht automatisch)."),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),

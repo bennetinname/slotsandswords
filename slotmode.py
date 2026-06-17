@@ -91,8 +91,40 @@ CHARMS = [
      "desc": "Pro übrigem Dreh am Rundenende: +6 Münzen Bonus."},
     {"id": "overclock",    "emoji": "⚡", "name": "Übertakter", "cost": 9,
      "desc": "Grund-Mult startet bei 2 statt 1."},
+    # ── v1.19: neue Charms mit mehr Tiefe ──
+    {"id": "magpie",       "emoji": "🐦", "name": "Elster", "cost": 6,
+     "desc": "+2 Münzen pro normalem Symbol im Dreh (kein Pech/Joker)."},
+    {"id": "gambler_soul", "emoji": "🎴", "name": "Zockerseele", "cost": 7,
+     "desc": "+12 Münzen, WENN ein Pech-Symbol im Dreh ist (Risiko zahlt sich aus)."},
+    {"id": "pyramid",      "emoji": "🔺", "name": "Schneeball", "cost": 7,
+     "desc": "Hast du die Miete schon zusammen: +2 Mult auf jeden weiteren Dreh."},
+    {"id": "escalation",   "emoji": "📈", "name": "Eskalation", "cost": 8,
+     "desc": "Jeder Dreh ohne Gewinn erhöht den nächsten Dreh um +2 Mult (stapelt)."},
+    {"id": "chain",        "emoji": "🔗", "name": "Kettenreaktion", "cost": 10,
+     "desc": "Jeder Drilling gibt dir einen GRATIS-Dreh dazu."},
+    {"id": "insurance",    "emoji": "🛟", "name": "Versicherung", "cost": 9,
+     "desc": "Einmal pro Lauf: verfehlst du die Miete, überlebst du trotzdem."},
+    {"id": "collector",    "emoji": "🗃️", "name": "Sammler", "cost": 8,
+     "desc": "+1 Mult pro 2 Charms, die du besitzt."},
+    {"id": "midas",        "emoji": "🪙", "name": "Midas-Hand", "cost": 10,
+     "desc": "Jeder 5. Dreh zahlt DOPPELT aus."},
 ]
 CHARM_BY_ID = {c["id"]: c for c in CHARMS}
+
+# Charm-Raritäten (Shop gewichtet; späte Runden eher selten/legendär).
+CHARM_RARITY = {
+    "magpie": "common", "reaper": "common", "arsonist": "common",
+    "chicken_farm": "common", "star_caller": "common", "scavenger": "common",
+    "clover_luck": "common", "twins": "common", "gold_vein": "common",
+    "gambler_soul": "uncommon", "high_roller": "uncommon", "moonlight": "uncommon",
+    "bomber": "uncommon", "gem_cutter": "uncommon", "exorcist": "uncommon",
+    "trap_smith": "uncommon", "bridge": "uncommon", "variety": "uncommon",
+    "pyramid": "uncommon", "lucky_seven": "uncommon", "wild_magnet": "uncommon",
+    "triple_crown": "rare", "diamond_hand": "rare", "interest": "rare",
+    "overclock": "rare", "escalation": "rare", "chain": "rare",
+    "insurance": "rare", "collector": "rare", "midas": "rare",
+}
+_RARITY_WEIGHT = {"common": 100, "uncommon": 45, "rare": 16}
 
 # ── Telefon-Deals (Risiko/Belohnung) ──────────────────────────────────
 PHONE_DEALS = [
@@ -106,6 +138,15 @@ PHONE_DEALS = [
      "good": ("coins_mult", 2.0), "bad": ("bag", "TRAP", 3)},
     {"id": "extra_spin", "label": "„Verlängerung“: +1 Dreh DAUERHAFT – kostet 16 Münzen.",
      "good": ("extra_spin", 1), "bad": ("coins", -16)},
+]
+
+# ── Boss-Runden-Modifikatoren (alle 5 Runden) ─────────────────────────
+BOSS_MODS = [
+    {"id": "neg_double",  "label": "Pech-Symbole zählen DOPPELT"},
+    {"id": "pairs_only",  "label": "Nur Paare & Drillinge zahlen (kein Grundwert)"},
+    {"id": "high_stakes", "label": "Miete +30%, dafür winkt ein Extra-Charm im Shop",
+     "quota_mult": 1.3},
+    {"id": "frozen_reel", "label": "Multiplikator startet bei 1 (Übertakter wirkt nicht)"},
 ]
 
 
@@ -152,6 +193,11 @@ class SlotRun:
         self.last_lines = []
         self.last_total = 0
         self._quota_mult = 1.0
+        self._dry_streak = 0          # Drehs ohne Gewinn (Eskalation-Charm)
+        self._spin_count = 0          # gesamte Drehs (Midas-Charm)
+        self._insurance_used = False
+        self.boss_mod = None          # Modifikator in Boss-Runden (alle 5)
+        self.next_lucky_spin = False  # Glücksdreh angefordert (Glück ausgeben)
         self.log = []
         self._begin_round()
 
@@ -161,28 +207,60 @@ class SlotRun:
         base = int(27 * r * (1.12 ** (r - 1)))
         return int(base * self._quota_mult)
 
+    def is_boss_round(self):
+        return self.round % 5 == 0
+
     def _begin_round(self):
+        # Boss-Modifikator alle 5 Runden
+        self.boss_mod = None
+        if self.is_boss_round():
+            self.boss_mod = dict(random.choice(BOSS_MODS))
         self.quota = self.quota_for(self.round)
+        if self.boss_mod and self.boss_mod.get("quota_mult"):
+            self.quota = int(self.quota * self.boss_mod["quota_mult"])
         self._quota_mult = 1.0
         self.spins_left = self.spins_per_round
+        self._dry_streak = 0
         self.in_shop = False
         self.phone = None
         self.last_lines = []
-        self.log = [f"Runde {self.round}: Dreh dir {self.quota} Münzen für die Miete!"]
+        if self.boss_mod:
+            self.log = [f"⚠️ BOSS-RUNDE {self.round}: {self.boss_mod['label']} "
+                        f"– Miete {self.quota}!"]
+        else:
+            self.log = [f"Runde {self.round}: Dreh dir {self.quota} Münzen für die Miete!"]
 
     # ── Ziehen (3 Symbole, mit Glücks-Filter gegen Pech) ────────
+    LUCKY_SPIN_COST = 4
+
+    def can_lucky_spin(self):
+        return self.lucky >= self.LUCKY_SPIN_COST and not self.next_lucky_spin
+
+    def request_lucky_spin(self):
+        """Glück als Ressource ausgeben: nächster Dreh ohne Pech-Symbole."""
+        if not self.can_lucky_spin():
+            return False
+        self.lucky -= self.LUCKY_SPIN_COST
+        self.next_lucky_spin = True
+        return True
+
     def draw_symbols(self):
         names = list(self.bag)
         weights = [self.bag[n] for n in names]
         res = [random.choices(names, weights)[0] for _ in range(3)]
-        if self.lucky > 0:
+        good = [n for n in names if n not in NEGATIVE]
+        gw = [self.bag[n] for n in good]
+        if good and self.next_lucky_spin:
+            # Glücksdreh: ALLE Pech-Symbole garantiert ersetzen
+            for i, n in enumerate(res):
+                if n in NEGATIVE:
+                    res[i] = random.choices(good, gw)[0]
+            self.next_lucky_spin = False
+        elif good and self.lucky > 0:
             p = min(0.7, 0.08 * self.lucky)
-            good = [n for n in names if n not in NEGATIVE]
-            gw = [self.bag[n] for n in good]
-            if good:
-                for i, n in enumerate(res):
-                    if n in NEGATIVE and random.random() < p:
-                        res[i] = random.choices(good, gw)[0]
+            for i, n in enumerate(res):
+                if n in NEGATIVE and random.random() < p:
+                    res[i] = random.choices(good, gw)[0]
         return res
 
     # ── Wertung (3 Symbole) ─────────────────────────────────────
@@ -209,8 +287,14 @@ class SlotRun:
         emj = " ".join(EMOJI.get(n, "?") for n in names)
         lines.append((f"Walzen: {emj}", ""))
 
-        chips = sum(self.values.get(n, 0) for n in names if n not in NEGATIVE)
-        mult = 2 if "overclock" in self.charms else 1
+        bossid = self.boss_mod["id"] if self.boss_mod else None
+        # Grundwert der Symbole (Boss 'pairs_only' streicht ihn)
+        if bossid == "pairs_only":
+            chips = 0
+        else:
+            chips = sum(self.values.get(n, 0) for n in names if n not in NEGATIVE)
+        # Übertakter (Boss 'frozen_reel' blockt ihn)
+        mult = 2 if ("overclock" in self.charms and bossid != "frozen_reel") else 1
 
         # Paar / Drilling
         m = self._best_match(names)
@@ -253,6 +337,14 @@ class SlotRun:
             extra = self.values.get("DIAMOND", 12) * cnt("DIAMOND")
             chips += extra
             lines.append(("💎 Diamanthand", f"+{extra} Chips"))
+        if "magpie" in self.charms:
+            n = sum(1 for s in names if s not in NEGATIVE and s != WILD)
+            if n:
+                chips += 2 * n
+                lines.append(("🐦 Elster", f"+{2*n} Chips"))
+        if "gambler_soul" in self.charms and any(s in NEGATIVE for s in names):
+            chips += 12
+            lines.append(("🎴 Zockerseele", "+12 Chips"))
 
         # Mult-Charms
         if "chicken_farm" in self.charms and cnt("CHICKEN"):
@@ -272,6 +364,14 @@ class SlotRun:
                 mult += 4; lines.append(("🍀 Glücksbringer", "+4 Mult"))
             elif self.lucky >= 5:
                 mult += 2; lines.append(("🍀 Glücksbringer", "+2 Mult"))
+        if "pyramid" in self.charms and self.coins >= self.quota:
+            mult += 2; lines.append(("🔺 Schneeball", "+2 Mult"))
+        if "collector" in self.charms and len(self.charms) >= 2:
+            inc = len(self.charms) // 2
+            mult += inc; lines.append(("🗃️ Sammler", f"+{inc} Mult"))
+        if "escalation" in self.charms and self._dry_streak > 0:
+            inc = 2 * self._dry_streak
+            mult += inc; lines.append(("📈 Eskalation", f"+{inc} Mult"))
 
         gross = chips * mult
 
@@ -296,6 +396,9 @@ class SlotRun:
                 penalty += 3 * c
                 lines.append((f"🪤 Falle ×{c}", f"-{3*c}"))
 
+        if bossid == "neg_double" and penalty:
+            penalty *= 2
+            lines.append(("⚠️ Boss: Pech doppelt", f"-{penalty//2}"))
         total = max(0, gross - penalty)
         if "high_roller" in self.charms and total >= 30:
             boost = total // 2
@@ -307,6 +410,12 @@ class SlotRun:
 
     def resolve_spin(self, names):
         total, lines = self.score(names)
+        # Midas-Hand: jeder 5. Dreh zahlt doppelt
+        self._spin_count += 1
+        if "midas" in self.charms and self._spin_count % 5 == 0 and total > 0:
+            total *= 2
+            lines.append(("🪙 Midas-Hand", f"DOPPELT! = {total}"))
+            self.last_total = total
         clovers = _count(names, "CLOVER")
         if clovers:
             per = 2 if "clover_luck" in self.charms else 1
@@ -317,7 +426,15 @@ class SlotRun:
         self.coins += total
         if "interest" in self.charms and self.coins > 0:
             self.coins += min(8, self.coins // 8)
+        # Eskalation: Dreh ohne Gewinn erhöht Streak, sonst Reset
+        self._dry_streak = self._dry_streak + 1 if total == 0 else 0
         self.spins_left -= 1
+        # Kettenreaktion: Drilling schenkt einen Gratis-Dreh
+        if "chain" in self.charms:
+            m = self._best_match(names)
+            if m and m[1] == 3:
+                self.spins_left += 1
+                self.log = ["🔗 Kettenreaktion: Gratis-Dreh!"]
         if self.spins_left <= 0:
             self._settle()
         return total, lines
@@ -332,6 +449,17 @@ class SlotRun:
             self.shop = self._roll_shop()
             self.phone = self._maybe_phone()
             self.log = [f"Miete bezahlt! −{self.quota} Münzen. Rest: {self.coins}."]
+        elif "insurance" in self.charms and not self._insurance_used:
+            # Versicherung: einmal pro Lauf die verfehlte Miete überleben
+            self._insurance_used = True
+            self.best_round = max(self.best_round, self.round)
+            save_best(self.round)
+            self.in_shop = True
+            self.reroll_cost = 4
+            self.shop = self._roll_shop()
+            self.phone = None
+            self.coins = 0
+            self.log = ["🛟 Versicherung greift! Du überlebst die verfehlte Miete (einmalig)."]
         else:
             self.game_over = True
             self.best_round = max(self.best_round, self.round)
@@ -351,13 +479,34 @@ class SlotRun:
         return True
 
     # ── Shop / Telefon ──────────────────────────────────────────
+    def _pick_charm(self):
+        """Wählt einen noch nicht besessenen Charm, gewichtet nach Rarität.
+        Späte Runden erhöhen die Chance auf seltene Charms."""
+        free = [c for c in CHARMS if c["id"] not in self.charms]
+        if not free or len(self.charms) >= 6:
+            return None
+        late = max(0, self.round - 3)
+        weights = []
+        for c in free:
+            rar = CHARM_RARITY.get(c["id"], "common")
+            w = _RARITY_WEIGHT[rar]
+            if rar in ("uncommon", "rare"):
+                w += late * (3 if rar == "uncommon" else 4)
+            weights.append(w)
+        return random.choices(free, weights)[0]
+
     def _roll_shop(self):
         offers = []
-        free = [c for c in CHARMS if c["id"] not in self.charms]
-        if free and len(self.charms) < 6:
-            j = random.choice(free)
+        j = self._pick_charm()
+        if j:
             offers.append({"kind": "charm", "charm": j["id"], "cost": j["cost"],
                            "label": f"{j['emoji']} {j['name']}"})
+        # Boss 'high_stakes': garantiert ein ZWEITER Charm
+        if self.boss_mod and self.boss_mod["id"] == "high_stakes":
+            j2 = self._pick_charm()
+            if j2 and j2["id"] not in [o.get("charm") for o in offers]:
+                offers.append({"kind": "charm", "charm": j2["id"], "cost": j2["cost"],
+                               "label": f"{j2['emoji']} {j2['name']}"})
         good = [s for s in self.values if s not in NEGATIVE and s != WILD]
         sym = random.choice(good)
         offers.append({"kind": "symbol", "sym": sym,
@@ -376,8 +525,13 @@ class SlotRun:
                            "label": "+1 Dreh pro Runde (dauerhaft)"})
         offers.append({"kind": "symbol", "sym": "WILD", "cost": 9,
                        "label": "+1 🎰 (Joker) in den Beutel"})
-        random.shuffle(offers)
-        return offers[:4]
+        # Charms bleiben garantiert vorne, der Rest wird gemischt
+        charms = [o for o in offers if o["kind"] == "charm"]
+        rest = [o for o in offers if o["kind"] != "charm"]
+        random.shuffle(rest)
+        result = (charms + rest)[:4]
+        random.shuffle(result)
+        return result
 
     def _maybe_phone(self):
         if random.random() < 0.35:

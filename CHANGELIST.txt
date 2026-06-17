@@ -41,6 +41,18 @@ KLASSEN ENTDOPPELT (vorher faktisch 2× Gift, 2× Luck):
 * 4 neue skalierende Effekte (Fäulnis/Glut/Eiszapfen/Wuchtschild) belohnen
   reine Archetyp-Builds.
 
+SLOT-MODUS „DAS LOCH" VERTIEFT:
+* 30 CHARMS (8 neue) mit RARITÄTEN (gewöhnlich/uncommon/selten). Der Shop
+  gewichtet nach Rarität – späte Runden bringen eher seltene Charms.
+  Neu: Elster, Zockerseele (Risiko zahlt sich aus), Schneeball, Eskalation
+  (Drehs ohne Gewinn stapeln Mult), Kettenreaktion (Drilling = Gratis-Dreh),
+  Versicherung (überlebe einmal eine verfehlte Miete), Sammler, Midas-Hand
+  (jeder 5. Dreh doppelt).
+* BOSS-RUNDEN alle 5 Runden mit Modifikator: Pech zählt doppelt / nur Paare
+  & Drillinge zahlen / Miete +30% mit Extra-Charm / Multiplikator gesperrt.
+* GLÜCKSDREH: Glück ist jetzt auch eine Ressource – gib 4 Glück aus für
+  einen garantiert pechfreien Dreh.
+
 
 [v1.18.0 – 2026-06-17]  SLOT-MODUS NEU GEDACHT: „DAS LOCH"
 ----------------------------------------------------------
