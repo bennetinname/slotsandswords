@@ -36,6 +36,14 @@ SHOP „DIE THEKE" + TELEFON:
 * 📞 TELEFON klingelt manchmal mit einem Risiko-Deal (Kredit, Reinigung,
   „Alles oder nichts", Verlängerung …) – Gut + Schlecht im Paket.
 
+ZUSÄTZLICH in v1.18.0:
+* UNVERZERRTE AUFLÖSUNGEN: Die Fenstergrößen sind jetzt im nativen
+  Seitenverhältnis 3:2 (900×600, 1200×800, 1500×1000, 1620×1080) – kein
+  langgezogenes Bild mehr. Standard ist jetzt 1200×800. [F11] = Vollbild.
+* LAGERFEUER zeigt jetzt deine aktuelle HP als Leiste (mit Heil-Vorschau),
+  damit du auf einen Blick siehst, ob sich Ausruhen lohnt. Bei voller HP
+  wird klar angezeigt, dass keine Heilung nötig ist.
+
 [v1.17.1 – 2026-06-17]  BUGFIXES & POLISHING
 ----------------------------------------------
 NEUE FEATURES:

@@ -17,17 +17,20 @@ DEFAULTS = {
     "shake": True,      # Screen-Shake an/aus
     "particles": True,  # Partikeleffekte an/aus
     "fast": False,      # Animationen/Übergänge beschleunigen
-    "window_w": 1280,   # Fenstergröße (Breite), nur im Fenstermodus
-    "window_h": 720,    # Fenstergröße (Höhe)
+    "window_w": 1200,   # Fenstergröße (Breite) – nativ 3:2, nicht verzerrt
+    "window_h": 800,    # Fenstergröße (Höhe)
     "last_seen": "",    # zuletzt gesehene Version (für Changelog-Auto-Popup)
 }
 
-# Vordefinierte Fenstergrößen (Name, Breite, Höhe)
+# Vordefinierte Fenstergrößen. Das Spiel rendert nativ in 1200×800 (3:2);
+# diese Presets behalten exakt dieses Seitenverhältnis -> NICHT verzerrt/
+# langgezogen. 1620×1080 ist die größte 3:2-Größe, die auf einen 1080p-
+# Monitor passt.
 WINDOW_PRESETS = [
-    ("960×540",   960,  540),
-    ("1280×720",  1280, 720),
-    ("1600×900",  1600, 900),
-    ("1920×1080", 1920, 1080),
+    ("900×600",    900,  600),
+    ("1200×800",  1200,  800),
+    ("1500×1000", 1500, 1000),
+    ("1620×1080", 1620, 1080),
 ]
 
 _FLOATS = ("master", "music", "sfx")

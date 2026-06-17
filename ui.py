@@ -1630,13 +1630,37 @@ class UIRenderer:
         """Lagerfeuer: Heilen oder Karte aufwerten"""
         self.draw_background()
         self._dim(120)
-        self._text("🔥  LAGERFEUER", self.font_huge, ORANGE, self.w // 2, 70, center=True, shadow=True)
+        self._text("🔥  LAGERFEUER", self.font_huge, ORANGE, self.w // 2, 60, center=True, shadow=True)
         self._text("Ein Moment der Ruhe. Nutze ihn weise.", self.font_small, INK_DIM,
-                   self.w // 2, 132, center=True)
+                   self.w // 2, 118, center=True)
         mouse = self._mouse
 
+        # ── Aktuelle HP anzeigen (damit man sieht, ob Heilen sich lohnt) ──
+        hp, mx = player.hp, player.max_hp
+        heal_amt = min(int(mx * 0.3), mx - hp)      # tatsächlich heilbar
+        bw, bh = 360, 26
+        bx, by = self.w // 2 - bw // 2, 150
+        ratio = hp / max(1, mx)
+        hp_col = GREEN if ratio > 0.5 else (GOLD if ratio > 0.25 else RED)
+        pygame.draw.rect(self.screen, GREY_DARK, (bx, by, bw, bh), border_radius=8)
+        if ratio > 0:
+            pygame.draw.rect(self.screen, hp_col, (bx, by, int(bw * ratio), bh),
+                             border_radius=8)
+        # Vorschau des Heilens (heller Abschnitt rechts vom aktuellen HP)
+        if heal_amt > 0:
+            px2 = bx + int(bw * ratio)
+            pw2 = int(bw * (heal_amt / max(1, mx)))
+            prev = pygame.Surface((max(1, pw2), bh), pygame.SRCALPHA)
+            prev.fill((120, 255, 140, 90))
+            self.screen.blit(prev, (px2, by))
+        pygame.draw.rect(self.screen, PANEL_LINE, (bx, by, bw, bh), 2, border_radius=8)
+        self._text(f"❤ {hp} / {mx} HP", self.font_small, WHITE,
+                   self.w // 2, by + 4, center=True)
+
         for keyname, title, emoji, desc, col in [
-            ("heal", "Ausruhen", "❤", f"Heile 30% deiner Max-HP\n(+{int(player.max_hp*0.3)} HP)", GREEN),
+            ("heal", "Ausruhen", "❤",
+             (f"Heile +{heal_amt} HP\n(30% der Max-HP)" if heal_amt > 0
+              else "HP bereits voll –\nkeine Heilung nötig"), GREEN),
             ("upgrade", "Schmieden", "⚒", "Werte eine Karte\ndauerhaft auf (+50%)", ACCENT),
         ]:
             rc = layout[keyname]
@@ -1716,9 +1740,9 @@ class UIRenderer:
         if win_btns:
             import options as _opt
             dim = bool(opts.get("fullscreen", False))
-            self._text("🪟 Fenstergröße", self.font_medium,
+            self._text("🪟 Fenstergröße (3:2, unverzerrt)", self.font_medium,
                        INK_DIM if dim else INK, panel.x + 30, win_btns[0].y + 6)
-            cur_w, cur_h = opts.get("window_w", 1280), opts.get("window_h", 720)
+            cur_w, cur_h = opts.get("window_w", 1200), opts.get("window_h", 800)
             for i, wr in enumerate(win_btns):
                 name, pw, ph = _opt.WINDOW_PRESETS[i]
                 active = (pw == cur_w and ph == cur_h) and not dim

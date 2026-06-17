@@ -8,7 +8,7 @@ SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
-    ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' – Miete zahlen statt Punkte, Glück, 22 Charms, Pech-Symbole, Shop + Telefon-Deals"),
+    ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer"),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
     ("1.16.0", "RIESEN-UPDATE: 5 Akte, 2 Klassen, Slot-Boss, Stärke-Rework, böse Slots, neue Leiste"),
