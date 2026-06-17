@@ -100,8 +100,9 @@ def _do_apply(url):
         os.replace(exe, old_path)
         os.replace(new_path, exe)
         progress["frac"] = 1.0
-        subprocess.Popen([exe])      # neue Version starten
-        progress["done"] = True      # Spiel beendet sich -> neue läuft
+        # KEIN automatischer Neustart: Spiel schließt sich nur, der Nutzer
+        # muss die neue Version selbst starten.
+        progress["done"] = True      # Spiel beendet sich -> Nutzer startet neu
     except Exception as e:
         progress["error"] = str(e)
         progress["active"] = False
