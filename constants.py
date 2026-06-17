@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.17.0"
+GAME_VERSION = "1.17.1"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),
     ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
     ("1.16.0", "RIESEN-UPDATE: 5 Akte, 2 Klassen, Slot-Boss, Stärke-Rework, böse Slots, neue Leiste"),
     ("1.15.0", "Schwerer & runder: Gegner skalieren (HP/Block/Ruestung), UI-Fixes (Relikte, Status, Karten)"),

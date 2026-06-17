@@ -1,6 +1,29 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.17.1 – 2026-06-17]  BUGFIXES & POLISHING
+----------------------------------------------
+NEUE FEATURES:
+* RELIKT-AUSWAHL: Bei Elite & Boss bekommst du jetzt 3 zufällige Relikte zur
+  Auswahl (die du noch nicht hast). Schöner Screen mit Icon, Name & Beschreibung –
+  so kannst du deinen Build aktiv planen, statt ein Relikt blind zu bekommen.
+* KARTEN 3×-CAP: Jede Karte kann maximal 3x im Deck erscheinen. Karten mit
+  bereits 3 Kopien fallen aus dem Auswahl-Pool heraus.
+
+BUGFIXES:
+* GEGNERSCHILD: Badge-Position war vom wackelnden Sprite losgelöst – jetzt
+  schwingt das Schild-Icon mit dem Sprite-Wobble mit (sieht aus wie beim Spieler).
+* SLOT-ENERGIE: Energie-Gewinne und -Verluste durch Slot-Symbole (Blitz-Drilling,
+  Abgrund, Blitz-Einzel, Paar, Kombo) wirken jetzt auf den NÄCHSTEN Zug statt
+  sofort – der aktuelle Kartenzug ist beim Drehen schon vorbei.
+* VOLLBILD / SKALIERUNG: pygame.SCALED ist jetzt auch im Fenstermodus aktiv.
+  Die interne Canvas (1200×800) skaliert sauber auf jeden Bildschirm.
+  Kleinere Monitore zeigen das Spiel nicht mehr abgeschnitten.
+
+PERFORMANCE:
+* Panel- und Shadow-Cache: bei Überlauf wird jetzt nur der älteste Eintrag
+  entfernt (statt alles auf einmal löschen = massiver Ruckler).
+
 [v1.17.0 – 2026-06-17]  GROSSES BUILD-/CONTENT-UPDATE (ARCHETYPEN)
 -----------------------------------------------------------------
 MECHANIKEN:

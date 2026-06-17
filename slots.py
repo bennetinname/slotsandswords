@@ -352,8 +352,8 @@ class SlotMachine:
             effects.append("🌀🌀🌀 HP-VORTEX! Chaos! Schmerz! Freude!")
         elif sym == "LIGHTNING":
             actual = enemy.take_damage(35 + player.strength)
-            player.energy += 2
-            effects.append(f"⚡⚡⚡ GEWITTERSTURM! {actual} Schaden, +2 Energie!")
+            player.energy_next_turn = getattr(player, "energy_next_turn", 0) + 2
+            effects.append(f"⚡⚡⚡ GEWITTERSTURM! {actual} Schaden, +2 Energie nächste Runde!")
         elif sym == "SHIELD":
             player.block += 30
             effects.append("🛡️🛡️🛡️ FESTUNG! +30 Block!")
@@ -393,8 +393,8 @@ class SlotMachine:
         elif sym == "PIT":
             lost = min(player.gold, 40)
             player.gold -= lost
-            player.energy = max(0, player.energy - 1)
-            effects.append(f"🕳️🕳️🕳️ ABGRUND! −{lost} Gold und −1 Energie!")
+            player.energy_next_turn = getattr(player, "energy_next_turn", 0) - 1
+            effects.append(f"🕳️🕳️🕳️ ABGRUND! −{lost} Gold und −1 Energie nächste Runde!")
         elif sym == "CURSE":
             player.block = 0
             player.vulnerable += 3
@@ -465,8 +465,8 @@ class SlotMachine:
             dmg = random.randint(8, 16) + player.strength
             actual = enemy.take_damage(dmg)
             if random.random() < 0.4:
-                player.energy += 1
-                return f"⚡ Blitz: {actual} Schaden, +1 Energie!"
+                player.energy_next_turn = getattr(player, "energy_next_turn", 0) + 1
+                return f"⚡ Blitz: {actual} Schaden, +1 Energie nächste Runde!"
             return f"⚡ Blitz: {actual} Schaden"
         elif sym == "SHIELD":
             player.block += random.randint(6, 12)
@@ -520,8 +520,8 @@ class SlotMachine:
                 lost = min(player.gold, random.randint(8, 16))
                 player.gold -= lost
                 return f"🕳️ Pechloch: −{lost} Gold"
-            player.energy = max(0, player.energy - 1)
-            return "🕳️ Pechloch: −1 Energie"
+            player.energy_next_turn = getattr(player, "energy_next_turn", 0) - 1
+            return "🕳️ Pechloch: −1 Energie nächste Runde"
         elif sym == "CURSE":
             if player.block > 0:
                 player.block = player.block // 2
@@ -553,8 +553,8 @@ class SlotMachine:
             return "🛡️🛡️ Paar: +12 Block!"
         elif sym == "LIGHTNING":
             enemy.take_damage(12 + player.strength)
-            player.energy += 1
-            return "⚡⚡ Paar: 12 Schaden, +1 Energie!"
+            player.energy_next_turn = getattr(player, "energy_next_turn", 0) + 1
+            return "⚡⚡ Paar: 12 Schaden, +1 Energie nächste Runde!"
         elif sym == "TARGET":
             enemy.vulnerable += 2
             return "🎯🎯 Paar: Gegner 2 Runden verwundbar!"
@@ -634,9 +634,9 @@ class SlotMachine:
             enemy.vulnerable += 1
             return f"{title}: {dmg} Schaden, +1 Verwundbar!"
         if combo == frozenset(("LIGHTNING", "DIAMOND")):
-            player.energy += 2
+            player.energy_next_turn = getattr(player, "energy_next_turn", 0) + 2
             player.add_gold(20)
-            return f"{title}: +2 Energie, +20 Gold!"
+            return f"{title}: +2 Energie nächste Runde, +20 Gold!"
         if combo == frozenset(("CLOVER", "DICE")):
             player.lucky += 2
             return f"{title}: +2 Glücksrunden!"

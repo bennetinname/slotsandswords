@@ -61,6 +61,7 @@ class UIRenderer:
         self._panel_cache = {}
         self._shadow_cache = {}
         self._grad_cache = {}
+        self._text_cache = {}   # gerenderte Text-Surfaces (vermeidet Ruckler)
 
         self._build_background()
 
@@ -168,8 +169,8 @@ class UIRenderer:
                 pygame.draw.rect(surf, (0, 0, 0, a),
                                  (inset, inset, w + (spread - inset) * 2, h + (spread - inset) * 2),
                                  border_radius=radius + spread - inset)
-            if len(self._shadow_cache) > 160:   # Schutz gegen Endlos-Wachstum
-                self._shadow_cache.clear()
+            if len(self._shadow_cache) > 160:   # ältesten Eintrag verwerfen
+                self._shadow_cache.pop(next(iter(self._shadow_cache)))
             self._shadow_cache[key] = surf
         self.screen.blit(surf, (x - spread, y - spread + dy))
 
@@ -190,8 +191,8 @@ class UIRenderer:
         base.blit(hi, (0, 0))
         if border_w > 0:
             pygame.draw.rect(base, border, (0, 0, w, h), border_w, border_radius=radius)
-        if len(self._panel_cache) > 320:        # Schutz gegen Endlos-Wachstum
-            self._panel_cache.clear()
+        if len(self._panel_cache) > 320:        # ältesten Eintrag verwerfen
+            self._panel_cache.pop(next(iter(self._panel_cache)))
         self._panel_cache[key] = base
         return base
 
@@ -708,9 +709,9 @@ class UIRenderer:
                 self._text(em, self.font_large, WHITE, pcx + 8 + i * cw + cw // 2,
                            pcy + 8, center=True)
 
-        # Block-Schild (gut sichtbar, damit klar ist warum Schaden absorbiert wird)
+        # Block-Schild: verankert am Sprite-Fuß (mit Wobble, damit es mitschwingt)
         if getattr(enemy, "block", 0) > 0:
-            self._block_badge(body_x, y + height - 44, enemy.block)
+            self._block_badge(body_x, y + height - 54 + wobble, enemy.block)
 
     def _block_badge(self, cx, cy, amount):
         """Blaues Schild mit Block-Zahl"""
@@ -753,9 +754,9 @@ class UIRenderer:
         self.screen.blit(plate, (body_x - (nw + 24) // 2, y + height - 18))
         self._text("DU", self.font_small, CYAN, body_x, y + height - 14, center=True)
 
-        # Block-Schild auch beim Spieler sichtbar
+        # Block-Schild auch beim Spieler sichtbar (mit Wobble verankert)
         if player.block > 0:
-            self._block_badge(body_x, y + height - 44, player.block)
+            self._block_badge(body_x, y + height - 54 + wobble, player.block)
 
     # ═══════════════════════════════════════════════
     # HANDKARTEN
@@ -1092,6 +1093,56 @@ class UIRenderer:
         self.draw_button("Überspringen", skip_rect.x, skip_rect.y, skip_rect.w, skip_rect.h,
                          color=GREY_DARK, text_color=WHITE)
         return card_rects, skip_rect
+
+    def draw_relic_reward(self, relics, player, hovered_idx=None):
+        """Relikt-Auswahl: 3 Relikte zur Wahl, je mit Icon, Name & Beschreibung."""
+        self.draw_background()
+        self._dim(180)
+        pw, ph = 820, 460
+        px, py = self.w // 2 - pw // 2, self.h // 2 - ph // 2
+        self._panel((px, py, pw, ph), radius=18, border=ACCENT, border_w=3)
+
+        self._text("💠  RELIKT WÄHLEN  💠", self.font_huge, ACCENT,
+                   self.w // 2, py + 22, center=True, shadow=True)
+        self._text("Wähle EIN Relikt für deinen Build:", self.font_small, INK_DIM,
+                   self.w // 2, py + 78, center=True)
+
+        rects = []
+        n = len(relics)
+        cw, ch = 230, 270
+        spacing = 26
+        total_w = n * cw + (n - 1) * spacing
+        cx_start = self.w // 2 - total_w // 2
+        cy = py + 112
+        mx, my = pygame.mouse.get_pos()
+        for i, relic in enumerate(relics):
+            cx = cx_start + i * (cw + spacing)
+            rect = pygame.Rect(cx, cy, cw, ch)
+            hot = (hovered_idx == i) or rect.collidepoint(mx, my)
+            self._panel((cx, cy - (6 if hot else 0), cw, ch), radius=14,
+                        top=_lighten(PANEL_FILL2, 0.14) if hot else PANEL_FILL2,
+                        bottom=PANEL_FILL,
+                        border=ACCENT if hot else PANEL_LINE,
+                        border_w=3 if hot else 2, shadow=hot)
+            top = cy - (6 if hot else 0)
+            # Icon
+            spr = assets.fit("relics", relic.get("id"), 72, 72)
+            if spr:
+                self.screen.blit(spr, (cx + cw // 2 - spr.get_width() // 2, top + 16))
+            else:
+                self._text(relic.get("emoji", "💠"), self.font_huge, WHITE,
+                           cx + cw // 2, top + 22, center=True)
+            # Name
+            self._text(relic["name"], self.font_medium, ACCENT_SOFT,
+                       cx + cw // 2, top + 100, center=True)
+            # Beschreibung (umgebrochen)
+            desc = relic.get("desc", "")
+            lines = self._wrap_text(desc, self.font_small, cw - 28)
+            for j, line in enumerate(lines[:6]):
+                self._text(line, self.font_small, INK,
+                           cx + cw // 2, top + 134 + j * 22, center=True)
+            rects.append(rect)
+        return rects
 
     # ═══════════════════════════════════════════════
     # EVENT-SCREEN

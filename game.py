@@ -37,6 +37,7 @@ STATE_PLAYER_TURN = "player_turn"    # Karten spielen
 STATE_SLOT_SPIN   = "slot_spin"      # Slot dreht sich
 STATE_ENEMY_TURN  = "enemy_turn"     # Gegner agiert
 STATE_REWARD      = "reward"         # Belohnungsbildschirm
+STATE_RELIC_REWARD = "relic_reward"  # Relikt-Auswahl (3 zur Wahl)
 STATE_EVENT       = "event"          # Zufalls-Event zwischen Etagen
 STATE_SHOP        = "shop"           # Laden zwischen Etagen
 STATE_GAME_OVER   = "game_over"
@@ -147,6 +148,9 @@ class Game:
         self.reward_card_rects = []
         self.reward_skip_rect = None
         self.reward_relic = None      # Relikt-Belohnung (Elite/Boss)
+        self.relic_choices = []       # 3 Relikte zur Auswahl (Elite/Boss)
+        self.relic_choice_rects = []
+        self.hovered_relic_idx = None
 
         # Combo-System
         self.combo_type = None
@@ -271,15 +275,20 @@ class Game:
         audio.set_sfx(self.options["sfx"])
 
     def _apply_fullscreen(self):
-        flags = (pygame.SCALED | pygame.FULLSCREEN) if self.options.get("fullscreen") else 0
+        # SCALED: pygame rendert intern auf SCREEN_W×SCREEN_H und skaliert
+        # auf die tatsächliche Fenstergröße – so passen alle Bildschirmgrößen.
+        if self.options.get("fullscreen"):
+            flags = pygame.SCALED | pygame.FULLSCREEN
+        else:
+            flags = pygame.SCALED   # Fenstermodus: skaliert trotzdem korrekt
         try:
             self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H), flags)
         except Exception:
             self.options["fullscreen"] = False
             try:
-                self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+                self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H), pygame.SCALED)
             except Exception:
-                pass
+                self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H))
         # Fenster-Icon (neu setzen, da set_mode es zurücksetzen kann)
         try:
             ic = assets.load("ui", "icon_256")
@@ -343,8 +352,8 @@ class Game:
     
     # Zustände, in denen ein laufender Run pausiert/gespeichert werden kann
     RUN_STATES = (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN,
-                  STATE_SHOP, STATE_EVENT, STATE_REWARD, STATE_MAP, STATE_REST,
-                  STATE_ACT_CLEAR)
+                  STATE_SHOP, STATE_EVENT, STATE_REWARD, STATE_RELIC_REWARD,
+                  STATE_MAP, STATE_REST, STATE_ACT_CLEAR)
 
     def _handle_escape(self):
         """ESC: kontextabhängig pausieren, zurück oder beenden"""
@@ -374,6 +383,10 @@ class Game:
             elif self.state == STATE_REWARD and self.reward_card_rects:
                 if idx < len(self.reward_card_rects):
                     self._pick_reward_card(idx)
+            elif self.state == STATE_RELIC_REWARD:
+                if idx < len(self.relic_choices):
+                    audio.play("click")
+                    self._pick_relic_reward(idx)
             return
 
         if key in (pygame.K_SPACE, pygame.K_RETURN):
@@ -514,6 +527,12 @@ class Game:
             for i, rect in enumerate(self.event_option_rects):
                 if rect and rect.collidepoint(pos):
                     self.hovered_event_idx = i
+                    break
+        elif self.state == STATE_RELIC_REWARD:
+            self.hovered_relic_idx = None
+            for i, rect in enumerate(self.relic_choice_rects):
+                if rect and rect.collidepoint(pos):
+                    self.hovered_relic_idx = i
                     break
         elif self.state == STATE_MAP:
             self.hovered_node = None
@@ -663,6 +682,13 @@ class Game:
                 if next_btn.collidepoint(pos):
                     self._start_enemy_turn()
         
+        elif self.state == STATE_RELIC_REWARD:
+            for i, rect in enumerate(self.relic_choice_rects):
+                if rect and rect.collidepoint(pos):
+                    audio.play("click")
+                    self._pick_relic_reward(i)
+                    return
+
         elif self.state == STATE_REWARD:
             if self.reward_card_rects:
                 for i, rect in enumerate(self.reward_card_rects):
@@ -1768,18 +1794,21 @@ class Game:
             if healed > 0:
                 self._log(f"❤️ Herzstein: +{healed} HP!")
 
-        # Relikt-Belohnung bei Elite & Boss
-        self.reward_relic = None
-        if self.enemy.is_elite or self.enemy.is_boss:
-            relic = self._grant_random_relic()
-            if relic:
-                self.reward_relic = relic
-                self._log(f"💠 Relikt erhalten: {relic['emoji']} {relic['name']}!")
-
         # Drei Karten zur Wahl – nach Seltenheit gewichtet (keine Flüche)
         self.reward_cards = self._weighted_reward_cards(3)
 
-        self.state = STATE_REWARD
+        # Relikt-Belohnung bei Elite & Boss: 3 zur Auswahl (Build planen)
+        self.reward_relic = None
+        self.relic_choices = []
+        self.relic_choice_rects = []
+        self.hovered_relic_idx = None
+        if self.enemy.is_elite or self.enemy.is_boss:
+            self.relic_choices = self._roll_relic_choices(3)
+
+        if self.relic_choices:
+            self.state = STATE_RELIC_REWARD
+        else:
+            self.state = STATE_REWARD
 
     def _weighted_reward_cards(self, n=3):
         """Wählt n verschiedene Karten gewichtet nach Seltenheit aus"""
@@ -1789,9 +1818,15 @@ class Game:
             "uncommon": 38 if boss else 27,
             "rare":     22 if boss else 5,
         }
-        # Flüche sind separat; Meta-Unlocks: gesperrte Karten erst nach Erfolg
+        # Flüche sind separat; Meta-Unlocks: gesperrte Karten erst nach Erfolg.
+        # Karten-Pool: jede Karte darf man bis zu 3x besitzen (mehrmals, aber
+        # nicht zu oft) – Karten mit bereits 3 Kopien fallen aus dem Pool.
+        owned_counts = {}
+        for c in (self.player.deck + self.player.discard + self.player.hand):
+            owned_counts[c.name] = owned_counts.get(c.name, 0) + 1
         avail = [c for c in CARD_DEFINITIONS
-                 if achievements.content_unlocked("card", c["name"])]
+                 if achievements.content_unlocked("card", c["name"])
+                 and owned_counts.get(c["name"], 0) < 3]
         # Klassen-Gewichtung: passende Archetyp-Karten häufiger (v1.17)
         fav = CLASS_FAVORED.get(getattr(self.player, "class_id", None), set())
         chosen = []
@@ -1806,6 +1841,30 @@ class Game:
             chosen.append(pick)
             avail.remove(pick)
         return [Card(c) for c in chosen]
+
+    def _roll_relic_choices(self, n=3):
+        """Wählt bis zu n verschiedene, noch nicht besessene Relikte zur Auswahl."""
+        owned = {r["id"] for r in self.player.relics}
+        available = [r for r in RELIC_DEFINITIONS if r["id"] not in owned
+                     and achievements.content_unlocked("relic", r["name"])]
+        if not available:
+            return []
+        return random.sample(available, min(n, len(available)))
+
+    def _pick_relic_reward(self, idx):
+        """Spieler wählt eines der angebotenen Relikte aus."""
+        if not (0 <= idx < len(self.relic_choices)):
+            return
+        relic = self.relic_choices[idx]
+        self.player.add_relic(relic)
+        self.reward_relic = relic
+        self._log(f"💠 Relikt erhalten: {relic['emoji']} {relic['name']}!")
+        if len(self.player.relics) >= 5:
+            self._award("relic_5")
+        audio.play("relic")
+        self.relic_choices = []
+        self.relic_choice_rects = []
+        self.state = STATE_REWARD
 
     def _grant_random_relic(self):
         """Vergibt ein zufälliges noch nicht besessenes Relikt"""
@@ -2680,6 +2739,12 @@ class Game:
         elif self.state in (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN):
             self._draw_combat()
         
+        elif self.state == STATE_RELIC_REWARD:
+            self._draw_combat_bg()
+            self.relic_choice_rects = self.ui.draw_relic_reward(
+                self.relic_choices, self.player, self.hovered_relic_idx
+            )
+
         elif self.state == STATE_REWARD:
             self._draw_combat_bg()  # Hintergrund
             self._draw_reward()

@@ -170,6 +170,7 @@ class Player:
         self.lucky = 0         # Slot-Bonus-Runden
         self.shield_up = False # Doppel-Block diese Runde
         self.keep_block_next = False  # Block in die nächste Runde mitnehmen (Verschanzen)
+        self.energy_next_turn = 0     # Slot-Energie-Delta (+ oder −) für den nächsten Zug
         self.war_dance = 0            # Kriegstanz: +X Stärke je Angriffskarte diese Runde
         self.mult = 1.0              # Schadens-Multiplikator (pro Kampf, für Mult-Karten)
         # Slot-Manipulation (wirkt auf den nächsten Dreh)
@@ -277,7 +278,10 @@ class Player:
             self.block = 0
         self.keep_block_next = False
         self.war_dance = 0          # Kriegstanz gilt nur für die aktuelle Runde
-        self.energy = self.max_energy
+        # Slot-Energie vom letzten Dreh anwenden (+ oder −)
+        slot_e = getattr(self, "energy_next_turn", 0)
+        self.energy = max(0, self.max_energy + slot_e)
+        self.energy_next_turn = 0
         self.bonus_spins = 0
         self.reflect = False
         self.coin_rain_active = False
