@@ -1021,6 +1021,13 @@ class Game:
         self.player.rage = 0
         self.player.focus = 0
         self.player.vulnerable = 0
+        self.player.mult = 1.0          # Multiplikator pro Kampf zurücksetzen
+        self.player.war_dance = 0
+        self._combat_first_spin = True  # Walzen-Joker: erster Dreh dieses Kampfes
+        self.player.next_spin_lucky = False
+        self.player.next_spin_wild = False
+        self.player.next_spin_double = False
+        self.player.next_spin_triple = False
         self.player.next_free_card = self.player.has_relic("first_free")
         self.player.draw_initial_hand()
         self.damage_numbers = []
@@ -1090,6 +1097,9 @@ class Game:
             self.player.next_free_card = True
         # ─── Klassenbuffs (Rundenstart) ───
         self._first_card_used = False
+        self._quick_used = False
+        if self.player.has_relic("dice_luck"):
+            self.player.lucky += 1
         self._apply_class_turn_buff()
         self.slot_effects_shown = []
         self._reset_combo()
@@ -1155,6 +1165,20 @@ class Game:
             drawn = p.draw_hand(2); self._log(f"🎴 Kartenmeister: +{drawn} Karten!")
         if p.has_relic("focus_lens"):
             p.focus += 2; self._log("🔎 Fokuslinse: +2 Fokus!")
+        # ─── v1.17: Build-Anker zu Kampfbeginn ───
+        if p.has_relic("spike_armor"):
+            p.thorns += 4; self._log("🦔 Stachelpanzer: +4 Dornen!")
+        if p.has_relic("luck_amulet"):
+            p.lucky += 2; self._log("🍀 Glücksamulett: +2 Glücksrunden!")
+        if p.has_relic("arsonist") and e:
+            e.burn += 3; self._log("🪔 Brandstifter: Gegner startet mit 3 Brennen!")
+        if p.has_relic("mult_core"):
+            p.mult = max(p.mult, 1.5); self._log("✖️ Multiplikator-Kern: Mult startet bei 1.5!")
+        if p.has_relic("gold_reserve"):
+            gb = p.gold // 50
+            if gb > 0:
+                p.strength += gb; self._log(f"🏆 Goldreserve: +{gb} Stärke (aus Reichtum)!")
+        self._combat_card_count = 0          # für Giftphiole/Berserkermal/Schnelldenker
         if (self.daily_mod or {}).get("start_lucky"):
             p.lucky += self.daily_mod["start_lucky"]
             self._log(f"📅 Glückstag: +{self.daily_mod['start_lucky']} Glücksrunde!")
@@ -1229,6 +1253,25 @@ class Game:
         p_hp0 = self.player.hp
         blk0 = self.player.block
         gold0 = self.player.gold
+
+        # ─── v1.17: Relikt-Hooks beim Kartenspielen ───
+        self._combat_card_count = getattr(self, "_combat_card_count", 0) + 1
+        if self.player.has_relic("poison_vial_relic") and self._combat_card_count % 3 == 0 and self.enemy:
+            self.enemy.poison += 1
+            self._log("🧫 Giftphiole: +1 Gift!")
+        if card.type == "attack" and self.player.has_relic("berserk_mark"):
+            self.player.strength += 1
+        if (cost == 0 and self.player.has_relic("quick_thinker")
+                and not getattr(self, "_quick_used", False)):
+            self._quick_used = True
+            drawn = self.player.draw_hand(1)
+            if drawn:
+                self._log("⚡ Schnelldenker: Karte nachgezogen!")
+
+        # Kriegstanz: jede Angriffskarte diese Runde gibt +Stärke (bleibt im Kampf)
+        if card.type == "attack" and getattr(self.player, "war_dance", 0) > 0:
+            self.player.strength += self.player.war_dance
+            self._log(f"⚔️ Kriegstanz: +{self.player.war_dance} Stärke!")
 
         # Fokus: nächste Angriffskarte bekommt +Fokus Schaden (über Stärke), einmalig
         focus_applied = 0
@@ -1326,12 +1369,29 @@ class Game:
         # Trinkgeld-Relikt: Gold pro Dreh
         if self.player.has_relic("tip_jar"):
             self.player.add_gold(2)
-        # Gezinkte Würfel: immer Glück. Sonst Glücksrunden verbrauchen.
-        lucky = self.player.has_relic("always_lucky") or self.player.lucky > 0
-        if self.player.lucky > 0:
-            self.player.lucky -= 1
+        # Gezinkte Würfel/Karte: Glück. Sonst Glücksrunden verbrauchen.
+        p = self.player
+        lucky = (p.has_relic("always_lucky") or p.lucky > 0
+                 or getattr(p, "next_spin_lucky", False))
+        if not p.has_relic("always_lucky") and not p.next_spin_lucky and p.lucky > 0:
+            p.lucky -= 1
+        if lucky:
+            self._log("🍀 GLÜCKSDREH! Keine Pech-Symbole, bessere Chancen.")
 
-        self.slot_machine.spin(lucky_bonus=lucky, time_scale=self._anim_mul())
+        rig = p.has_relic("rigged_machine")
+        force_wild = ((p.has_relic("reel_joker") and getattr(self, "_combat_first_spin", False))
+                      or getattr(p, "next_spin_wild", False))
+        force_triple = getattr(p, "next_spin_triple", False)
+        if force_triple:
+            self._log("🎰 JACKPOT ERZWUNGEN – Drilling!")
+        self.slot_machine.spin(lucky_bonus=lucky, time_scale=self._anim_mul(),
+                               rig_negatives=rig, force_wild=force_wild,
+                               force_triple=force_triple)
+        self._combat_first_spin = False
+        # Manipulations-Flags des nächsten Drehs verbrauchen
+        p.next_spin_lucky = False
+        p.next_spin_wild = False
+        p.next_spin_triple = False
         self.slot_done = False
         self.slot_effects_shown = []
         audio.start_spin()
@@ -1347,6 +1407,15 @@ class Game:
         self.slot_effects_shown = effects
         for eff in effects:
             self._log(f"  {eff}")
+
+        # Doppelter Einsatz: das Ergebnis nochmal anwenden
+        if getattr(self.player, "next_spin_double", False):
+            self.player.next_spin_double = False
+            self._log("  💵 DOPPELTER EINSATZ – nochmal!")
+            extra = self.slot_machine.evaluate(self.player, self.enemy)
+            for eff in extra:
+                self._log(f"  {eff}")
+            self.slot_effects_shown = effects + ["💵 ×2"] + extra
 
         if is_triple:
             self._award("triple")
@@ -1657,6 +1726,11 @@ class Game:
             if healed > 0:
                 self._log(f"🦅 Aasfresser: +{healed} HP!")
 
+        # Krähenfeder: Gold + Glück bei jedem Kill
+        if self.player.has_relic("crow_feather"):
+            self.player.add_gold(5); self.player.lucky += 1
+            self._log("🪶 Krähenfeder: +5 Gold, +1 Glücksrunde!")
+
         # ─── Erfolge ───
         self._award("first_blood")
         if self.enemy.is_boss:
@@ -1718,9 +1792,16 @@ class Game:
         # Flüche sind separat; Meta-Unlocks: gesperrte Karten erst nach Erfolg
         avail = [c for c in CARD_DEFINITIONS
                  if achievements.content_unlocked("card", c["name"])]
+        # Klassen-Gewichtung: passende Archetyp-Karten häufiger (v1.17)
+        fav = CLASS_FAVORED.get(getattr(self.player, "class_id", None), set())
         chosen = []
         for _ in range(min(n, len(avail))):
-            ws = [weights.get(c.get("rarity", "common"), 10) for c in avail]
+            ws = []
+            for c in avail:
+                w = weights.get(c.get("rarity", "common"), 10)
+                if c.get("effect") in fav:
+                    w = int(w * 2.5)
+                ws.append(w)
             pick = random.choices(avail, weights=ws, k=1)[0]
             chosen.append(pick)
             avail.remove(pick)
@@ -2182,7 +2263,7 @@ class Game:
             "max_hp": p.max_hp, "hp": p.hp, "gold": p.gold, "block": p.block,
             "energy": p.energy, "max_energy": p.max_energy,
             "burn": p.burn, "strength": p.strength, "perm_strength": p.perm_strength,
-            "lucky": p.lucky,
+            "mult": p.mult, "lucky": p.lucky,
             "poison": p.poison, "regen": p.regen, "thorns": p.thorns,
             "vulnerable": p.vulnerable, "rage": p.rage, "focus": p.focus,
             "class_id": p.class_id, "phoenix_used": p.phoenix_used,
@@ -2209,6 +2290,7 @@ class Game:
         p.energy = d.get("energy", p.energy); p.max_energy = d.get("max_energy", p.max_energy)
         p.burn = d.get("burn", 0); p.strength = d.get("strength", 0); p.lucky = d.get("lucky", 0)
         p.perm_strength = d.get("perm_strength", d.get("strength", 0))
+        p.mult = d.get("mult", 1.0)
         p.poison = d.get("poison", 0); p.regen = d.get("regen", 0); p.thorns = d.get("thorns", 0)
         p.vulnerable = d.get("vulnerable", 0); p.rage = d.get("rage", 0); p.focus = d.get("focus", 0)
         p.class_id = d.get("class_id")

@@ -43,10 +43,11 @@ class CardEffectResolver:
             logs.append("   (Der Raum riecht jetzt nach verbranntem Plastik.)")
         
         elif effect == "coinflip":
-            if random.random() < 0.5:
+            heads = min(0.9, 0.5 + 0.15 * player.lucky)   # Glück verbessert die Chance
+            if random.random() < heads:
                 dmg = 25 + player.strength
                 actual = enemy.take_damage(dmg)
-                logs.append(f"🪙 COIN FLIP: KOPF! {actual} Schaden! Glück gehabt!")
+                logs.append(f"🪙 COIN FLIP: KOPF! {actual} Schaden! ({int(heads*100)}% Chance)")
             else:
                 self_dmg = random.randint(8, 15)
                 player.take_damage(self_dmg, ignore_block=True)
@@ -60,13 +61,11 @@ class CardEffectResolver:
         
         elif effect == "gambling":
             if player.spend_gold(10):
-                dmg = random.randint(1, 40) + player.strength
+                dmg = random.randint(12, 24) + 3 * player.lucky + player.strength
                 actual = enemy.take_damage(dmg)
                 logs.append(f"🎰 GAMBLING ADDICTION: -10 Gold, {actual} Schaden!")
-                if dmg > 30:
-                    logs.append("   (Du riechst das Adrenalin. Du willst mehr.)")
-                elif dmg < 10:
-                    logs.append("   (Vielleicht nächstes Mal besser.)")
+                if player.lucky > 0:
+                    logs.append("   (Das Glück steht dir bei.)")
             else:
                 logs.append("🎰 GAMBLING ADDICTION: Kein Gold! Die Karte lacht dich aus.")
         
@@ -243,12 +242,13 @@ class CardEffectResolver:
                 logs.append("   " + self._quick_chicken(player, enemy))
         
         elif effect == "roulette":
-            if random.random() < (1/6):
+            chambers = max(1, 6 - player.lucky)   # Glück entfernt Kammern
+            if random.random() < (1 / chambers):
                 player.take_damage(40, ignore_block=True)
-                logs.append("🔫 RUSSISCH ROULETTE: KLICK-BANG! -40 HP! Autsch.")
+                logs.append(f"🔫 RUSSISCH ROULETTE: KLICK-BANG! -40 HP! (1 von {chambers})")
             else:
                 actual = enemy.take_damage(40 + player.strength)
-                logs.append(f"🔫 RUSSISCH ROULETTE: Leer! {actual} Schaden am Gegner!")
+                logs.append(f"🔫 RUSSISCH ROULETTE: Leer! {actual} Schaden! (1 von {chambers} Risiko)")
         
         elif effect == "redraw":
             n = len(player.hand)
@@ -608,6 +608,181 @@ class CardEffectResolver:
             actual = enemy.take_damage(card.damage + player.strength)
             healed = player.heal_hp(actual)
             logs.append(f"🍖 {card.name}: {actual} Schaden, +{healed} HP gesaugt!")
+
+        # ══════════ v1.17: ARCHETYP-EFFEKTE ══════════
+        # ── A) Gift ──
+        elif effect == "poison_seed":
+            actual = enemy.take_damage(card.damage + player.strength)
+            bonus = 1 if player.has_relic("poison_boost") else 0
+            enemy.poison += 4 + bonus
+            logs.append(f"🌱 {card.name}: {actual} Schaden, +{4+bonus} Gift!")
+        elif effect == "plague_cloud":
+            bonus = 1 if player.has_relic("poison_boost") else 0
+            extra = 3 if enemy.poison > 0 else 0
+            enemy.poison += 3 + extra + bonus
+            logs.append(f"☁️ {card.name}: +{3+extra+bonus} Gift!"
+                        + (" (verseucht!)" if extra else ""))
+        elif effect == "poison_double":
+            gained = enemy.poison
+            enemy.poison *= 2
+            logs.append(f"⚗️ {card.name}: Gift verdoppelt (+{gained}, jetzt {enemy.poison})!")
+        elif effect == "poison_strike":
+            actual = enemy.take_damage(enemy.poison + player.strength)
+            logs.append(f"🐍 {card.name}: {actual} Schaden (= aktuelles Gift)!")
+        elif effect == "poison_detonate":
+            p = enemy.poison
+            actual = enemy.take_damage(p * 2 + player.strength)
+            enemy.poison = 0
+            logs.append(f"💥 {card.name}: VERFALL! {actual} Schaden, Gift verbraucht!")
+        elif effect == "venom_frost":
+            actual = enemy.take_damage(card.damage + player.strength)
+            bonus = 1 if player.has_relic("poison_boost") else 0
+            enemy.poison += 2 + bonus; enemy.frost += 2
+            logs.append(f"🥶 {card.name}: {actual} Schaden, +{2+bonus} Gift, +2 Frost!")
+        # ── B) Brennen ──
+        elif effect == "ignite":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.burn += 4
+            logs.append(f"🔥 {card.name}: {actual} Schaden, +4 Brennen!")
+        elif effect == "accelerant":
+            enemy.burn += 3
+            tick = enemy.burn
+            enemy.hp = max(0, enemy.hp - tick)
+            logs.append(f"⛽ {card.name}: +3 Brennen, sofort {tick} Brennschaden!")
+        elif effect == "firestorm":
+            actual = enemy.take_damage(enemy.burn + player.strength)
+            enemy.burn += 2
+            logs.append(f"🌋 {card.name}: {actual} Schaden (= Brennen), +2 Brennen!")
+        elif effect == "burn_double":
+            gained = enemy.burn
+            enemy.burn *= 2
+            logs.append(f"♨️ {card.name}: Brennen verdoppelt (+{gained}, jetzt {enemy.burn})!")
+        elif effect == "fire_poison":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.burn += 2; enemy.poison += 2
+            logs.append(f"🧪 {card.name}: {actual} Schaden, +2 Brennen, +2 Gift!")
+        # ── C) Frost ──
+        elif effect == "frost_breath":
+            enemy.frost += 3
+            logs.append(f"❄️ {card.name}: +3 Frost!")
+        elif effect == "ice_break":
+            base = card.damage + player.strength
+            if enemy.frost > 0:
+                base *= 2
+            actual = enemy.take_damage(base)
+            logs.append(f"🧊 {card.name}: {actual} Schaden"
+                        + (" (×2 gegen Frost!)" if enemy.frost > 0 else "") + "!")
+        elif effect == "frost_shatter":
+            dmg = card.damage + player.strength + enemy.frost * 3
+            actual = enemy.take_damage(dmg)
+            enemy.frost = 0
+            logs.append(f"💎 {card.name}: {actual} Schaden, Frost zersplittert!")
+        elif effect == "frost_nova":
+            enemy.frost += 2; enemy.vulnerable += 2
+            logs.append(f"🌨️ {card.name}: +2 Frost, +2 Verwundbar!")
+        # ── D) Block / Dornen ──
+        elif effect == "fortify_keep":
+            amt = card.block * (2 if player.shield_up else 1)
+            player.block += amt
+            player.keep_block_next = True
+            logs.append(f"🏰 {card.name}: +{amt} Block – bleibt nächste Runde erhalten!")
+        elif effect == "block_half":
+            dmg = player.block // 2 + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🛡️ {card.name}: {actual} Schaden (= halber Block)!")
+        elif effect == "bodyslam":
+            dmg = player.block + player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"💢 {card.name}: {actual} Schaden (= dein Block)!")
+        elif effect == "thorn_cloak":
+            amt = card.block * (2 if player.shield_up else 1)
+            player.block += amt; player.thorns += 3
+            logs.append(f"🌵 {card.name}: +{amt} Block, +3 Dornen!")
+        elif effect == "block_to_thorns":
+            gained = player.block
+            player.thorns += gained
+            logs.append(f"🔃 {card.name}: {gained} Block → {gained} Dornen!")
+        # ── E) Stärke / Multi-Hit ──
+        elif effect == "tense":
+            player.strength += 2
+            logs.append(f"💪 {card.name}: +2 Stärke (Kampf)!")
+        elif effect == "war_dance":
+            player.war_dance = getattr(player, "war_dance", 0) + 1
+            logs.append(f"⚔️ {card.name}: Jede Angriffskarte gibt diese Runde +1 Stärke!")
+        elif effect in ("multi3", "multi4"):
+            hits = 3 if effect == "multi3" else 4
+            total = 0
+            for _ in range(hits):
+                total += enemy.take_damage(card.damage + player.strength)
+            logs.append(f"🗡️ {card.name}: {hits}× = {total} Schaden!")
+        elif effect == "strength_smash":
+            dmg = card.damage + 2 * player.strength
+            actual = enemy.take_damage(dmg)
+            logs.append(f"🔨 {card.name}: {actual} Schaden (+2× Stärke)!")
+        # ── G) Multiplikator ──
+        elif effect == "mult_small":
+            player.mult = round(getattr(player, "mult", 1.0) + 0.5, 2)
+            logs.append(f"✖️ {card.name}: Multiplikator jetzt ×{player.mult}!")
+        elif effect == "mult_big":
+            player.mult = round(getattr(player, "mult", 1.0) + 1.0, 2)
+            logs.append(f"✖️ {card.name}: Multiplikator jetzt ×{player.mult}!")
+        elif effect == "mult_hit":
+            m = getattr(player, "mult", 1.0)
+            actual = enemy.take_damage(int((card.damage + player.strength) * m))
+            logs.append(f"✖️ {card.name}: {actual} Schaden (×{m})!")
+        elif effect == "mult_finale":
+            m = getattr(player, "mult", 1.0)
+            actual = enemy.take_damage(int((card.damage + player.strength) * m))
+            player.mult = 1.0
+            logs.append(f"🎇 {card.name}: {actual} Schaden (×{m}), Mult zurückgesetzt!")
+        # ── H) Gold ──
+        elif effect == "gold_flow":
+            player.add_gold(12)
+            gain = player.gold // 12
+            player.block += gain
+            logs.append(f"💰 {card.name}: +12 Gold, +{gain} Block!")
+        elif effect == "gold_strike":
+            actual = enemy.take_damage(player.gold // 8 + player.strength)
+            logs.append(f"🪙 {card.name}: {actual} Schaden (= Gold/8)!")
+        elif effect == "invest":
+            if player.spend_gold(15):
+                player.strength += 3
+                logs.append(f"📈 {card.name}: −15 Gold, +3 Stärke!")
+            else:
+                logs.append(f"📉 {card.name}: Nicht genug Gold (15 nötig)!")
+        # ── I) Risiko ──
+        elif effect == "madness_pact":
+            player.take_damage(5, ignore_block=True)
+            player.energy += 1
+            logs.append(f"🤪 {card.name}: −5 HP, +1 Energie!")
+        elif effect == "doom_strike":
+            actual = enemy.take_damage(card.damage + player.strength)
+            enemy.doom += 2
+            logs.append(f"💀 {card.name}: {actual} Schaden, +2 Verhängnis!")
+        elif effect == "executioner_verdict":
+            actual = enemy.take_damage(card.damage + player.strength)
+            player.take_damage(8, ignore_block=True)
+            logs.append(f"⚖️ {card.name}: {actual} Schaden, 8 Selbstschaden!")
+        # ── J) Glück ──
+        elif effect == "luck_strike":
+            actual = enemy.take_damage(card.damage + 4 * player.lucky + player.strength)
+            logs.append(f"🍀 {card.name}: {actual} Schaden (+4 je Glücksrunde)!")
+        elif effect == "stack_luck":
+            player.lucky += 3
+            logs.append(f"🍀 {card.name}: +3 Glücksrunden (jetzt {player.lucky})!")
+        # ── F) Slot-Manipulation (nächster Dreh) ──
+        elif effect == "rig_next":
+            player.next_spin_lucky = True
+            logs.append(f"🎯 {card.name}: nächster Dreh wird ein Glücksdreh!")
+        elif effect == "smuggle_wild":
+            player.next_spin_wild = True
+            logs.append(f"🎰 {card.name}: nächster Dreh enthält ein Wild!")
+        elif effect == "double_next":
+            player.next_spin_double = True
+            logs.append(f"💵 {card.name}: nächster Dreh zählt DOPPELT!")
+        elif effect == "force_jackpot":
+            player.next_spin_triple = True
+            logs.append(f"🎰 {card.name}: nächster Dreh = garantierter DRILLING!")
 
         else:
             logs.append(f"❓ {card.name}: Unbekannter Effekt '{effect}'. Seltsam.")

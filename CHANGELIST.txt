@@ -1,6 +1,41 @@
 CHANGELIST – SLOTS & SWORDS
 ===========================
 
+[v1.17.0 – 2026-06-17]  GROSSES BUILD-/CONTENT-UPDATE (ARCHETYPEN)
+-----------------------------------------------------------------
+MECHANIKEN:
+* BLOCK VERFÄLLT jetzt zu Beginn deiner nächsten Runde (Slay-the-Spire-Regel) –
+  außer eine Karte/ein Relikt hält ihn (Verschanzen / Bollwerk-Kern).
+* GLÜCK lohnt sich endlich: ein Glücksdreh unterdrückt ALLE Negativ-Symbole und
+  zieht ~55%/Walze auf gute Symbole (inkl. Wild/Glocke/Edelstein), mit sichtbarem
+  "🍀 GLÜCKSDREH"-Banner. Die Zufallskarten (Coin Flip, Russisch Roulette,
+  Gambling Addiction) skalieren jetzt mit Glück statt blind zu würfeln.
+* MULTIPLIKATOR-Stat (✖️) für einen neuen Build: aufbauen und mit "Finale" entladen.
+
+42 NEUE KARTEN in 10 Archetypen (Enabler -> Payoff -> Synergie):
+* Gift: Giftsaat, Pestwolke, Hexenkessel, Seuchenstoß, Verfall entfesseln, Giftiger Frost
+* Brennen: Zündfunke, Brandbeschleuniger, Feuersturm, Verbrennung, Brandgift
+* Frost: Eishauch, Eisbruch, Splitterfrost, Frostnova
+* Block/Dornen: Turmschild, Verschanzen, Schildschlag, Wuchtstoß, Dornenmantel, Umlenkung
+* Stärke/Multi-Hit: Anspannung, Kriegstanz, Hagelklingen, Klingenregen, Wuchtschlag
+* Multiplikator: Momentum, Steigerung, Verstärker, Finale
+* Gold: Goldfluss, Mittelsmann, Investition
+* Risiko: Pakt des Wahnsinns, Schicksalsstoß, Henkersurteil
+* Glück: Glücksstoß, Hochstapeln
+* Slot-Manipulation: Zinken, Wild-Schmuggel, Doppelter Einsatz, Jackpot erzwingen
+
+16 NEUE RELIKTE (Build-Anker):
+* Giftphiole, Ewige Glut, Permafrost-Kern, Bollwerk-Kern, Stachelpanzer,
+  Berserkermal, Gezinkter Automat, Glücksamulett, Walzen-Joker, Multiplikator-Kern,
+  Goldreserve, Schnelldenker, Brandstifter, Seuchenmaske, Würfelglück, Krähenfeder.
+
+KLASSEN-SYNERGIE:
+* Belohnungspool je Klasse gewichtet: Hexe/Alchemist ziehen öfter Gift, Ritter
+  Block/Stärke, Croupière/Hochstapler Slot/Glück/Gold – alle Karten bleiben
+  aber für alle erreichbar (Off-Class-Builds möglich).
+
+Saves bleiben gültig (neue Felder additiv/defensiv).
+
 [v1.16.0 – 2026-06-16]  RIESEN-UPDATE 3: AKTE, KLASSEN, SLOT-BOSS & BALANCE
 --------------------------------------------------------------------------
 BALANCE / SCHWIERIGKEIT:

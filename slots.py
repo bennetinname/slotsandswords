@@ -166,10 +166,13 @@ class SlotMachine:
         self.spin_complete = False
         self._reel_done = [False, False, False]
         self.glow_timer = 0.0
+        self.lucky_spin = False      # war der laufende/letzte Dreh ein Glücksdreh?
     
-    def spin(self, lucky_bonus=False, time_scale=1.0, targets=None):
+    def spin(self, lucky_bonus=False, time_scale=1.0, targets=None,
+             rig_negatives=False, force_wild=False, force_triple=False):
         """Startet den Spin aller drei Walzen. `targets` (Liste von Symbol-Dicts)
-        erzwingt das Ergebnis (für den Slot-Modus)."""
+        erzwingt das Ergebnis (für den Slot-Modus). rig_negatives/force_wild =
+        Relikt-Effekte (Gezinkter Automat / Walzen-Joker)."""
         self.spinning = True
         self.spin_complete = False
         self._reel_done = [False, False, False]
@@ -180,14 +183,40 @@ class SlotMachine:
         durations = [d * time_scale for d in (0.9, 1.2, 1.6)]
         if targets is None:
             targets = [weighted_choice(SLOT_SYMBOLS) for _ in range(3)]
-        
-        # Lucky: leicht bessere Chancen
-        if lucky_bonus:
+
+        # Glücksdreh (v1.17 aufgewertet): Negativ-Symbole werden unterdrückt,
+        # und jede Walze hat eine hohe Chance auf ein GUTES Symbol.
+        # Gezinkter Automat: Negativ-Symbole 50% seltener
+        if rig_negatives:
+            safe = [s for s in SLOT_SYMBOLS if s["name"] not in SLOT_NEGATIVE]
             for i in range(3):
-                if random.random() < 0.3:
-                    good = [s for s in SLOT_SYMBOLS if s["name"] in ("HEART","MONEY","STAR","CROWN")]
+                if targets[i]["name"] in SLOT_NEGATIVE and random.random() < 0.5:
+                    targets[i] = random.choice(safe)
+
+        self.lucky_spin = bool(lucky_bonus)
+        if lucky_bonus:
+            good = [s for s in SLOT_SYMBOLS if s["name"] in GOOD_SYMBOLS]
+            safe = [s for s in SLOT_SYMBOLS if s["name"] not in SLOT_NEGATIVE]
+            for i in range(3):
+                # 1) Negativ-Symbole gibt's im Glücksdreh nicht
+                if targets[i]["name"] in SLOT_NEGATIVE:
+                    targets[i] = random.choice(safe)
+                # 2) starker Bias auf gute Symbole
+                if random.random() < 0.55:
                     targets[i] = random.choice(good)
-        
+
+        # Walzen-Joker: ein garantiertes WILD
+        if force_wild:
+            wild = next((s for s in SLOT_SYMBOLS if s["name"] == "WILD"), None)
+            if wild:
+                targets[random.randint(0, 2)] = wild
+
+        # Jackpot erzwingen: garantierter Drilling (nie ein Negativ-Symbol)
+        if force_triple:
+            pool = [s for s in SLOT_SYMBOLS if s["name"] not in SLOT_NEGATIVE]
+            sym = weighted_choice(pool)
+            targets = [sym, sym, sym]
+
         for i, reel in enumerate(self.reels):
             reel.start_spin(durations[i], targets[i])
     
@@ -716,6 +745,10 @@ class SlotMachine:
                 spin_txt = font_small.render("⚡ SPINNING... ⚡", True, CYAN)
                 screen.blit(spin_txt, (self.cab_x + self.cab_w // 2 - spin_txt.get_width() // 2,
                                        self.cab_y + self.cab_h + 2))
+            if self.lucky_spin and (self.spinning or self.glow_timer > 0):
+                lt = font_title.render("🍀 GLÜCKSDREH 🍀", True, (120, 235, 120))
+                screen.blit(lt, (self.cab_x + self.cab_w // 2 - lt.get_width() // 2,
+                                 self.cab_y - 22))
             return
 
         # ── Procedural-Fallback (kein Cabinet-Sprite) ──
@@ -739,3 +772,6 @@ class SlotMachine:
             spin_txt = font_small.render("⚡ SPINNING... ⚡", True, CYAN)
             screen.blit(spin_txt, (self.x + self.width//2 - spin_txt.get_width()//2,
                                    self.y + self.height - 22))
+        if self.lucky_spin and (self.spinning or self.glow_timer > 0):
+            lt = font_title.render("🍀 GLÜCKSDREH 🍀", True, (120, 235, 120))
+            screen.blit(lt, (self.x + self.width // 2 - lt.get_width() // 2, self.y - 20))

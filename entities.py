@@ -112,6 +112,27 @@ class Card:
         "rage_power": "strength_fist", "focus_power": "strength_fist",
         "sacrifice_card": "strength_fist",
         "rush": "energy_bolt", "mega_poison": "poison_vial", "wild_luck": "luck_clover",
+        # v1.17 Archetyp-Karten
+        "poison_seed": "poison_vial", "plague_cloud": "poison_vial",
+        "poison_double": "poison_vial", "poison_strike": "poison_vial",
+        "poison_detonate": "poison_vial", "venom_frost": "poison_vial",
+        "fire_poison": "poison_vial",
+        "ignite": "fire", "accelerant": "fire", "firestorm": "fire", "burn_double": "fire",
+        "frost_breath": "atk_slash", "ice_break": "atk_slash",
+        "frost_shatter": "atk_slash", "frost_nova": "atk_slash",
+        "fortify_keep": "defense_shield", "thorn_cloak": "defense_shield",
+        "block_to_thorns": "defense_shield",
+        "block_half": "shield_bash", "bodyslam": "shield_bash",
+        "tense": "strength_fist", "war_dance": "strength_fist", "strength_smash": "strength_fist",
+        "multi3": "atk_slash", "multi4": "atk_slash",
+        "mult_small": "energy_bolt", "mult_big": "energy_bolt",
+        "mult_hit": "atk_slash", "mult_finale": "death_skull",
+        "gold_flow": "gold_coin", "gold_strike": "gold_coin", "invest": "gold_coin",
+        "madness_pact": "death_skull", "doom_strike": "death_skull",
+        "executioner_verdict": "death_skull",
+        "luck_strike": "luck_clover", "stack_luck": "luck_clover",
+        "rig_next": "luck_clover", "smuggle_wild": "luck_clover",
+        "double_next": "gold_coin", "force_jackpot": "luck_clover",
     }
 
     def get_effect_icon(self):
@@ -148,6 +169,14 @@ class Player:
         self.perm_strength = 0 # dauerhafte Stärke-Basis (nur seltene Quellen)
         self.lucky = 0         # Slot-Bonus-Runden
         self.shield_up = False # Doppel-Block diese Runde
+        self.keep_block_next = False  # Block in die nächste Runde mitnehmen (Verschanzen)
+        self.war_dance = 0            # Kriegstanz: +X Stärke je Angriffskarte diese Runde
+        self.mult = 1.0              # Schadens-Multiplikator (pro Kampf, für Mult-Karten)
+        # Slot-Manipulation (wirkt auf den nächsten Dreh)
+        self.next_spin_lucky = False
+        self.next_spin_wild = False
+        self.next_spin_double = False
+        self.next_spin_triple = False
         self.reflect = False   # Reflektiert nächsten Schaden
         self.dodge = False     # Weicht dem nächsten Gegnerangriff aus
         # ─── Neue Statuseffekte (v1.12.0) ───
@@ -240,7 +269,14 @@ class Player:
         self.draw_hand(PLAYER_HAND_SIZE)
     
     def start_turn(self):
-        """Rundenstart: Energie auffüllen, Karten nachziehen (Block bleibt erhalten!)"""
+        """Rundenstart: Block verfällt (außer 'behalten'), Energie auffüllen, nachziehen."""
+        # Block-Verfall (v1.17): der Block vom letzten Zug ist jetzt weg –
+        # außer eine Karte/ein Relikt hält ihn (Verschanzen / Bollwerk-Kern).
+        keep = getattr(self, "keep_block_next", False) or self.has_relic("bollwerk_kern")
+        if not keep:
+            self.block = 0
+        self.keep_block_next = False
+        self.war_dance = 0          # Kriegstanz gilt nur für die aktuelle Runde
         self.energy = self.max_energy
         self.bonus_spins = 0
         self.reflect = False
@@ -261,12 +297,17 @@ class Player:
         if self.regen > 0:
             self.heal_hp(self.regen)
             self.regen -= 1
+        # Seuchenmaske: immun gegen eigenes Gift/Brennen
+        plague_immune = self.has_relic("plague_mask")
         # Burn-Schaden
         if self.burn > 0:
-            self.take_damage(self.burn, ignore_block=True)
+            if not plague_immune:
+                self.take_damage(self.burn, ignore_block=True)
             self.burn = max(0, self.burn - 1)
         # Gift-Schaden (ignoriert Block, sinkt um 1)
-        if self.poison > 0:
+        if self.poison > 0 and plague_immune:
+            self.poison = max(0, self.poison - 1)
+        elif self.poison > 0:
             self.take_damage(self.poison, ignore_block=True)
             self.poison -= 1
         # Nachziehen bis zu einer ZUFÄLLIGEN Ziel-Handgröße (Hand-RNG):
@@ -512,9 +553,10 @@ class Enemy:
         # Block vom letzten Zug läuft ab (sonst sammelt er sich unsichtbar an)
         self.block = 0
 
-        # Burn
+        # Burn (Ewige Glut: tickt 2×)
         if self.burn > 0:
-            burn_dmg = self.burn
+            mult = 2 if player.has_relic("ember_relic") else 1
+            burn_dmg = self.burn * mult
             self.hp = max(0, self.hp - burn_dmg)
             result.append(f"{self.name} brennt! ({burn_dmg} Schaden)")
             self.burn = max(0, self.burn - 1)
@@ -592,8 +634,8 @@ class Enemy:
         # ─── Einzigartige Mechaniken ───
         result.extend(self._apply_mechanic(player, dealt))
 
-        # Frost baut nach dem Zug ab
-        if self.frost > 0:
+        # Frost baut nach dem Zug ab (Permafrost-Kern: läuft nicht ab)
+        if self.frost > 0 and not player.has_relic("permafrost"):
             self.frost -= 1
 
         # Nächste Aktion planen

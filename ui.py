@@ -263,6 +263,7 @@ class UIRenderer:
         "vulnerable": ("vulnerable", "💔"), "weak": ("weak", "😵"),
         "frost": ("frost", "❄️"), "marked": ("marked", "🩸"),
         "stun": ("stun", "💫"), "doom": ("doom", "💀"),
+        "mult": (None, "✖️"),
     }
 
     def _sb_chip_w(self, key, label):
@@ -398,6 +399,9 @@ class UIRenderer:
         if getattr(player, "vulnerable", 0) > 0:
             pit.append(("vulnerable", str(player.vulnerable), HP_RED, (60, 12, 12, 170),
                         f"Verwundbar: du nimmst +50% Schaden ({player.vulnerable} Runden)."))
+        if getattr(player, "mult", 1.0) != 1.0:
+            pit.append(("mult", f"{player.mult:g}", PURPLE, (40, 20, 55, 170),
+                        f"Multiplikator: Mult-Karten machen ×{player.mult:g} Schaden."))
         self._sb_strip(pit, 14, self.w // 2 - 160, 44, "left", hot)
 
         # ── Tier 2: Gegner-Status + Absicht (rechte Zone, rechtsbündig) ──

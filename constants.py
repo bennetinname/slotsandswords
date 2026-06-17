@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.16.0"
+GAME_VERSION = "1.17.0"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.17.0", "BUILD-UPDATE: 42 neue Karten (Archetypen!), 16 Relikte, Block-Verfall, Glück lohnt sich, Multiplikator"),
     ("1.16.0", "RIESEN-UPDATE: 5 Akte, 2 Klassen, Slot-Boss, Stärke-Rework, böse Slots, neue Leiste"),
     ("1.15.0", "Schwerer & runder: Gegner skalieren (HP/Block/Ruestung), UI-Fixes (Relikte, Status, Karten)"),
     ("1.14.0", "NEUER SPIELMODUS: Slot-Modus (Balatro-Style) - bau deinen Automaten, knack die Ziele!"),
@@ -161,8 +162,39 @@ SLOT_SYMBOLS = [
     {"emoji": "🧿", "name": "CURSE",    "weight": 6},   # NEGATIV: Block weg / verwundbar
 ]
 
+# Klassen-Gewichtung im Belohnungspool: Karten mit diesen Effekten erscheinen
+# für die jeweilige Klasse häufiger (v1.17). Alle Karten bleiben erreichbar.
+_POISON_FX = {"poison_blade", "toxic_cloud", "acid_barrel", "plague_breath",
+              "brew_poison", "bloodletting", "poison_dart", "venom_burst", "mega_poison",
+              "poison_seed", "plague_cloud", "poison_double", "poison_strike",
+              "poison_detonate", "venom_frost", "fire_poison"}
+_BURN_FROST_FX = {"ignite", "accelerant", "firestorm", "burn_double",
+                  "frost_strike", "frost_breath", "ice_break", "frost_shatter",
+                  "frost_nova", "icestorm", "mark_strike", "stun_bash", "doom_card"}
+_BLOCK_STR_FX = {"block", "fortify_keep", "block_half", "bodyslam", "thorn_cloak",
+                 "block_to_thorns", "spike_skin", "shield_wall", "shield_bash",
+                 "counter", "evade", "entrench", "frost_armor", "endure",
+                 "tense", "war_dance", "multi3", "multi4", "strength_smash",
+                 "warcry", "berserk_rage", "meditate", "iron_storm", "retribution"}
+_LUCK_SLOT_FX = {"rig_next", "smuggle_wild", "double_next", "force_jackpot",
+                 "luck_strike", "stack_luck", "lucky_streak", "lucky_hit",
+                 "loaded_dice", "double_spin", "triple_spin", "coinflip",
+                 "roulette", "gambling"}
+_GOLD_FX = {"gold_flow", "gold_strike", "invest", "midas", "greed", "bribe",
+            "pillage", "gold_rush", "coin_rain", "tax_evasion", "all_in"}
+CLASS_FAVORED = {
+    "knight":    _BLOCK_STR_FX,
+    "gambler":   _LUCK_SLOT_FX | _GOLD_FX,
+    "witch":     _POISON_FX,
+    "croupiere": _LUCK_SLOT_FX,
+    "alchemist": _POISON_FX | _BURN_FROST_FX,
+}
+
 # Negativ-Symbole (für UI-Hinweise / Logik)
 SLOT_NEGATIVE = {"TRAP", "PIT", "CURSE"}
+# "Gute" Symbole, auf die ein Glücksdreh bevorzugt zieht (v1.17)
+GOOD_SYMBOLS = {"HEART", "MONEY", "STAR", "CROWN", "CLOVER", "BELL", "GEM",
+                "WILD", "DIAMOND"}
 
 # Gegner-Typen
 ENEMY_TYPES = [
@@ -1308,6 +1340,103 @@ CARD_DEFINITIONS = [
     {"name": "Henkersmahlzeit", "type": "attack", "cost": 2, "damage": 14, "color": RED_DARK,
      "tooltip": "14 Schaden und heile um den verursachten Schaden. Festmahl.",
      "rarity": "rare", "effect": "feast"},
+
+    # ══════════ v1.17: ARCHETYP-KARTEN ══════════
+    # ── A) Gift / Verfall ──
+    {"name": "Giftsaat", "type": "attack", "cost": 1, "damage": 4, "color": GREEN,
+     "tooltip": "4 Schaden, +4 Gift. Säe den Verfall.", "rarity": "common", "effect": "poison_seed"},
+    {"name": "Pestwolke", "type": "special", "cost": 1, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "+3 Gift. Ist der Gegner schon vergiftet: +3 Gift extra.",
+     "rarity": "common", "effect": "plague_cloud"},
+    {"name": "Hexenkessel", "type": "special", "cost": 2, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "Verdopple das Gift am Gegner. Brodel, brodel.", "rarity": "uncommon", "effect": "poison_double"},
+    {"name": "Seuchenstoß", "type": "attack", "cost": 2, "damage": 0, "color": GREEN,
+     "tooltip": "Schaden = aktuelles Gift am Gegner (Gift bleibt!).", "rarity": "uncommon", "effect": "poison_strike"},
+    {"name": "Verfall entfesseln", "type": "special", "cost": 2, "damage": 0, "color": GREEN_DARK,
+     "tooltip": "Schaden = Gift × 2, verbraucht dann das gesamte Gift.", "rarity": "rare", "effect": "poison_detonate"},
+    {"name": "Giftiger Frost", "type": "attack", "cost": 1, "damage": 5, "color": (60, 180, 160),
+     "tooltip": "5 Schaden, +2 Gift, +2 Frost. Zwei Übel auf einmal.", "rarity": "uncommon", "effect": "venom_frost"},
+    # ── B) Brennen / Feuer ──
+    {"name": "Zündfunke", "type": "attack", "cost": 1, "damage": 5, "color": ORANGE,
+     "tooltip": "5 Schaden, +4 Brennen.", "rarity": "common", "effect": "ignite"},
+    {"name": "Brandbeschleuniger", "type": "special", "cost": 1, "damage": 0, "color": ORANGE,
+     "tooltip": "+3 Brennen und der Gegner brennt SOFORT (tickt jetzt).", "rarity": "uncommon", "effect": "accelerant"},
+    {"name": "Feuersturm", "type": "attack", "cost": 2, "damage": 0, "color": (230, 90, 30),
+     "tooltip": "Schaden = Brennen am Gegner, danach +2 Brennen.", "rarity": "uncommon", "effect": "firestorm"},
+    {"name": "Verbrennung", "type": "special", "cost": 1, "damage": 0, "color": ORANGE,
+     "tooltip": "Verdopple das Brennen am Gegner.", "rarity": "uncommon", "effect": "burn_double"},
+    {"name": "Brandgift", "type": "attack", "cost": 1, "damage": 4, "color": (210, 120, 40),
+     "tooltip": "4 Schaden, +2 Brennen, +2 Gift. Hybrid-Übel.", "rarity": "uncommon", "effect": "fire_poison"},
+    # ── C) Frost / Kontrolle ──
+    {"name": "Eishauch", "type": "special", "cost": 1, "damage": 0, "color": CYAN,
+     "tooltip": "+3 Frost. Der Gegner erstarrt.", "rarity": "common", "effect": "frost_breath"},
+    {"name": "Eisbruch", "type": "attack", "cost": 2, "damage": 10, "color": CYAN,
+     "tooltip": "10 Schaden, DOPPELT gegen gefrorene Gegner.", "rarity": "uncommon", "effect": "ice_break"},
+    {"name": "Splitterfrost", "type": "attack", "cost": 2, "damage": 6, "color": (120, 220, 230),
+     "tooltip": "6 Schaden + 3 je Frost am Gegner, verbraucht den Frost.", "rarity": "rare", "effect": "frost_shatter"},
+    {"name": "Frostnova", "type": "special", "cost": 2, "damage": 0, "color": CYAN,
+     "tooltip": "+2 Frost und +2 Verwundbar auf den Gegner.", "rarity": "uncommon", "effect": "frost_nova"},
+    # ── D) Block / Dornen (Block verfällt – diese behalten/nutzen ihn) ──
+    {"name": "Turmschild", "type": "defense", "cost": 1, "damage": 0, "block": 9, "color": BLUE,
+     "tooltip": "+9 Block.", "rarity": "common", "effect": "block"},
+    {"name": "Verschanzen", "type": "defense", "cost": 2, "damage": 0, "block": 10, "color": BLUE,
+     "tooltip": "+10 Block – DIESER Block verfällt nächste Runde NICHT.", "rarity": "uncommon", "effect": "fortify_keep"},
+    {"name": "Schildschlag", "type": "attack", "cost": 1, "damage": 0, "color": (120, 160, 220),
+     "tooltip": "Schaden = halber aktueller Block (+Stärke).", "rarity": "common", "effect": "block_half"},
+    {"name": "Wuchtstoß", "type": "attack", "cost": 2, "damage": 0, "color": (120, 160, 220),
+     "tooltip": "Schaden = dein aktueller Block (+Stärke). Bodyslam!", "rarity": "rare", "effect": "bodyslam"},
+    {"name": "Dornenmantel", "type": "defense", "cost": 1, "damage": 0, "block": 5, "color": BLUE,
+     "tooltip": "+5 Block, +3 Dornen.", "rarity": "uncommon", "effect": "thorn_cloak"},
+    {"name": "Umlenkung", "type": "special", "cost": 1, "damage": 0, "color": BLUE,
+     "tooltip": "Verwandle deinen aktuellen Block in ebenso viel Dornen.", "rarity": "uncommon", "effect": "block_to_thorns"},
+    # ── E) Stärke / Multi-Hit (Stärke = pro Kampf) ──
+    {"name": "Anspannung", "type": "special", "cost": 0, "damage": 0, "color": (210, 110, 40),
+     "tooltip": "+2 Stärke für diesen Kampf.", "rarity": "common", "effect": "tense"},
+    {"name": "Kriegstanz", "type": "special", "cost": 1, "damage": 0, "color": (220, 80, 60),
+     "tooltip": "Diese Runde: jede Angriffskarte gibt +1 Stärke.", "rarity": "uncommon", "effect": "war_dance"},
+    {"name": "Hagelklingen", "type": "attack", "cost": 1, "damage": 3, "color": (200, 200, 210),
+     "tooltip": "Triff 3× für je 3 (+Stärke).", "rarity": "common", "effect": "multi3"},
+    {"name": "Klingenregen", "type": "attack", "cost": 2, "damage": 3, "color": (200, 200, 210),
+     "tooltip": "Triff 4× für je 3 (+Stärke).", "rarity": "uncommon", "effect": "multi4"},
+    {"name": "Wuchtschlag", "type": "attack", "cost": 2, "damage": 8, "color": (210, 110, 40),
+     "tooltip": "8 Schaden + 2× Stärke. Volle Wucht.", "rarity": "uncommon", "effect": "strength_smash"},
+    # ── G) Multiplikator / Combo ──
+    {"name": "Momentum", "type": "special", "cost": 0, "damage": 0, "color": PURPLE,
+     "tooltip": "+0.5 Multiplikator für diesen Kampf.", "rarity": "common", "effect": "mult_small"},
+    {"name": "Steigerung", "type": "special", "cost": 1, "damage": 0, "color": PURPLE,
+     "tooltip": "+1 Multiplikator für diesen Kampf.", "rarity": "uncommon", "effect": "mult_big"},
+    {"name": "Verstärker", "type": "attack", "cost": 1, "damage": 6, "color": (180, 100, 220),
+     "tooltip": "Schaden × Multiplikator (Mult bleibt erhalten).", "rarity": "uncommon", "effect": "mult_hit"},
+    {"name": "Finale", "type": "attack", "cost": 2, "damage": 10, "color": (200, 80, 220),
+     "tooltip": "Schaden × Multiplikator, danach Mult zurück auf 1. Großer Schlag!", "rarity": "rare", "effect": "mult_finale"},
+    # ── H) Gold / Gier ──
+    {"name": "Goldfluss", "type": "special", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "+12 Gold und +Block in Höhe von Gold/12.", "rarity": "common", "effect": "gold_flow"},
+    {"name": "Mittelsmann", "type": "attack", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "Schaden = Gold / 8 (+Stärke). Reichtum ist Macht.", "rarity": "uncommon", "effect": "gold_strike"},
+    {"name": "Investition", "type": "special", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "Zahle 15 Gold → +3 Stärke für diesen Kampf.", "rarity": "uncommon", "effect": "invest"},
+    # ── I) Verhängnis / Risiko ──
+    {"name": "Pakt des Wahnsinns", "type": "special", "cost": 0, "damage": 0, "color": CURSE_COL,
+     "tooltip": "−5 HP, dafür +1 Energie diese Runde. Riskant.", "rarity": "common", "effect": "madness_pact"},
+    {"name": "Schicksalsstoß", "type": "attack", "cost": 2, "damage": 8, "color": CURSE_COL,
+     "tooltip": "8 Schaden + 2 Verhängnis auf den Gegner.", "rarity": "uncommon", "effect": "doom_strike"},
+    {"name": "Henkersurteil", "type": "attack", "cost": 3, "damage": 32, "color": RED_DARK,
+     "tooltip": "32 Schaden, aber 8 Selbstschaden. Alles oder nichts.", "rarity": "rare", "effect": "executioner_verdict"},
+    # ── J) Glück-Payoffs ──
+    {"name": "Glücksstoß", "type": "attack", "cost": 1, "damage": 6, "color": (120, 220, 120),
+     "tooltip": "6 Schaden, +4 je verbleibender Glücksrunde (+Stärke).", "rarity": "common", "effect": "luck_strike"},
+    {"name": "Hochstapeln", "type": "special", "cost": 1, "damage": 0, "color": (120, 220, 120),
+     "tooltip": "+3 Glücksrunden. Das Haus dreht für dich.", "rarity": "common", "effect": "stack_luck"},
+    # ── F) Slot-Manipulation (wirkt auf den nächsten Dreh) ──
+    {"name": "Zinken", "type": "special", "cost": 0, "damage": 0, "color": (255, 200, 70),
+     "tooltip": "Dein nächster Dreh ist ein Glücksdreh (keine Pech-Symbole).", "rarity": "common", "effect": "rig_next"},
+    {"name": "Wild-Schmuggel", "type": "special", "cost": 1, "damage": 0, "color": (255, 200, 70),
+     "tooltip": "Dein nächster Dreh enthält ein garantiertes Wild 🎰.", "rarity": "uncommon", "effect": "smuggle_wild"},
+    {"name": "Doppelter Einsatz", "type": "special", "cost": 1, "damage": 0, "color": GOLD,
+     "tooltip": "Dein nächster Dreh zählt DOPPELT.", "rarity": "uncommon", "effect": "double_next"},
+    {"name": "Jackpot erzwingen", "type": "special", "cost": 3, "damage": 0, "color": GOLD,
+     "tooltip": "Dein nächster Dreh ist ein garantierter DRILLING!", "rarity": "rare", "effect": "force_jackpot"},
 ]
 
 # ═══════════════════════════════════════════════
@@ -1438,6 +1567,39 @@ RELIC_DEFINITIONS = [
      "desc": "35% Chance, dass der Gegner zu Kampfbeginn Verhängnis bekommt.", "rarity": "rare"},
     {"id": "ice_heart",      "name": "Eisherz",         "emoji": "🧊",
      "desc": "Du weichst dem ersten Gegnertreffer jedes Kampfes aus.", "rarity": "rare"},
+    # ─── v1.17: Build-Anker-Relikte ───
+    {"id": "poison_vial_relic", "name": "Giftphiole", "emoji": "🧫",
+     "desc": "Jede 3. gespielte Karte: +1 Gift auf den Gegner.", "rarity": "uncommon"},
+    {"id": "ember_relic",    "name": "Ewige Glut",      "emoji": "🔥",
+     "desc": "Brennen am Gegner tickt 2× pro Runde.", "rarity": "rare"},
+    {"id": "permafrost",     "name": "Permafrost-Kern", "emoji": "🧊",
+     "desc": "Frost am Gegner läuft nicht ab.", "rarity": "rare"},
+    {"id": "bollwerk_kern",  "name": "Bollwerk-Kern",   "emoji": "🏰",
+     "desc": "Dein Block verfällt nicht am Rundenende.", "rarity": "rare"},
+    {"id": "spike_armor",    "name": "Stachelpanzer",   "emoji": "🦔",
+     "desc": "Kampfbeginn: +4 Dornen.", "rarity": "uncommon"},
+    {"id": "berserk_mark",   "name": "Berserkermal",    "emoji": "🗡️",
+     "desc": "+1 Stärke je gespielter Angriffskarte (diesen Kampf).", "rarity": "rare"},
+    {"id": "rigged_machine", "name": "Gezinkter Automat", "emoji": "🎰",
+     "desc": "Negativ-Symbole im Slot erscheinen 50% seltener.", "rarity": "rare"},
+    {"id": "luck_amulet",    "name": "Glücksamulett",   "emoji": "🍀",
+     "desc": "Kampfbeginn: +2 Glücksrunden.", "rarity": "uncommon"},
+    {"id": "reel_joker",     "name": "Walzen-Joker",    "emoji": "🃏",
+     "desc": "Dein erster Dreh pro Kampf enthält ein garantiertes Wild.", "rarity": "rare"},
+    {"id": "mult_core",      "name": "Multiplikator-Kern", "emoji": "✖️",
+     "desc": "Dein Multiplikator startet jeden Kampf bei 1.5.", "rarity": "rare"},
+    {"id": "gold_reserve",   "name": "Goldreserve",     "emoji": "🏆",
+     "desc": "Kampfbeginn: +Stärke in Höhe von Gold/50.", "rarity": "uncommon"},
+    {"id": "quick_thinker",  "name": "Schnelldenker",   "emoji": "⚡",
+     "desc": "Die erste 0-Kosten-Karte pro Runde zieht eine Karte nach.", "rarity": "uncommon"},
+    {"id": "arsonist",       "name": "Brandstifter",    "emoji": "🪔",
+     "desc": "Kampfbeginn: der Gegner startet mit 3 Brennen.", "rarity": "uncommon"},
+    {"id": "plague_mask",    "name": "Seuchenmaske",    "emoji": "😷",
+     "desc": "Du bist immun gegen eigenes Gift und Brennen.", "rarity": "uncommon"},
+    {"id": "dice_luck",      "name": "Würfelglück",     "emoji": "🎲",
+     "desc": "+1 Glücksrunde zu Beginn jeder Runde.", "rarity": "rare"},
+    {"id": "crow_feather",   "name": "Krähenfeder",     "emoji": "🪶",
+     "desc": "Stirbt ein Gegner: +5 Gold und +1 Glücksrunde.", "rarity": "uncommon"},
 ]
 
 # ═══════════════════════════════════════════════
