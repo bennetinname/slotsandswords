@@ -275,20 +275,26 @@ class Game:
         audio.set_sfx(self.options["sfx"])
 
     def _apply_fullscreen(self):
-        # SCALED: pygame rendert intern auf SCREEN_W×SCREEN_H und skaliert
-        # auf die tatsächliche Fenstergröße – so passen alle Bildschirmgrößen.
-        if self.options.get("fullscreen"):
-            flags = pygame.SCALED | pygame.FULLSCREEN
-        else:
-            flags = pygame.SCALED   # Fenstermodus: skaliert trotzdem korrekt
+        """Wechselt zwischen Vollbild und Fenstermodus.
+        Internes Canvas bleibt immer 1200×800 (SCREEN_W×SCREEN_H).
+        run() skaliert es mit Letterboxing auf den Display."""
         try:
-            self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H), flags)
+            if self.options.get("fullscreen"):
+                info = pygame.display.Info()
+                w, h = info.current_w, info.current_h
+                self.display = pygame.display.set_mode((w, h), pygame.FULLSCREEN)
+            else:
+                w = self.options.get("window_w", 1280)
+                h = self.options.get("window_h", 720)
+                self.display = pygame.display.set_mode((w, h), pygame.RESIZABLE)
         except Exception:
             self.options["fullscreen"] = False
             try:
-                self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H), pygame.SCALED)
+                self.display = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
             except Exception:
                 self.display = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+        # Viewport neu berechnen
+        self._update_viewport()
         # Fenster-Icon (neu setzen, da set_mode es zurücksetzen kann)
         try:
             ic = assets.load("ui", "icon_256")
@@ -297,27 +303,59 @@ class Game:
         except Exception:
             pass
 
+    def _update_viewport(self):
+        """Berechnet Skalierung und Offset um self.screen (SCREEN_W×SCREEN_H)
+        mit Letterboxing auf self.display (beliebige Größe) zu blitten."""
+        dw, dh = self.display.get_size()
+        scale = min(dw / SCREEN_W, dh / SCREEN_H)
+        bw, bh = int(SCREEN_W * scale), int(SCREEN_H * scale)
+        self._vp_scale = scale
+        self._vp_ox = (dw - bw) // 2
+        self._vp_oy = (dh - bh) // 2
+        self._vp_bw = bw
+        self._vp_bh = bh
+
+    def _to_logical(self, raw_pos):
+        """Wandelt rohe Display-Koordinaten in das 1200×800-Logik-Koordinatensystem."""
+        if not hasattr(self, "_vp_scale") or self._vp_scale == 0:
+            return raw_pos
+        x = (raw_pos[0] - self._vp_ox) / self._vp_scale
+        y = (raw_pos[1] - self._vp_oy) / self._vp_scale
+        return (int(x), int(y))
+
     # ═══════════════════════════════════════════════
     # MAIN LOOP
     # ═══════════════════════════════════════════════
-    
+
     def run(self):
         dt = 0.0
+        self._update_viewport()
         while self.running:
             dt = self.clock.tick(60) / 1000.0
             self.ui.tick(dt)
 
             self._handle_events()
             self._update(dt)
+
+            # Logische Mausposition vor dem Zeichnen setzen (ui.py nutzt self._mouse)
+            self.ui._mouse = self._to_logical(pygame.mouse.get_pos())
+
             self._draw()
 
-            # Canvas mit Screen-Shake-Versatz aufs Fenster bringen
-            ox = oy = 0
+            # Canvas skaliert + zentriert (Letterboxing) mit Screen-Shake aufs Display
+            if not hasattr(self, "_vp_scale"):
+                self._update_viewport()
+            ox, oy = self._vp_ox, self._vp_oy
             if self.shake > 0.5:
-                ox = int(random.uniform(-self.shake, self.shake))
-                oy = int(random.uniform(-self.shake, self.shake))
+                sh = int(self.shake * self._vp_scale)
+                ox += int(random.uniform(-sh, sh))
+                oy += int(random.uniform(-sh, sh))
+            if self._vp_bw != SCREEN_W or self._vp_bh != SCREEN_H:
+                scaled = pygame.transform.smoothscale(self.screen, (self._vp_bw, self._vp_bh))
+            else:
+                scaled = self.screen
             self.display.fill(DARKER_BG)
-            self.display.blit(self.screen, (ox, oy))
+            self.display.blit(scaled, (ox, oy))
             pygame.display.flip()
     
     def _handle_events(self):
@@ -333,6 +371,10 @@ class Game:
                         self._start_game()
                 elif event.key == pygame.K_m:
                     audio.toggle_mute()
+                elif event.key == pygame.K_F11:
+                    self.options["fullscreen"] = not self.options.get("fullscreen", False)
+                    self._apply_fullscreen()
+                    options.save(self.options)
                 else:
                     self._handle_key(event.key)
 
@@ -340,7 +382,7 @@ class Game:
                 self._handle_scroll(event.y)
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self._handle_click(pygame.mouse.get_pos())
+                self._handle_click(self._to_logical(event.pos))
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.options_drag:
@@ -348,7 +390,14 @@ class Game:
                     options.save(self.options)
 
             if event.type == pygame.MOUSEMOTION:
-                self._handle_hover(pygame.mouse.get_pos())
+                self._handle_hover(self._to_logical(event.pos))
+
+            if event.type == pygame.VIDEORESIZE:
+                # Fenstergröße merken und Viewport neu berechnen
+                if not self.options.get("fullscreen"):
+                    self.options["window_w"] = event.w
+                    self.options["window_h"] = event.h
+                self._update_viewport()
     
     # Zustände, in denen ein laufender Run pausiert/gespeichert werden kann
     RUN_STATES = (STATE_PLAYER_TURN, STATE_SLOT_SPIN, STATE_ENEMY_TURN,
@@ -451,7 +500,7 @@ class Game:
         }
 
     def _compute_options_layout(self):
-        """Layout des Optionsmenüs (Slider + Toggles)."""
+        """Layout des Optionsmenüs (Slider + Toggles + Fenstergröße)."""
         cx = SCREEN_W // 2
         px = cx - 300
         sliders = {
@@ -465,15 +514,17 @@ class Game:
             "particles":  pygame.Rect(px + 488, 488, 72, 32),
             "fast":       pygame.Rect(px + 488, 532, 72, 32),
         }
-        # Schwierigkeits-Auswahl: drei Segment-Buttons
-        diff = [pygame.Rect(px + 250 + i * 110, 578, 100, 34) for i in range(3)]
+        # Fenstergröße: 4 Preset-Buttons
+        import options as _opt
+        n = len(_opt.WINDOW_PRESETS)
+        win_btns = [pygame.Rect(px + 30 + i * 138, 578, 128, 34) for i in range(n)]
         return {
-            "panel": pygame.Rect(px, 150, 600, 540),
-            "sliders": sliders,
-            "toggles": toggles,
-            "difficulty": diff,
-            "back":     pygame.Rect(cx - 200, 632, 180, 44),
-            "defaults": pygame.Rect(cx + 20, 632, 180, 44),
+            "panel":    pygame.Rect(px, 150, 600, 520),
+            "sliders":  sliders,
+            "toggles":  toggles,
+            "win_btns": win_btns,
+            "back":     pygame.Rect(cx - 200, 620, 180, 44),
+            "defaults": pygame.Rect(cx + 20,  620, 180, 44),
         }
 
     def _set_slider(self, key, mx, track):
@@ -496,10 +547,14 @@ class Game:
                     self._apply_fullscreen()
                 options.save(self.options)
                 return
-        for i, dr in enumerate(lay.get("difficulty", [])):
-            if dr.collidepoint(pos):
-                self.options["difficulty"] = i
+        for i, wr in enumerate(lay.get("win_btns", [])):
+            if wr.collidepoint(pos) and not self.options.get("fullscreen"):
+                import options as _opt
+                _name, w, h = _opt.WINDOW_PRESETS[i]
+                self.options["window_w"] = w
+                self.options["window_h"] = h
                 audio.click(); options.save(self.options)
+                self._apply_fullscreen()  # Fenster sofort anpassen
                 return
         if lay["back"].collidepoint(pos):
             audio.click(); options.save(self.options); self.state = self._options_return
@@ -911,15 +966,6 @@ class Game:
         # Stärke-Stacking & Multi-Hit-Karten, je tiefer desto mehr.
         armor_bonus = f // 8 + (3 if node_type == "boss" else 0)
         enemy_def["armor"] = enemy_def.get("armor", 0) + armor_bonus
-
-        # Schwierigkeitsgrad (Optionen): skaliert Gegner-HP/-Schaden
-        try:
-            _dname, hp_mul, dmg_mul = options.DIFFICULTY[self.options.get("difficulty", 1)]
-            enemy_def["hp"] = max(1, int(enemy_def["hp"] * hp_mul))
-            enemy_def["max_hp"] = enemy_def["hp"]
-            enemy_def["damage"] = max(1, int(enemy_def["damage"] * dmg_mul))
-        except (IndexError, KeyError, TypeError):
-            pass
 
         # Tages-Modifikatoren (Gegner-Seite)
         m = self.daily_mod or {}

@@ -17,20 +17,22 @@ DEFAULTS = {
     "shake": True,      # Screen-Shake an/aus
     "particles": True,  # Partikeleffekte an/aus
     "fast": False,      # Animationen/Übergänge beschleunigen
-    "difficulty": 1,    # 0=Einfach, 1=Normal, 2=Hart (skaliert Gegner)
+    "window_w": 1280,   # Fenstergröße (Breite), nur im Fenstermodus
+    "window_h": 720,    # Fenstergröße (Höhe)
     "last_seen": "",    # zuletzt gesehene Version (für Changelog-Auto-Popup)
 }
 
-# Gegner-Skalierung je Schwierigkeit: (hp_mult, dmg_mult)
-DIFFICULTY = [
-    ("Einfach", 0.80, 0.80),
-    ("Normal",  1.00, 1.00),
-    ("Hart",    1.25, 1.20),
+# Vordefinierte Fenstergrößen (Name, Breite, Höhe)
+WINDOW_PRESETS = [
+    ("960×540",   960,  540),
+    ("1280×720",  1280, 720),
+    ("1600×900",  1600, 900),
+    ("1920×1080", 1920, 1080),
 ]
 
 _FLOATS = ("master", "music", "sfx")
 _BOOLS = ("fullscreen", "shake", "particles", "fast")
-_INTS = ("difficulty",)
+_INTS = ("window_w", "window_h")
 
 
 def load():
@@ -57,7 +59,9 @@ def load():
             o[k] = int(o[k])
         except (TypeError, ValueError):
             o[k] = DEFAULTS[k]
-    o["difficulty"] = min(2, max(0, o["difficulty"]))
+    # Mindestgröße
+    o["window_w"] = max(640, o["window_w"])
+    o["window_h"] = max(480, o["window_h"])
     return o
 
 

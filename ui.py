@@ -56,6 +56,9 @@ class UIRenderer:
         self._font_nano  = self._font_micro
 
         self._anim_t = 0.0
+        # Logische Mausposition (in der 1200×800-Canvas), wird jedes Frame
+        # von game.run() gesetzt nachdem der Viewport-Transform berechnet wurde.
+        self._mouse = (0, 0)
 
         # Caches für teure Surfaces
         self._panel_cache = {}
@@ -322,7 +325,7 @@ class UIRenderer:
         pygame.draw.line(self.screen, (*ACCENT, 60), (0, 1), (self.w, 1), 1)
 
         self._buff_tip = None
-        mx, my = pygame.mouse.get_pos()
+        mx, my = self._mouse
         hot = []
 
         # ── Tier 1: HP / Energie / Gold (links) ──
@@ -524,7 +527,7 @@ class UIRenderer:
         self._relic_tip = None
         if not player.relics:
             return
-        mx, my = pygame.mouse.get_pos()
+        mx, my = self._mouse
         chip, gap = 32, 6
         step = chip + gap
         bottom = 612                       # nicht in die Hand-Karten laufen
@@ -980,7 +983,7 @@ class UIRenderer:
             self._text(text, self.font_medium, GREY, x + w // 2, y + h // 2 - 11, center=True)
             return rect
 
-        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        hovered = rect.collidepoint(self._mouse)
         lift = 2 if hovered else 0
         col = _lighten(color, 0.12) if hovered else color
 
@@ -1005,7 +1008,7 @@ class UIRenderer:
     def draw_slot_button(self, x, y, w, h, pulsing=True):
         """Thematischer 'Slot drehen'-Knopf im Casino-Cabinet-Look."""
         rect = pygame.Rect(x, y, w, h)
-        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        hovered = rect.collidepoint(self._mouse)
         lift = 2 if hovered else 0
         # Glühen
         p = abs(math.sin(self._anim_t * 3)) if pulsing else 1.0
@@ -1084,7 +1087,7 @@ class UIRenderer:
         for i, card in enumerate(cards):
             cx = cx_start + i * (card_w + spacing)
             cy = top + 30
-            hov = pygame.Rect(cx, cy, card_w, 210).collidepoint(pygame.mouse.get_pos())
+            hov = pygame.Rect(cx, cy, card_w, 210).collidepoint(self._mouse)
             rect = pygame.Rect(cx, cy - (8 if hov else 0), card_w, 210)
             card_rects.append(pygame.Rect(cx, cy, card_w, 210))
             self._draw_card(card, rect, hovered=hov)
@@ -1114,7 +1117,7 @@ class UIRenderer:
         total_w = n * cw + (n - 1) * spacing
         cx_start = self.w // 2 - total_w // 2
         cy = py + 112
-        mx, my = pygame.mouse.get_pos()
+        mx, my = self._mouse
         for i, relic in enumerate(relics):
             cx = cx_start + i * (cw + spacing)
             rect = pygame.Rect(cx, cy, cw, ch)
@@ -1420,7 +1423,7 @@ class UIRenderer:
                 info += f" · Best: {best:,}".replace(",", ".")
             if streak > 1:
                 info += f" · 🔥{streak} Tage"
-            if d.collidepoint(pygame.mouse.get_pos()):
+            if d.collidepoint(self._mouse):
                 info = f"{mod['name']}: {mod['desc']}"
             self._text(info, self.font_tiny, INK_DIM, d.right + 12, d.y + d.h // 2 - 7)
         sm = layout.get("slotmode")
@@ -1445,7 +1448,7 @@ class UIRenderer:
 
         cl = layout.get("changelog")
         if cl:
-            hot = cl.collidepoint(pygame.mouse.get_pos())
+            hot = cl.collidepoint(self._mouse)
             self._chip("🆕 Was ist neu?", self.font_small, cl.x, cl.y,
                        text_col=ACCENT_SOFT if hot else INK_DIM, fill=(*PANEL_FILL, 200),
                        border=ACCENT if hot else PANEL_LINE)
@@ -1630,7 +1633,7 @@ class UIRenderer:
         self._text("🔥  LAGERFEUER", self.font_huge, ORANGE, self.w // 2, 70, center=True, shadow=True)
         self._text("Ein Moment der Ruhe. Nutze ihn weise.", self.font_small, INK_DIM,
                    self.w // 2, 132, center=True)
-        mouse = pygame.mouse.get_pos()
+        mouse = self._mouse
 
         for keyname, title, emoji, desc, col in [
             ("heal", "Ausruhen", "❤", f"Heile 30% deiner Max-HP\n(+{int(player.max_hp*0.3)} HP)", GREEN),
@@ -1695,7 +1698,7 @@ class UIRenderer:
             self._text(f"{int(opts[key] * 100)}%", self.font_small, ACCENT_SOFT,
                        tr.right + 18, tr.y - 7)
 
-        tlabels = {"fullscreen": "🖥 Vollbild", "shake": "📳 Screen-Shake",
+        tlabels = {"fullscreen": "🖥 Vollbild  [F11]", "shake": "📳 Screen-Shake",
                    "particles": "✨ Partikel", "fast": "⏩ Schnell (Animationen)"}
         for key, pill in layout["toggles"].items():
             self._text(tlabels[key], self.font_medium, INK, panel.x + 30, pill.y + 4)
@@ -1708,27 +1711,28 @@ class UIRenderer:
             self._text("AN" if on else "AUS", self.font_tiny, INK_DIM,
                        pill.x - 8, pill.centery - 7, right=True)
 
-        # Schwierigkeitsgrad
-        diff = layout.get("difficulty")
-        if diff:
+        # Fenstergröße Presets (nur im Fenstermodus aktiv)
+        win_btns = layout.get("win_btns", [])
+        if win_btns:
             import options as _opt
-            self._text("🎚 Schwierigkeit", self.font_medium, INK, panel.x + 30, diff[0].y + 6)
-            cur = int(opts.get("difficulty", 1))
-            names = [d[0] for d in _opt.DIFFICULTY]
-            for i, dr in enumerate(diff):
-                on = (i == cur)
-                col = ACCENT if on else GREY_DARK
-                pygame.draw.rect(self.screen, col, dr, border_radius=8)
-                pygame.draw.rect(self.screen, _lighten(col, 0.2) if on else GREY, dr, 2,
-                                 border_radius=8)
-                self._text(names[i], self.font_small, BLACK if on else INK_DIM,
-                           dr.centerx, dr.centery - 8, center=True)
+            dim = bool(opts.get("fullscreen", False))
+            self._text("🪟 Fenstergröße", self.font_medium,
+                       INK_DIM if dim else INK, panel.x + 30, win_btns[0].y + 6)
+            cur_w, cur_h = opts.get("window_w", 1280), opts.get("window_h", 720)
+            for i, wr in enumerate(win_btns):
+                name, pw, ph = _opt.WINDOW_PRESETS[i]
+                active = (pw == cur_w and ph == cur_h) and not dim
+                col = ACCENT if active else (GREY_DARK if dim else (50, 50, 70))
+                pygame.draw.rect(self.screen, col, wr, border_radius=8)
+                pygame.draw.rect(self.screen, _lighten(col, 0.15), wr, 2, border_radius=8)
+                tcol = BLACK if active else (INK_FAINT if dim else INK_DIM)
+                self._text(name, self.font_tiny, tcol, wr.centerx, wr.centery - 7, center=True)
 
         b = layout["back"]
         self.draw_button("Zurück", b.x, b.y, b.w, b.h, color=ACCENT, text_color=BLACK)
         d = layout["defaults"]
         self.draw_button("↺ Standard", d.x, d.y, d.w, d.h, color=GREY_DARK, text_color=WHITE)
-        self._text("Tipp: [M] schaltet den Ton schnell stumm.", self.font_tiny, INK_FAINT,
+        self._text("Tipp: [M] Ton stumm · [F11] Vollbild", self.font_tiny, INK_FAINT,
                    self.w // 2, panel.bottom - 28, center=True)
 
     # ═══════════════════════════════════════════════
@@ -1828,7 +1832,7 @@ class UIRenderer:
         total_w = cols * item_w + (cols - 1) * spacing
         start_x = self.w // 2 - total_w // 2
         item_y = 150
-        mouse = pygame.mouse.get_pos()
+        mouse = self._mouse
 
         for i, item in enumerate(items):
             ix = start_x + i * (item_w + spacing)
@@ -1913,7 +1917,7 @@ class UIRenderer:
         spacing = 12
         start_x = self.w // 2 - (per_row * (card_w + spacing) - spacing) // 2
         start_y = 92
-        mouse = pygame.mouse.get_pos()
+        mouse = self._mouse
 
         total_rows = (len(all_cards) + per_row - 1) // per_row
         visible_rows = max(1, (self.h - 90 - start_y + spacing) // (card_h + spacing))
@@ -1966,7 +1970,7 @@ class UIRenderer:
         self._text("Jede Klasse bringt ein eigenes Startdeck und ein Start-Relikt mit.",
                    self.font_small, INK_DIM, self.w // 2, 100, center=True)
 
-        mouse = pygame.mouse.get_pos()
+        mouse = self._mouse
         n = len(classes)
         gap = 20
         ch = 290                       # kompakte Karten – Details kommen beim Hovern
