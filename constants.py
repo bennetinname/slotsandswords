@@ -1,13 +1,14 @@
 """Konstanten und Konfiguration für das gesamte Spiel"""
 
 # Version (rein informativ; Spielstände sind versionsunabhängig gültig)
-GAME_VERSION = "1.19.0"
+GAME_VERSION = "1.19.1"
 
 # Speicherstand-Datei (laufender Run)
 SAVE_FILE = "savegame.json"
 
 # Kompakte In-Game-Changelist (neueste oben, EINE kurze Zeile pro Version)
 CHANGELOG = [
+    ("1.19.1", "NEU: 📖 Kompendium im Menü – sieh alle Gegner, Karten, Relikte, Symbole, Charms, Events, Klassen & Status auf einen Blick."),
     ("1.19.0", "Klassen entdoppelt + 25 Karten + Slot-Modus vertieft + Relikt IMMER aus 3 wählen (auch Events/Schatz) + 6 neue Events. Fix: 0-HP-Bug."),
     ("1.18.0", "SLOT-MODUS NEU: 'Das Loch' (Miete, Glück, 22 Charms, Telefon) + unverzerrte 3:2-Auflösungen + HP-Anzeige am Lagerfeuer. HINWEIS: Nach einem Update schließt sich das Spiel - bitte SELBST neu starten (öffnet nicht automatisch)."),
     ("1.17.1", "Relikt-Auswahl (3 zur Wahl), Karten max. 3x, Schildbug Gegner, Slot-Energie nächste Runde, Vollbild/Skalierung"),

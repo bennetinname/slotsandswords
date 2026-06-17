@@ -44,6 +44,7 @@ STATE_GAME_OVER   = "game_over"
 STATE_VICTORY     = "victory"
 STATE_SCORES      = "scores"         # Highscore-Anzeige
 STATE_ACHIEVEMENTS = "achievements"  # Erfolge-Anzeige
+STATE_WIKI        = "wiki"           # Kompendium (Gegner/Karten/Relikte ...)
 STATE_CLASS_SELECT = "class_select"  # Klassenauswahl vor dem Run
 STATE_SLOTMODE     = "slotmode"      # Reiner Slot-Modus (eigenes Spiel)
 
@@ -228,6 +229,12 @@ class Game:
         achievements.load()
         self.achievement_toasts = []
         self.achievements_back_rect = None
+        # Kompendium / Wiki
+        self.wiki_tab = 0
+        self.wiki_scroll = 0
+        self.wiki_back_rect = None
+        self.wiki_tab_rects = []
+        self.wiki_max_scroll = 0
 
         # Highscore-Zustand
         self.highscores = load_highscores()
@@ -411,7 +418,7 @@ class Game:
         elif self.state == STATE_PAUSE:
             self.state = self._prev_state           # Weiter spielen
         elif self.state in (STATE_TUTORIAL, STATE_SCORES, STATE_CHANGELOG,
-                            STATE_ACHIEVEMENTS, STATE_CLASS_SELECT,
+                            STATE_ACHIEVEMENTS, STATE_CLASS_SELECT, STATE_WIKI,
                             STATE_GAME_OVER, STATE_VICTORY, STATE_SLOTMODE):
             self.state = STATE_MENU
         else:  # Hauptmenü
@@ -471,6 +478,7 @@ class Game:
                 "options":  pygame.Rect(cx - 110, 624, 220, 34),
                 "scores":   pygame.Rect(cx - 110, 662, 220, 34),
                 "achievements": pygame.Rect(cx - 110, 700, 220, 34),
+                "wiki":     pygame.Rect(cx - 110, 738, 220, 34),
                 "changelog": changelog,
             }
         return {
@@ -482,6 +490,7 @@ class Game:
             "options":  pygame.Rect(cx - 110, 612, 220, 38),
             "scores":   pygame.Rect(cx - 110, 654, 220, 38),
             "achievements": pygame.Rect(cx - 110, 696, 220, 38),
+            "wiki":     pygame.Rect(cx - 110, 738, 220, 38),
             "changelog": changelog,
         }
 
@@ -594,6 +603,9 @@ class Game:
 
     def _handle_scroll(self, delta_y):
         """Mausrad-Scrolling: Karten-Raster (Overlay) vor Kampflog"""
+        if self.state == STATE_WIKI:
+            self.wiki_scroll = max(0, min(self.wiki_max_scroll, self.wiki_scroll - delta_y))
+            return
         # Karten-Raster (Aufwerten/Verbrennen): bei großen Decks scrollen
         if self.shop_remove_mode or self.shop_upgrade_mode:
             total = len(self.player.deck + self.player.discard + self.player.hand)
@@ -661,6 +673,11 @@ class Game:
                 return
             if lay["achievements"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_ACHIEVEMENTS
+                return
+            if lay.get("wiki") and lay["wiki"].collidepoint(pos):
+                audio.play("click")
+                self.wiki_tab = 0; self.wiki_scroll = 0
+                self.state = STATE_WIKI
                 return
             if lay["changelog"].collidepoint(pos):
                 audio.play("click"); self.state = STATE_CHANGELOG
@@ -762,6 +779,17 @@ class Game:
         elif self.state == STATE_ACHIEVEMENTS:
             if self.achievements_back_rect and self.achievements_back_rect.collidepoint(pos):
                 audio.play("click"); self.state = STATE_MENU
+
+        elif self.state == STATE_WIKI:
+            if self.wiki_back_rect and self.wiki_back_rect.collidepoint(pos):
+                audio.play("click"); self.state = STATE_MENU
+                return
+            for i, rect in enumerate(self.wiki_tab_rects):
+                if rect and rect.collidepoint(pos):
+                    if i != self.wiki_tab:
+                        audio.play("click")
+                        self.wiki_tab = i; self.wiki_scroll = 0
+                    return
 
         elif self.state == STATE_CLASS_SELECT:
             for i, rect in enumerate(self.class_select_rects or []):
@@ -2942,6 +2970,12 @@ class Game:
         elif self.state == STATE_ACHIEVEMENTS:
             self.achievements_back_rect = self.ui.draw_achievements(
                 achievements.DEFS, achievements.is_unlocked, achievements.progress())
+
+        elif self.state == STATE_WIKI:
+            res = self.ui.draw_wiki(self.wiki_tab, self.wiki_scroll)
+            self.wiki_tab_rects = res["tabs"]
+            self.wiki_back_rect = res["back"]
+            self.wiki_max_scroll = res["max_scroll"]
 
         elif self.state == STATE_CLASS_SELECT:
             self.class_select_rects, self.class_back_rect = self.ui.draw_class_select(

@@ -32,6 +32,59 @@ def _darken(c, f=0.25):
             max(0, int(c[2] * (1 - f))))
 
 
+# ── Klartext-Daten fürs Kompendium ───────────────────────────────────
+_WIKI_MECH = {
+    "gold_thief": "Klaut beim Angriff Gold.",
+    "block_eater": "Frisst deinen Block vor dem Schlag.",
+    "undying": "Steht einmal aus dem Tod wieder auf.",
+    "reaper": "Betrügt den Tod – überlebt einmal.",
+    "slot_boss": "Dreht seinen eigenen Automaten.",
+    "slot_jammer": "Blockiert manchmal einen deiner Drehs.",
+    "rig_slots": "Zinkt deine Walzen zu seinen Gunsten.",
+    "enrage": "Wird unter halber HP wütender.",
+    "reckless": "Haut hart zu, ohne sich zu schützen.",
+    "pierce": "Ignoriert einen Teil deines Blocks.",
+    "venom": "Vergiftet dich.", "plague": "Verteilt Gift/Seuche.",
+    "infest": "Setzt Gift/Befall ein.", "spores": "Streut Sporen (Gift).",
+    "chill": "Verlangsamt/friert (Frost).", "freeze": "Friert dich ein.",
+    "infernal": "Brennen-/Feuer-Schaden.", "chili": "Heiß – Brennen.",
+    "curse_gift": "Schiebt dir Flüche unter.", "luck_eater": "Frisst dein Glück.",
+    "siphon": "Saugt Ressourcen ab.", "gambler_foe": "Setzt auf Glücksspiel.",
+    "roulette_foe": "Russisch-Roulette-Mechanik.", "fortuna": "Glücks-Mechanik.",
+    "house_edge": "Das Haus gewinnt – Vorteil für den Gegner.",
+    "mirror_boss": "Spiegelt deine Taktik.", "chicken_army": "Beschwört Hühner.",
+}
+_WIKI_SYM = {
+    "SKULL": "Direkter Schaden.", "CLOVER": "Glück – bessere Slot-Chancen.",
+    "MONEY": "Gold.", "HEART": "Heilung.", "DICE": "Chaos/Zufall.",
+    "FIRE": "Brennen.", "CHICKEN": "Hühner-Chaos.", "STAR": "Schaden oder Stärke.",
+    "BOMB": "Viel Schaden, etwas Selbstschaden.", "VORTEX": "HP-Tausch/Chaos.",
+    "BEER": "Heilung & schwächt Gegner.", "CROWN": "Gold-Bonus.",
+    "LIGHTNING": "Schaden + Energie nächste Runde.", "SHIELD": "Block.",
+    "TARGET": "Kritischer Treffer.", "CHERRY": "Kleiner Allrounder.",
+    "DIAMOND": "Viel Gold + Buff.", "SNAKE": "Gift.", "MOON": "Heilung skaliert.",
+    "CLOWN": "Reines Chaos.", "WILD": "Joker – zählt als jedes Symbol.",
+    "BELL": "Gold + Heilung.", "GEM": "Gold.",
+    "TRAP": "NEGATIV: Selbstschaden.", "PIT": "NEGATIV: Gold-/Energieverlust.",
+    "CURSE": "NEGATIV: Block weg / verwundbar.",
+}
+_WIKI_STATUS = [
+    ("☠️", "Gift", "Schaden pro Runde, ignoriert Block. Sinkt nicht – belohnt Aufbau."),
+    ("🔥", "Brennen", "Schaden pro Runde, sinkt um 1."),
+    ("❄️", "Frost", "Halbiert den Angriffsschaden des Gegners, läuft ab."),
+    ("🩸", "Verwundbar", "Ziel nimmt +50% Schaden."),
+    ("🎯", "Markiert", "Pauschaler Bonus-Schaden pro Treffer."),
+    ("💪", "Stärke", "Erhöht den Schaden deiner Angriffe (pro Kampf)."),
+    ("🛡️", "Block", "Absorbiert Schaden, verfällt zu Beginn deiner Runde."),
+    ("🌵", "Dornen", "Reflektiert Schaden bei Gegnertreffern."),
+    ("💥", "Verhängnis", "Countdown – am Ende ein massiver Selbstschlag."),
+    ("💫", "Betäubt", "Überspringt den nächsten Zug."),
+    ("🥀", "Geschwächt", "Macht weniger Schaden."),
+    ("🍀", "Glück", "Bessere Slot-Chancen; auch als Glücksdreh ausgebbar (Slot-Modus)."),
+    ("✖️", "Multiplikator", "Vervielfacht den Schaden von Mult-Karten."),
+]
+
+
 class UIRenderer:
     """Zentrale Klasse für alle UI-Darstellungen"""
 
@@ -1445,6 +1498,10 @@ class UIRenderer:
         if ac:
             self.draw_button("🎖 Erfolge", ac.x, ac.y, ac.w, ac.h,
                              color=_darken(PURPLE, 0.25), text_color=WHITE)
+        wk = layout.get("wiki")
+        if wk:
+            self.draw_button("📖 Kompendium", wk.x, wk.y, wk.w, wk.h,
+                             color=_darken(CYAN, 0.2), text_color=BLACK)
 
         cl = layout.get("changelog")
         if cl:
@@ -2127,6 +2184,145 @@ class UIRenderer:
         self.draw_button("Zurück", back.x, back.y, back.w, back.h,
                          color=ACCENT, text_color=BLACK)
         return back
+
+    # ═══════════════════════════════════════════════
+    # KOMPENDIUM / WIKI
+    # ═══════════════════════════════════════════════
+
+    WIKI_TABS = ["Gegner", "Karten", "Relikte", "Symbole", "Charms", "Events",
+                 "Klassen", "Status"]
+
+    def _wiki_items(self, tab):
+        """Baut die Einträge eines Tabs aus den Spiel-Definitionen.
+        Eintrag = dict(cat, sid, emoji, title, sub, body)."""
+        import constants as C
+        items = []
+        name = self.WIKI_TABS[tab]
+        if name == "Gegner":
+            for e in C.ENEMY_TYPES:
+                mech = _WIKI_MECH.get(e.get("mechanic"), "")
+                sub = f"HP ~{e['hp']}  ·  Schaden {e['damage']}" + (
+                    f"  ·  🛡{e['armor']}" if e.get("armor") else "")
+                items.append(dict(cat="enemies", sid=e.get("asset"), emoji="👾",
+                                  title=e["name"], sub=sub,
+                                  body=(e.get("tooltip", "") + (("  ⚙ " + mech) if mech else ""))))
+        elif name == "Karten":
+            from entities import Card
+            rar = {"common": "Gewöhnlich", "uncommon": "Selten", "rare": "Rar", "curse": "Fluch"}
+            for c in C.CARD_DEFINITIONS:
+                sid = Card.EFFECT_ICONS.get(c.get("effect"))
+                vals = []
+                if c.get("damage"): vals.append(f"{c['damage']} Schaden")
+                if c.get("block"): vals.append(f"{c['block']} Block")
+                if c.get("heal"): vals.append(f"{c['heal']} Heilung")
+                sub = f"{c.get('cost',0)}⚡  ·  {rar.get(c.get('rarity'),'')}" + (
+                    "  ·  " + ", ".join(vals) if vals else "")
+                items.append(dict(cat="cards", sid=sid, emoji="🃏",
+                                  title=c["name"], sub=sub, body=c.get("tooltip", "")))
+        elif name == "Relikte":
+            for r in C.RELIC_DEFINITIONS:
+                items.append(dict(cat="relics", sid=r["id"], emoji=r.get("emoji", "💠"),
+                                  title=r["name"], sub=r.get("rarity", ""),
+                                  body=r.get("desc", "")))
+        elif name == "Symbole":
+            for s in C.SLOT_SYMBOLS:
+                neg = s["name"] in ("TRAP", "PIT", "CURSE")
+                items.append(dict(cat=None, sid=None, emoji=s.get("emoji", "?"),
+                                  title=s["name"].capitalize(),
+                                  sub="⚠️ Negativ" if neg else "Gut",
+                                  body=_WIKI_SYM.get(s["name"], "Ein Slot-Symbol.")))
+        elif name == "Charms":
+            import slotmode
+            rar = {"common": "Gewöhnlich", "uncommon": "Selten", "rare": "Rar"}
+            for ch in slotmode.CHARMS:
+                items.append(dict(cat="jokers", sid=ch["id"], emoji=ch.get("emoji", "🃏"),
+                                  title=ch["name"],
+                                  sub="Slot-Charm  ·  " + rar.get(slotmode.CHARM_RARITY.get(ch["id"], ""), ""),
+                                  body=ch.get("desc", "")))
+        elif name == "Events":
+            for ev in C.EVENT_DEFINITIONS:
+                opts = "  ·  ".join(o["label"] for o in ev["options"])
+                items.append(dict(cat="events", sid=ev.get("asset"), emoji=ev.get("emoji", "❓"),
+                                  title=ev["title"], sub=opts, body=ev.get("text", "")))
+        elif name == "Klassen":
+            for cl in C.CLASS_DEFINITIONS:
+                items.append(dict(cat="ui", sid=f"class_{cl['id']}", emoji=cl.get("emoji", "🧑"),
+                                  title=cl["name"], sub=cl.get("perk", ""),
+                                  body=cl.get("desc", "") + "  Deck: " + ", ".join(cl["deck"])))
+        elif name == "Status":
+            for emj, ti, bo in _WIKI_STATUS:
+                items.append(dict(cat=None, sid=None, emoji=emj, title=ti, sub="", body=bo))
+        return items
+
+    def draw_wiki(self, tab, scroll):
+        self.draw_background()
+        self._dim(140)
+        self._text("📖  KOMPENDIUM", self.font_huge, CYAN, self.w // 2, 18,
+                   center=True, shadow=True)
+
+        # Tab-Leiste
+        tabs = self.WIKI_TABS
+        tw, th, gap = 132, 34, 6
+        total = len(tabs) * tw + (len(tabs) - 1) * gap
+        tx = self.w // 2 - total // 2
+        ty = 74
+        tab_rects = []
+        for i, name in enumerate(tabs):
+            r = pygame.Rect(tx + i * (tw + gap), ty, tw, th)
+            tab_rects.append(r)
+            active = (i == tab)
+            col = CYAN if active else (44, 40, 60)
+            pygame.draw.rect(self.screen, col, r, border_radius=8)
+            pygame.draw.rect(self.screen, _lighten(col, 0.2), r, 2, border_radius=8)
+            self._text(name, self.font_small, BLACK if active else INK_DIM,
+                       r.centerx, r.centery - 8, center=True)
+
+        items = self._wiki_items(tab)
+        # Liste (scrollbar)
+        area = pygame.Rect(self.w // 2 - 460, 124, 920, self.h - 124 - 70)
+        self._panel((area.x, area.y, area.w, area.h), radius=12, border=PANEL_LINE)
+        row_h = 72
+        per = (area.h - 16) // row_h
+        max_scroll = max(0, len(items) - per)
+        scroll = max(0, min(scroll, max_scroll))
+        prev_clip = self.screen.get_clip()
+        self.screen.set_clip(area.inflate(-6, -6))
+        for vi in range(per + 1):
+            idx = scroll + vi
+            if idx >= len(items):
+                break
+            it = items[idx]
+            ry = area.y + 8 + vi * row_h
+            rr = pygame.Rect(area.x + 8, ry, area.w - 16, row_h - 6)
+            self._panel((rr.x, rr.y, rr.w, rr.h), radius=8,
+                        top=PANEL_FILL2, bottom=PANEL_FILL, border=PANEL_LINE,
+                        border_w=1, shadow=False)
+            # Icon
+            spr = assets.fit(it["cat"], it["sid"], 52, 52) if it["cat"] and it["sid"] else None
+            if spr:
+                self.screen.blit(spr, (rr.x + 10, rr.y + rr.h // 2 - spr.get_height() // 2))
+            else:
+                self._text(it["emoji"], self.font_h1, WHITE, rr.x + 34, rr.y + 14, center=True)
+            tx2 = rr.x + 72
+            self._text(it["title"], self.font_medium, ACCENT, tx2, rr.y + 8)
+            if it["sub"]:
+                self._text(it["sub"][:78], self.font_tiny, GOLD, tx2, rr.y + 32)
+            body = it["body"]
+            if len(body) > 96:
+                body = body[:93] + "…"
+            self._text(body, self.font_tiny, INK_DIM, tx2, rr.y + 50)
+        self.screen.set_clip(prev_clip)
+
+        # Scroll-Hinweis
+        if max_scroll > 0:
+            self._text(f"▲▼ Scrollen  ({scroll + 1}–{min(len(items), scroll + per)} / {len(items)})",
+                       self.font_tiny, INK_FAINT, area.right - 10, area.y - 16, right=True)
+        self._text(f"{len(items)} Einträge", self.font_tiny, INK_FAINT, area.x + 6, area.y - 16)
+
+        back = pygame.Rect(self.w // 2 - 100, self.h - 58, 200, 44)
+        self.draw_button("Zurück", back.x, back.y, back.w, back.h,
+                         color=ACCENT, text_color=BLACK)
+        return {"tabs": tab_rects, "back": back, "max_scroll": max_scroll}
 
     # ═══════════════════════════════════════════════
     # SLOT-MODUS (eigenständiges Spiel)
