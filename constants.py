@@ -1849,6 +1849,7 @@ EVENT_DEFINITIONS = [
     # ── v1.19: neue Events ──
     {
         "title": "Die Wahrsagerin",
+        "asset": "wahrsagerin",
         "emoji": "🔮",
         "text": "Eine Frau mit Goldzähnen mischt einen seltsamen Kartenstapel. "
                 "'Das Schicksal hat Karten für dich, Liebes.'",
@@ -1860,6 +1861,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Der Priester der Reinheit",
+        "asset": "priester",
         "emoji": "🕯️",
         "text": "Ein blasser Priester betrachtet dein Deck. 'Ich kann dich von "
                 "einer Bürde befreien… wenn du es zulässt.'",
@@ -1871,6 +1873,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Der Blutverleiher",
+        "asset": "blutverleiher",
         "emoji": "🩸",
         "text": "Ein hagerer Geldverleiher mustert dich. 'Gesundheit ist auch eine "
                 "Währung. Ich zahle gut.'",
@@ -1882,6 +1885,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Das vergessene Arsenal",
+        "asset": "arsenal",
         "emoji": "⚔️",
         "text": "Eine verstaubte Waffenkammer. Zwischen rostigem Schrott blinkt "
                 "etwas Brauchbares.",
@@ -1893,6 +1897,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Die Opfergrube",
+        "asset": "opfergrube",
         "emoji": "🕳️",
         "text": "Ein dunkles Loch im Boden. Eine Stimme flüstert von Macht im "
                 "Tausch gegen… etwas.",
@@ -1904,6 +1909,7 @@ EVENT_DEFINITIONS = [
     },
     {
         "title": "Der Glückstempel",
+        "asset": "gluckstempel",
         "emoji": "🍀",
         "text": "Ein kleiner Tempel voller Kleeblätter und Glücksmünzen. Es "
                 "kribbelt im ganzen Raum.",
